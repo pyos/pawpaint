@@ -1,0 +1,34 @@
+%!doctype html
+%html
+  %head
+    %meta charset="utf-8"
+    %title -> HTML5 cannot into pressure
+    %link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"
+    %link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css"
+    %link rel="stylesheet" href="index.css"
+    %script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"
+    %script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"
+    %script src="coffeescript.js"
+    %script src="index.coffee" type="text/coffeescript"
+  %body
+    %div.navbar.navbar-fixed-top
+      %button.navbar-toggle.collapsed data-toggle="collapse" data-target=".navbar-collapse"
+        %span.icon-bar
+        %span.icon-bar
+        %span.icon-bar
+      %a.navbar-brand -> canvas
+      %div.navbar-collapse.collapse
+        %ul.nav.navbar-nav
+          %li.dropdown
+            %a.dropdown-toggle data-toggle="dropdown" ->
+              %span.layer-display -> layers
+              %span.caret
+            %ul.dropdown-menu.layer-menu
+          %li.dropdown
+            %a.dropdown-toggle data-toggle="dropdown" ->
+              %span.tool-display -> tools
+              %span.caret
+            %ul.dropdown-menu.tool-menu
+          %li -> %a.color-picker.width-picker -> &nbsp;
+          //%li -> %a.width-picker -> &nbsp;
+    %div.main-area
