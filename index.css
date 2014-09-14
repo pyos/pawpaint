@@ -10,6 +10,10 @@ canvas {
   cursor: crosshair;
 }
 
+.navbar {
+  z-index: 65537;
+}
+
 .main-area {
   border-top: 1px solid #ccc;
   position: absolute;
@@ -19,7 +23,10 @@ canvas {
   right:  0;
 }
 
-.main-area > canvas {
+.layer {
+  position: absolute;
+  top:  0;
+  left: 0;
   width:  100%;
   height: 100%;
 }

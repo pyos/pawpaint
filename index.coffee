@@ -1,237 +1,299 @@
-$ ->
-  window._focused = true
-  $(window).on 'focus', -> this._focused = true
-  $(window).on 'blur',  -> this._focused = false
+evdev =
+  # When using tablets, evdev may bug and send the cursor jumping when doing
+  # fine movements. To prevent this, we're going to ignore extremely fast
+  # mouse movement events.
+  #
+  # Usage:
+  #
+  #   smth.on 'mousedown', (ev) ->
+  #     if evdev.ok ev, true # !!! new code !!!
+  #       ...
+  #
+  #   smth.on 'mousemove', (ev) ->
+  #     if evdev.ok ev # !!! new code !!!
+  #       ...
+  #
+  lastX: 0
+  lastY: 0
+  ok: (ev, reset) ->
+    ok = Math.abs(ev.pageX - this.lastX) + Math.abs(ev.pageY - this.lastY) < 150
+    if reset or ok
+      this.lastX = ev.pageX
+      this.lastY = ev.pageY
+    reset or ok
 
-  _evdev =
-    lastX: 0
-    lastY: 0
-    hack: (ev, reset) ->
-      # evdev sometimes bugs out when using tablets.
-      # To prevent the line from jumping, we'll ignore fast movements.
-      ok = Math.abs(ev.pageX - this.lastX) + Math.abs(ev.pageY - this.lastY) < 150
-      if reset or ok
-        this.lastX = ev.pageX
-        this.lastY = ev.pageY
-      reset or ok
 
-  tools =
-    pen:    (ctx, path) -> ctx.stroke path
-    eraser: (ctx, path) ->
-      _composite = ctx.globalCompositeOperation
-      ctx.globalCompositeOperation = "destination-out"
-      ctx.stroke path
-      ctx.globalCompositeOperation = _composite
+class Tool
+  name: "noop"
 
-  icons =
-    pen:    "fa fa-paint-brush"
-    eraser: "fa fa-eraser"
+  constructor: (size, color, options) ->
+    this.size    = size
+    this.color   = color
+    this.options = options
 
-  defaults =
-    layer: "background"
-    style: "#000000"
-    width: 1
-    tool:  tools.pen
+  crosshair: (ctx) ->
+    ctx.lineWidth   = 1
+    ctx.strokeStyle = "#777"
+    ctx.stroke()
 
-  state  = jQuery.extend {}, defaults
-  canvas = $ '<canvas>'
-  canvas.appendTo ".main-area"
-  canvas = canvas[0]
+  setColor:   (color)   -> this.color   = color
+  setSize:    (size)    -> this.size    = size
+  setOptions: (options) -> this.options = jQuery.extend this.options options
 
-  canvas._ctx   = canvas.getContext "2d"
-  canvas._paths = { }
-  canvas._paths[state.layer] = { paths: [], hidden: false }
+  start: (ctx, x, y) ->
+  move:  (ctx, x, y) ->
+  stop:  (ctx, x, y) ->
 
-  canvas.start = (ev) ->
-    if window._focused and ev.button == 0
-      this.drawing = true
-      this._path = tool: state.tool, width: state.width, style: state.style, x: new Path2D()
-      this._path.x.moveTo(ev.pageX - this.rect.left - 1, ev.pageY - this.rect.top)
-      this._paths[state.layer].paths.push this._path
-      this.draw(ev)
 
-  canvas.finish = (ev) ->
-    this.draw(ev)
+class Pen extends Tool
+  name: "pen"
+
+  crosshair: (ctx, size, color, options) ->
+    ctx.beginPath()
+    ctx.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI, false)
+    super ctx, size, color, options
+
+  start: (ctx, x, y) ->
+    ctx.lineCap     = "round"
+    ctx.lineJoin    = "round"
+    ctx.lineWidth   = this.size
+    ctx.strokeStyle = this.color
+    ctx.beginPath()
+    ctx.moveTo x, y
+
+  move: (ctx, x, y) ->
+    ctx.lineTo x, y
+    ctx.stroke()
+    ctx.beginPath()
+    ctx.moveTo x, y
+
+  stop: (ctx, x, y) ->
+    ctx.lineTo x, y
+    ctx.stroke()
+
+
+class Eraser extends Pen
+  name: "eraser"
+
+  start: (ctx, x, y) ->
+    this._old_mode = ctx.globalCompositeOperation
+    ctx.globalCompositeOperation = "destination-out"
+    super ctx, x, y
+
+  stop: (ctx, x, y) ->
+    super ctx, x, y
+    ctx.globalCompositeOperation = this._old_mode
+
+
+class Layer
+  constructor: (area, name) ->
+    this.canvas = $ '<canvas class="layer">'
+    this.canvasE = this.canvas[0]
+    this.context = this.canvasE.getContext "2d"
+    this.name    = name
     this.drawing = false
-    # TODO optimize `this._path` to minimize drawing
-    this.redraw()
 
-  canvas.draw = (ev) ->
-    x = ev.pageX - this.rect.left
-    y = ev.pageY - this.rect.top
-    this._path.x.lineTo(x, y)
-    this.redraw (ctx) ->
-      ctx.beginPath()
-      ctx.rect(x - state.width, y - state.width, state.width * 2, state.width * 2)
-      ctx.clip()
 
-  canvas.draw_tool_circle = (ev) ->
-    if this._crosshair
-      lastX = this._crosshair.x
-      lastY = this._crosshair.y
-    if ev is null
-      this._crosshair = undefined
-    else
-      x = ev.pageX - this.rect.left
-      y = ev.pageY - this.rect.top
-      this._crosshair = x: x, y: y
+class Area
+  defaults:
+    layerName: "layer"
+    toolColor: "#000000"
+    toolSize:  15
 
-    this.redraw (ctx) =>
-      ctx.beginPath()
-      ctx.rect(lastX - state.width, lastY - state.width, state.width * 2, state.width * 2)
-      if this._crosshair
-        ctx.rect(x - state.width, y - state.width, state.width * 2, state.width * 2)
-      ctx.clip()
+  constructor: (selector, tools) ->
+    this.element = $ selector
+    this.element.css 'overflow', 'hidden'
 
-  canvas.redraw = (clipf) ->
-    ctx = this._ctx
-    ctx.save()
-    clipf ctx if clipf isnt undefined
-    ctx.clearRect 0, 0, this.width, this.height
+    this.size      = this.element[0].getBoundingClientRect()
+    this.tools     = tools
+    this.crosshair = $ '<span>'
+    this.layer     = 0
+    this.layers    = []
 
-    for layer of this._paths
-      if not this._paths[layer].hidden
-        for path in this._paths[layer].paths
-          ctx.lineCap     = "round"
-          ctx.lineJoin    = "round"
-          ctx.lineWidth   = path.width
-          ctx.strokeStyle = path.style
-          path.tool(ctx, path.x)
+  event: (name, layer) ->
+    size    = this.size
+    tool    = this.tool
+    context = layer.context
 
-    if this._crosshair
-      ctx.beginPath()
-      ctx.arc this._crosshair.x, this._crosshair.y, state.width / 2, 0, 2 * Math.PI, false
-      ctx.lineWidth   = 1
-      ctx.strokeStyle = "#777"
-      ctx.stroke()
+    if name == "mousedown"
+      (ev) =>
+        ev.preventDefault()
+        if ev.button == 0 and evdev.ok ev, true
+          layer.drawing = true
+          tool.start(context, ev.pageX - size.left, ev.pageY - size.top)
+    else if name == "mousemove"
+      (ev) =>
+        this.crosshair
+          .css 'left', ev.pageX - this.crosshair_left
+          .css 'top',  ev.pageY - this.crosshair_top
+        if layer.drawing and evdev.ok ev
+          tool.move(context, ev.pageX - size.left, ev.pageY - size.top)
+    else if name == "mouseup"
+      (ev) =>
+        if layer.drawing and evdev.ok ev
+          layer.drawing = false
+          tool.stop(context, ev.pageX - size.left, ev.pageY - size.top)
 
-    ctx.restore()
+  addLayer: (name) ->
+    layer = new Layer(this.element, name)
+    layer.canvas.css 'z-index', this.layers.length
+    layer.canvas.appendTo this.element
+    layer.canvasE.setAttribute 'width',  this.element[0].offsetWidth
+    layer.canvasE.setAttribute 'height', this.element[0].offsetHeight
+    this.layers.push(layer)
+    this.element.trigger 'addLayer', [layer]
+    this.setLayer(this.layers.length - 1)
+    this.redoLayout()
 
-  body = $ "body"
-  body.on 'resize', ->
-    canvas.setAttribute 'width',  canvas.offsetWidth
-    canvas.setAttribute 'height', canvas.offsetHeight
-    canvas.rect = canvas.getBoundingClientRect()
-    canvas.redraw()
-  body.resize()
+  setLayer: (i) ->
+    if 0 <= i < this.layers.length
+      this.layer = i
+      this.element
+        .off 'mousedown'
+        .off 'mouseup'
+        .off 'mouseleave'
+        .off 'mousemove'
+        .on 'mousedown',  this.event("mousedown", this.layers[this.layer])
+        .on 'mouseup',    this.event("mouseup",   this.layers[this.layer])
+        .on 'mouseleave', this.event("mouseup",   this.layers[this.layer])
+        .on 'mousemove',  this.event("mousemove", this.layers[this.layer])
+        .trigger 'setLayer', [i]
 
-  body.on 'mousedown', "canvas", (ev) ->
-    ev.preventDefault()
-    _evdev.hack ev, true
-    canvas.start(ev)
+  delLayer: (i) ->
+    if 0 <= i < this.layers.length
+      layer = this.layers.splice(i, 1)[0]
+      layer.canvas.remove()
+      this.element.trigger 'delLayer', [i]
+      this.addLayer this.defaults.layerName if not this.layers.length
+      this.setLayer this.layer
+      this.redoLayout()
 
-  body.on 'mousemove', (ev) ->
-    canvas.draw(ev) if canvas.drawing and _evdev.hack ev
+  moveLayer: (i, delta) ->
+    if 0 <= i < this.layers.length and 0 <= i + delta < this.layers.length
+      this.layers.splice(i + delta, 0, this.layers.splice(i, 1)[0])
+      this.element.trigger 'moveLayer', [i, delta]
+      this.setLayer(i + delta)
+      this.redoLayout()
 
-  body.on 'mouseup', (ev) ->
-    canvas.finish(ev) if canvas.drawing
+  toggleLayer: (i) ->
+    this.layers[i].canvas.toggle()
+    this.element.trigger 'toggleLayer', [i]
 
-  body.on 'mouseleave', (ev) ->
-    canvas.finish(ev) if self.drawing and _evdev.hack ev
+  redoLayout: ->
+    for i of this.layers
+      this.layers[i].canvas.css 'z-index', i
 
-  body.on 'mousemove', 'canvas', (ev) ->
-    if state.width > 5
-      canvas.draw_tool_circle(ev)
+  redoCrosshair: ->
+    this.crosshair.remove()
+    this.crosshair = $ '<canvas>'
+    this.crosshair.appendTo this.element
+    this.crosshair.css 'z-index', '65536'
+    this.crosshair.css 'position', 'absolute'
+    this.crosshair.attr 'width',  this.tool.size
+    this.crosshair.attr 'height', this.tool.size
+    this.crosshair_left = this.element[0].offsetLeft + this.tool.size / 2
+    this.crosshair_top  = this.element[0].offsetTop  + this.tool.size / 2
+    this.tool.kind.prototype.crosshair(
+      this.crosshair[0].getContext('2d'),
+      this.tool.size, this.tool.color, this.tool.options)
 
-  body.on 'mouseleave', 'canvas', (ev) ->
-    canvas.draw_tool_circle(null)
+  setTool: (kind, size, color, options) ->
+    this.tool = new kind(size, color, options)
+    this.tool.kind = kind
 
-  $(".tool-menu").each ->
-    for t of tools
-      item = $ "<a data-tool='#{t}'>"
-      item.append "<i class='#{icons[t]}'>"
-      item.on 'click', ->
-        state.tool = tools[$(this).attr("data-tool")]
-        entry = $(this).parent()
-        entry.addClass "active" unless entry.hasClass "active"
-        entry.siblings().removeClass "active"
-        $(".tool-display").html $(this).html()
+    this.element.trigger 'changeTool'
+    this.element.trigger 'changeSize'
+    this.element.trigger 'changeColor'
+    this.element.trigger 'changeOptions'
+    this.redoCrosshair()
+    this.setLayer(this.layer)
 
-      entry = $ "<li>"
-      entry.append item
-      entry.appendTo this
-      item.click() if tools[t] == state.tool
+  setToolColor: (color) ->
+    this.tool.setColor color
+    this.element.trigger 'changeColor'
+    this.redoCrosshair()
 
-  $(".color-picker").each ->
-    self = $ this
-    self.on 'click', -> inpf.click()
+  setToolSize: (size) ->
+    this.tool.setSize size
+    this.element.trigger 'changeSize'
+    this.redoCrosshair()
 
-    inpf = $ "<input type='color'>"
-    inpf.on 'change', ->
-      state.style = inpf.val()
-      self.css 'background-color', inpf.val()
-      self.css 'color', 'white'
+  setToolOptions: (options) ->
+    this.tool.setOptions options
+    this.element.trigger 'changeOptions'
+    this.redoCrosshair()
 
-    inpf.css 'visibility', 'hidden'
-    inpf.val(state.style).change().appendTo body
 
-  $(".width-picker").each ->
-    self = $ this
-    self.html('')
+$ ->
+  area = window.area = new Area '.main-area', [Pen, Eraser]
 
-    inpf = $ "<input type='range' min='1' max='60' step='1'>"
-    inpf.on 'change', -> state.width = parseInt inpf.val()
-    inpf.on 'click',  -> false
-    inpf.val(state.width).change().appendTo self
+  tools = $ '.tool-menu'
+  tools.on 'click', '[data-tool]', ->
+    tool = area.tools[parseInt $(this).attr('data-tool')]
+    area.setTool tool, area.tool.size, area.tool.color, area.tool.options
 
-  $(".layer-menu").each ->
-    self = $ this
+  for t of area.tools
+    item = $ "<a data-tool='#{t}'>"
+    item.text area.tools[t].name
+    $("<li>").append(item).appendTo(tools)
 
-    self.on 'click', '.create-layer', ->
-      name = prompt 'new layer name:'
-      if name and canvas._paths[name] is undefined
-        canvas._paths[name] = { paths: [], hidden: false }
-        state.layer = name
-        update()
+  colors = $ '.color-picker'
+  colors.on 'click', -> colors.input.click()
+  colors.input = $ '<input type="color">'
+  colors.input.css 'position', 'absolute'
+  colors.input.css 'visibility', 'hidden'
+  colors.input.appendTo area.element
+  colors.input.on 'change', -> area.setToolColor this.value
 
-    self.on 'click', '.toggle-layer-visibility', (ev) ->
+  width = $ '.width-picker'
+  width.input = $ '<input type="range" min="1" max="61" step="1">'
+  width.input.appendTo width.html('')
+  width.input.on 'change',     -> area.setToolSize parseInt(this.value)
+  width.input.on 'click', (ev) -> ev.stopPropagation()
+
+  layers = $ '.layer-menu'
+  layers
+    .on 'click', '.toggle', (ev) ->
+      ev.preventDefault()
       ev.stopPropagation()
-      value = $(this).parent().attr('data-layer')
-      canvas._paths[value].hidden = not canvas._paths[value].hidden
-      canvas.redraw()
-      $(this).toggleClass('fa-eye').toggleClass('fa-eye-slash')
+      area.toggleLayer $(this).parents('li').index()
 
-    self.on 'click', '.remove-layer', (ev) ->
+    .on 'click', '.remove', (ev) ->
+      ev.preventDefault()
       ev.stopPropagation()
-      value = $(this).parent().attr('data-layer')
-      delete canvas._paths[value]
-      canvas.redraw()
-      if value == state.layer
-        for k of canvas._paths
-          0  # noop
-        if k is undefined
-          # k will be undefined if `canvas._paths` is empty,
-          state.layer = defaults.layer
-          canvas._paths[state.layer] = { paths: [], hidden: false }
-        else
-          # otherwise it will point to one of the layers.
-          state.layer = k
-      update()
+      area.delLayer $(this).parents('li').index()
 
-    self.on 'click', '[data-layer]', ->
-      state.layer = $(this).attr('data-layer')
-      entry = $(this).parent()
+    .on 'click', 'li', (ev) ->
+      ev.preventDefault()
+      ev.stopPropagation()
+      area.setLayer $(this).index()
+
+  area.element
+    .on 'changeSize',  -> width.input.val area.tool.size
+    .on 'changeColor', -> colors.css 'background-color', area.tool.color
+    .on 'changeColor', -> colors.input.val area.tool.color
+    .on 'changeTool',  ->
+      index = area.tools.indexOf area.tool.kind
+      eitem = tools.find "[data-tool='#{index}']"
+      entry = eitem.parent()
+
       entry.addClass "active" unless entry.hasClass "active"
       entry.siblings().removeClass "active"
-      $(".layer-display").text $(this).text()
+      $('.tool-display').html(area.tool.kind.name)
 
-    update = ->
-      self.html ''
-      self.append $ '<li><a class="create-layer">create</a></li>'
-      self.append $ '<li class="divider">'
+    .on 'addLayer', (ev, layer) ->
+      entry = $ '<li><a><i class="fa toggle fa-eye"></i> <i class="fa fa-times remove"></i> <span class="name"></span></a></li>'
+      entry.find('.name').text layer.name
+      entry.appendTo layers
 
-      for i of canvas._paths
-        check = $ "<i class='fa toggle-layer-visibility'></i>"
-        check.addClass if canvas._paths.hidden then 'fa-eye-slash' else 'fa-eye'
+    .on 'setLayer', (ev, index) ->
+      $('.layer-display').text area.layers[index].name
+      layers.children().removeClass 'active'
+      layers.children().eq(index).addClass 'active'
 
-        item = $ "<a data-layer='#{i}'>"
-        item.text i
-        item.prepend ' <i class="fa fa-times remove-layer"></i> '
-        item.prepend check
+    .on 'delLayer',    (ev, i)    -> layers.children().eq(i).remove()
+    .on 'moveLayer',   (ev, i, d) -> layers.children().eq(i).insertAfter(layers.children().eq(i + d))
+    .on 'toggleLayer', (ev, i)    -> layers.children().eq(i).find('.toggle').toggleClass('fa-eye').toggleClass('fa-eye-slash')
 
-        entry = $ "<li>"
-        entry.append item
-        entry.appendTo self
-        item.click() if i == state.layer
-
-    update()
+  area.addLayer area.defaults.layerName
+  area.setTool  area.tools[0], area.defaults.toolSize, area.defaults.toolColor, {}
