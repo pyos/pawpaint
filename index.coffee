@@ -24,8 +24,6 @@ evdev =
 
 
 class Tool
-  name: "noop"
-
   constructor: (size, color, options) ->
     this.size    = size
     this.color   = color
@@ -46,8 +44,6 @@ class Tool
 
 
 class Pen extends Tool
-  name: "pen"
-
   crosshair: (ctx, size, color, options) ->
     ctx.beginPath()
     ctx.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI, false)
@@ -73,8 +69,6 @@ class Pen extends Tool
 
 
 class Eraser extends Pen
-  name: "eraser"
-
   start: (ctx, x, y) ->
     this._old_mode = ctx.globalCompositeOperation
     ctx.globalCompositeOperation = "destination-out"
@@ -96,7 +90,7 @@ class Layer
 
 class Area
   defaults:
-    layerName: "layer"
+    layerName: "Layer"
     toolColor: "#000000"
     toolSize:  1
 
@@ -254,18 +248,14 @@ $ ->
   layers = $ '.layer-menu'
   layers
     .on 'click', '.toggle', (ev) ->
-      ev.preventDefault()
       ev.stopPropagation()
       area.toggleLayer $(this).parents('li').index()
 
     .on 'click', '.remove', (ev) ->
-      ev.preventDefault()
       ev.stopPropagation()
       area.delLayer $(this).parents('li').index()
 
     .on 'click', 'li', (ev) ->
-      ev.preventDefault()
-      ev.stopPropagation()
       area.setLayer $(this).index()
 
   area.element
