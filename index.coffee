@@ -98,7 +98,7 @@ class Area
   defaults:
     layerName: "layer"
     toolColor: "#000000"
-    toolSize:  15
+    toolSize:  1
 
   constructor: (selector, tools) ->
     this.element = $ selector
