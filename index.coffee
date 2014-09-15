@@ -1,3 +1,5 @@
+pow = Math.pow
+
 evdev =
   # When using tablets, evdev may bug and send the cursor jumping when doing
   # fine movements. To prevent this, we're going to ignore extremely fast
@@ -16,21 +18,25 @@ evdev =
   lastX: 0
   lastY: 0
   ok: (ev, reset) ->
-    ok = Math.abs(ev.pageX - this.lastX) + Math.abs(ev.pageY - this.lastY) < 150
+    ok = Math.abs(ev.pageX - @lastX) + Math.abs(ev.pageY - @lastY) < 150
     if reset or ok
-      this.lastX = ev.pageX
-      this.lastY = ev.pageY
+      @lastX = ev.pageX
+      @lastY = ev.pageY
     reset or ok
 
 
 class Tool
   defaults:
-    size:  1
-    color: "#000000"
+    dynamic: null
+    opacity: 1
+    size:    1
+    color:   "#000000"
 
   constructor: (options) ->
-    this.options = jQuery.extend {}, this.defaults
-    this.options = jQuery.extend this.options, options
+    @options = jQuery.extend {}, @defaults
+    @lastX = 0
+    @lastY = 0
+    @setOptions options
 
   crosshair: (ctx, options) ->
     ctx.lineWidth   = 1
@@ -38,7 +44,7 @@ class Tool
     ctx.stroke()
 
   setOptions: (options) ->
-    this.options = jQuery.extend this.options, options
+    @options = jQuery.extend @options, options
 
   start: (ctx, x, y) ->
   move:  (ctx, x, y) ->
@@ -47,39 +53,79 @@ class Tool
 
 class Pen extends Tool
   crosshair: (ctx, options) ->
-    size = options.size || this.defaults.size
+    size = options.size || @defaults.size
     ctx.beginPath()
     ctx.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI, false)
-    super ctx, options
+    super
+
+  dynamize: (ctx, x, y) ->
+    velocity = pow(pow(x - @lastX, 2) + pow(y - @lastY, 2), 0.333) || 0.1
+
+    data =
+      lx: @lastX
+      ly: @lastY
+      la: ctx.globalAlpha
+      lw: ctx.lineWidth
+      x:  x
+      y:  y
+      a:  ctx.globalAlpha
+      w:  ctx.lineWidth
+
+    switch @options.dynamic
+      when "size"    then data.w = pow(0.01, 1 / velocity) * @options.size
+      when "opacity" then data.a = (1 - pow(0.01, 1 / velocity)) * @options.opacity
+
+    @lastX = x
+    @lastY = y
+    data
+
+  draw: (ctx, data) ->
+    steps  = 5
+    x_step = (data.x - data.lx) / steps
+    y_step = (data.y - data.ly) / steps
+    a_step = (data.a - data.la) / steps
+    w_step = (data.w - data.lw) / steps
+    x = data.lx
+    y = data.ly
+
+    for i in [0...steps]
+      ctx.lineWidth   += w_step
+      ctx.globalAlpha += a_step
+      ctx.beginPath()
+      ctx.moveTo(x, y)
+      ctx.lineTo((x += x_step), (y += y_step))
+      ctx.stroke()
+
+    ctx.lineWidth   = data.w
+    ctx.globalAlpha = data.a
+    data
 
   start: (ctx, x, y) ->
     ctx.lineCap     = "round"
     ctx.lineJoin    = "round"
-    ctx.lineWidth   = this.options.size
-    ctx.strokeStyle = this.options.color
-    ctx.beginPath()
-    ctx.moveTo x, y
+    ctx.lineWidth   = @options.size
+    ctx.strokeStyle = @options.color
+    ctx.globalAlpha = @options.opacity
+    @lastX = x
+    @lastY = y
+    data = @dynamize ctx, x, y
+    ctx.lineWidth   = data.w
+    ctx.globalAlpha = data.a
+    data
 
-  move: (ctx, x, y) ->
-    ctx.lineTo x, y
-    ctx.stroke()
-    ctx.beginPath()
-    ctx.moveTo x, y
-
-  stop: (ctx, x, y) ->
-    ctx.lineTo x, y
-    ctx.stroke()
+  move: (ctx, x, y) -> @draw ctx, @dynamize(ctx, x, y)
+  stop: (ctx, x, y) -> @draw ctx, @dynamize(ctx, x, y)
 
 
 class Eraser extends Pen
   start: (ctx, x, y) ->
-    this._old_mode = ctx.globalCompositeOperation
+    @_old_mode = ctx.globalCompositeOperation
     ctx.globalCompositeOperation = "destination-out"
-    super ctx, x, y
+    super
 
   stop: (ctx, x, y) ->
-    super ctx, x, y
-    ctx.globalCompositeOperation = this._old_mode
+    super
+    ctx.globalCompositeOperation = @_old_mode
 
 
 class Layer
@@ -87,27 +133,27 @@ class Layer
     name: "Layer"
 
   constructor: (area, name) ->
-    this.canvas = $ '<canvas class="layer">'
-    this.canvasE = this.canvas[0]
-    this.context = this.canvasE.getContext "2d"
-    this.name    = name || this.defaults.name
-    this.drawing = false
+    @canvas = $ '<canvas class="layer">'
+    @canvasE = @canvas[0]
+    @context = @canvasE.getContext "2d"
+    @name    = name || @defaults.name
+    @drawing = false
 
 
 class Area
   constructor: (selector, tools) ->
-    this.element = $ selector
-    this.element.css 'overflow', 'hidden'
+    @element = $ selector
+    @element.css 'overflow', 'hidden'
 
-    this.size      = this.element[0].getBoundingClientRect()
-    this.tools     = tools
-    this.crosshair = $ '<span>'
-    this.layer     = 0
-    this.layers    = []
+    @size      = @element[0].getBoundingClientRect()
+    @tools     = tools
+    @crosshair = $ '<span>'
+    @layer     = 0
+    @layers    = []
 
   event: (name, layer) ->
-    size    = this.size
-    tool    = this.tool
+    size    = @size
+    tool    = @tool
     context = layer.context
 
     switch name
@@ -133,9 +179,9 @@ class Area
 
       when "mousemove", "touchmove" then (ev) =>
         ev = ev.originalEvent?.targetTouches?[0] || ev
-        this.crosshair
-          .css 'left', ev.pageX - this.crosshair_left
-          .css 'top',  ev.pageY - this.crosshair_top
+        @crosshair
+          .css 'left', ev.pageX - @crosshair_left
+          .css 'top',  ev.pageY - @crosshair_top
 
         if layer.drawing and evdev.ok ev
           tool.move(context, ev.pageX - size.left, ev.pageY - size.top)
@@ -147,80 +193,80 @@ class Area
           tool.stop(context, ev.pageX - size.left, ev.pageY - size.top)
 
   addLayer: (name) ->
-    layer = new Layer(this.element, name)
-    layer.canvas.css 'z-index', this.layers.length
-    layer.canvas.appendTo this.element
-    layer.canvasE.setAttribute 'width',  this.element[0].offsetWidth
-    layer.canvasE.setAttribute 'height', this.element[0].offsetHeight
-    this.layers.push(layer)
-    this.element.trigger 'layer:add', [layer]
-    this.setLayer(this.layers.length - 1)
-    this.redoLayout()
+    layer = new Layer(@element, name)
+    layer.canvas.css 'z-index', @layers.length
+    layer.canvas.appendTo @element
+    layer.canvasE.setAttribute 'width',  @element[0].offsetWidth
+    layer.canvasE.setAttribute 'height', @element[0].offsetHeight
+    @layers.push(layer)
+    @element.trigger 'layer:add', [layer]
+    @setLayer(@layers.length - 1)
+    @redoLayout()
 
   setLayer: (i) ->
-    if 0 <= i < this.layers.length
-      layer  = this.layers[i]
+    if 0 <= i < @layers.length
+      layer  = @layers[i]
       events = ['mousedown', 'mouseup', 'mouseleave', 'mousemove',
                 'touchstart', 'touchmove', 'touchend']
 
-      this.layer = i
+      @layer = i
       for ev in events
-        this.element.off ev
-        this.element.on  ev, this.event(ev, layer)
-      this.element.trigger 'layer:set', [i]
+        @element.off ev
+        @element.on  ev, @event(ev, layer)
+      @element.trigger 'layer:set', [i]
 
   delLayer: (i) ->
-    if 0 <= i < this.layers.length
-      layer = this.layers.splice(i, 1)[0]
+    if 0 <= i < @layers.length
+      layer = @layers.splice(i, 1)[0]
       layer.canvas.remove()
-      this.element.trigger 'layer:del', [i]
-      this.addLayer null if not this.layers.length
-      this.setLayer this.layer
-      this.redoLayout()
+      @element.trigger 'layer:del', [i]
+      @addLayer null if not @layers.length
+      @setLayer @layer
+      @redoLayout()
 
   moveLayer: (i, delta) ->
-    if 0 <= i < this.layers.length and 0 <= i + delta < this.layers.length
-      this.layers.splice(i + delta, 0, this.layers.splice(i, 1)[0])
-      this.element.trigger 'layer:move', [i, delta]
-      this.setLayer(i + delta)
-      this.redoLayout()
+    if 0 <= i < @layers.length and 0 <= i + delta < @layers.length
+      @layers.splice(i + delta, 0, @layers.splice(i, 1)[0])
+      @element.trigger 'layer:move', [i, delta]
+      @setLayer(i + delta)
+      @redoLayout()
 
   toggleLayer: (i) ->
-    this.layers[i].canvas.toggle()
-    this.element.trigger 'layer:toggle', [i]
+    @layers[i].canvas.toggle()
+    @element.trigger 'layer:toggle', [i]
 
   redoLayout: ->
-    for i of this.layers
-      this.layers[i].canvas.css 'z-index', i
+    for i of @layers
+      @layers[i].canvas.css 'z-index', i
 
   redoCrosshair: ->
-    this.crosshair.remove()
-    this.crosshair = $ '<canvas>'
-    this.crosshair.appendTo this.element
-    this.crosshair.css 'z-index', '65536'
-    this.crosshair.css 'position', 'absolute'
-    this.crosshair.attr 'width',  this.tool.size
-    this.crosshair.attr 'height', this.tool.size
-    this.crosshair_left = this.element[0].offsetLeft + this.tool.size / 2
-    this.crosshair_top  = this.element[0].offsetTop  + this.tool.size / 2
-    this.tool.options.kind.prototype.crosshair(
-      this.crosshair[0].getContext('2d'), this.tool.options)
+    @crosshair.remove()
+    @crosshair = $ '<canvas>'
+    @crosshair.appendTo @element
+    @crosshair.css 'z-index', '65536'
+    @crosshair.css 'position', 'absolute'
+    @crosshair.attr 'width',  @tool.size
+    @crosshair.attr 'height', @tool.size
+    @crosshair_left = @element[0].offsetLeft + @tool.size / 2
+    @crosshair_top  = @element[0].offsetTop  + @tool.size / 2
+    @tool.options.kind.prototype.crosshair(
+      @crosshair[0].getContext('2d'), @tool.options)
 
   setTool: (kind, size, color, options) ->
-    this.tool = new kind(size, color, options)
-    this.tool.options.kind = kind
+    @tool = new kind(size, color, options)
+    @tool.options.kind = kind
 
-    for k of this.tool.options
-      this.element.trigger('tool:' + k, [this.tool.options[k]])
+    for k of @tool.options
+      @element.trigger('tool:' + k, [@tool.options[k]])
 
-    this.redoCrosshair()
-    this.setLayer(this.layer)
+    @redoCrosshair()
+    @setLayer(@layer)
 
   setToolOptions: (options) ->
-    this.tool.setOptions options
+    @tool.setOptions options
     for k of options
-      this.element.trigger('tool:' + k, [options[k]])
-    this.redoCrosshair()
+      @element.trigger('tool:' + k, [options[k]])
+    @redoCrosshair()
 
 
 $ ->
@@ -242,12 +288,12 @@ $ ->
   colors.input.css 'position', 'absolute'
   colors.input.css 'visibility', 'hidden'
   colors.input.appendTo area.element
-  colors.input.on 'change', -> area.setToolOptions color: this.value
+  colors.input.on 'change', -> area.setToolOptions color: @value
 
   width = $ '.width-picker'
   width.input = $ '<input type="range" min="1" max="61" step="1">'
   width.input.appendTo width.html('')
-  width.input.on 'change',     -> area.setToolOptions size: parseInt(this.value)
+  width.input.on 'change',     -> area.setToolOptions size: parseInt(@value)
   width.input.on 'click', (ev) -> ev.stopPropagation()
 
   layers = $ '.layer-menu'
