@@ -109,21 +109,38 @@ class Area
     tool    = this.tool
     context = layer.context
 
-    if name == "mousedown"
-      (ev) =>
+    switch name
+      when "touchstart" then (ev) =>
+        touch = ev.originalEvent.targetTouches[0]
+        ev.preventDefault()
+
+        if ev.originalEvent.targetTouches.length == 1
+          layer.drawing = true
+          tool.start(context, touch.pageX - size.left, touch.pageY - size.top)
+          # Strictly speaking, this hack is unnecessary on touchpads.
+          # However, it's way easier to use it than to special-case touch events.
+          evdev.ok touch, true
+        else if layer.drawing
+          layer.drawing = false
+          tool.stop(context, touch.pageX - size.left, touch.pageY - size.top)
+
+      when "mousedown" then (ev) =>
         ev.preventDefault()
         if ev.button == 0 and evdev.ok ev, true
           layer.drawing = true
           tool.start(context, ev.pageX - size.left, ev.pageY - size.top)
-    else if name == "mousemove"
-      (ev) =>
+
+      when "mousemove", "touchmove" then (ev) =>
+        ev = ev.originalEvent?.targetTouches?[0] || ev
         this.crosshair
           .css 'left', ev.pageX - this.crosshair_left
           .css 'top',  ev.pageY - this.crosshair_top
+
         if layer.drawing and evdev.ok ev
           tool.move(context, ev.pageX - size.left, ev.pageY - size.top)
-    else if name == "mouseup"
-      (ev) =>
+
+      when "mouseup", "touchend" then (ev) =>
+        ev = ev.originalEvent?.targetTouches?[0] || ev
         if layer.drawing and evdev.ok ev
           layer.drawing = false
           tool.stop(context, ev.pageX - size.left, ev.pageY - size.top)
@@ -141,17 +158,15 @@ class Area
 
   setLayer: (i) ->
     if 0 <= i < this.layers.length
+      layer  = this.layers[i]
+      events = ['mousedown', 'mouseup', 'mouseleave', 'mousemove',
+                'touchstart', 'touchmove', 'touchend']
+
       this.layer = i
-      this.element
-        .off 'mousedown'
-        .off 'mouseup'
-        .off 'mouseleave'
-        .off 'mousemove'
-        .on 'mousedown',  this.event("mousedown", this.layers[this.layer])
-        .on 'mouseup',    this.event("mouseup",   this.layers[this.layer])
-        .on 'mouseleave', this.event("mouseup",   this.layers[this.layer])
-        .on 'mousemove',  this.event("mousemove", this.layers[this.layer])
-        .trigger 'setLayer', [i]
+      for ev in events
+        this.element.off ev
+        this.element.on  ev, this.event(ev, layer)
+      this.element.trigger 'setLayer', [i]
 
   delLayer: (i) ->
     if 0 <= i < this.layers.length
