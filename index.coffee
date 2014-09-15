@@ -179,6 +179,7 @@ class Area
 
       when "mousemove", "touchmove" then (ev) =>
         ev = ev.originalEvent?.targetTouches?[0] || ev
+
         @crosshair
           .css 'left', ev.pageX - @crosshair_left
           .css 'top',  ev.pageY - @crosshair_top
@@ -245,10 +246,10 @@ class Area
     @crosshair.appendTo @element
     @crosshair.css 'z-index', '65536'
     @crosshair.css 'position', 'absolute'
-    @crosshair.attr 'width',  @tool.size
-    @crosshair.attr 'height', @tool.size
-    @crosshair_left = @element[0].offsetLeft + @tool.size / 2
-    @crosshair_top  = @element[0].offsetTop  + @tool.size / 2
+    @crosshair.attr 'width',  @tool.options.size
+    @crosshair.attr 'height', @tool.options.size
+    @crosshair_left = @element[0].offsetLeft + @tool.options.size / 2
+    @crosshair_top  = @element[0].offsetTop  + @tool.options.size / 2
     @tool.options.kind.prototype.crosshair(
       @crosshair[0].getContext('2d'), @tool.options)
 
