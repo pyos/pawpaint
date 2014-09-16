@@ -17,23 +17,26 @@
   </head>
   <body>
     <div class="navbar navbar-inverse navbar-fixed-top">
-      <button data-toggle="collapse" data-target=".navbar-collapse" class="navbar-toggle collapsed">
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
-
-      <a class="navbar-brand">canvas</a>
-      <div class="navbar-collapse collapse">
-        <ul class="nav navbar-nav">
-          <li><a class="tool-name">Loading</a></li>
-          <li class="disabled"><a>Middle-click the canvas for tool options</a></li>
-        </ul>
+      <div class="row">
+        <div class="col-md-10">
+          <a class="navbar-brand">canvas</a>
+          <ul class="nav navbar-nav">
+            <li><a class="tool-name">Loading</a></li>
+            <li class="disabled xs-hidden sm-hidden"><a>Middle-click the canvas for tool options</a></li>
+          </ul>
+        </div>
+        <div class="col-md-2">
+          <ul class="nav navbar-nav layer-global-cmds">
+            <li><a class="layer-add fa fa-plus"></a></li>
+            <li><a class="layer-del fa fa-times"></a></li>
+            <li><a class="layer-show fa fa-eye"></a><a class="layer-hide fa fa-eye-slash"></a></li>
+          </ul>
+        </div>
       </div>
     </div>
 
     <div class="container">
-      <div class="row">
+      <div class="row main-container-area">
         <div class="main-area col-md-10">
         </div>
         <div class="side-area col-md-2">

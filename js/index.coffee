@@ -1,19 +1,17 @@
 $ ->
   tool = $ '.tool-name'
-    .on 'click', (ev) ->
-      Canvas.Selector.show(area, tool.offset().left, tool.offset().top + tool.outerHeight(), true)
+  tool.on 'click', (ev) ->
+    Canvas.Selector.show(area, tool.offset().left, tool.offset().top + tool.outerHeight(), true)
 
   layers = $ '.layer-menu'
-    .on 'click', '.toggle', (ev) ->
-      ev.stopPropagation()
-      area.toggleLayer $(this).parents('li').index()
+  layers.on 'click', 'li', (ev) ->
+    area.setLayer $(this).index()
 
-    .on 'click', '.remove', (ev) ->
-      ev.stopPropagation()
-      area.delLayer $(this).parents('li').index()
-
-    .on 'click', 'li', (ev) ->
-      area.setLayer $(this).index()
+  layermenu = $ '.layer-global-cmds'
+    .on 'click', '.layer-add',  (ev) -> ev.preventDefault(); area.addLayer(null)
+    .on 'click', '.layer-del',  (ev) -> ev.preventDefault(); area.delLayer(area.layer)
+    .on 'click', '.layer-hide', (ev) -> ev.preventDefault(); area.toggleLayer(area.layer)
+    .on 'click', '.layer-show', (ev) -> ev.preventDefault(); area.toggleLayer(area.layer)
 
   area = window.area = new Canvas.Area '.main-area', [Canvas.Pen, Canvas.Eraser]
   area.element
@@ -25,7 +23,19 @@ $ ->
         .css 'color', if Canvas.RGBtoHSL(v)[2] > 0.5 then 'black' else 'white'
 
     .on 'layer:add', (_, layer) ->
-      entry = $ '<li><a><i class="fa toggle fa-eye"></i> <i class="fa fa-times remove"></i> <span class="name"></span></a></li>'
+      width  = area.element.innerWidth()
+      height = area.element.innerHeight()
+      max    = Math.max(width, height)
+
+      entry = $ "<li>
+        <a>
+          <canvas class='layer-preview'
+            width='#{Math.round(width / max * 50)}'
+            height='#{Math.round(height / max * 50)}'></canvas>
+          <span class='name'></span>
+        </a>
+      </li>"
+      entry
       entry.find('.name').text layer.name
       entry.appendTo layers
 
@@ -33,10 +43,23 @@ $ ->
       $('.layer-display').text area.layers[index].name
       layers.children().removeClass 'active'
       layers.children().eq(index).addClass 'active'
+      hidden = area.layers[index].canvas.css('display') == 'none'
+      layermenu.find('.layer-hide').toggle(not hidden)
+      layermenu.find('.layer-show').toggle(    hidden)
+
+    .on 'stroke:end', (_, layer, index) ->
+      cnv = layers.children().eq(index).find('canvas')
+      ctx = cnv[0].getContext('2d')
+      ctx.clearRect(0, 0, cnv.innerWidth(), cnv.innerHeight())
+      ctx.drawImage(layer, 0, 0, cnv.innerWidth(), cnv.innerHeight())
 
     .on 'layer:del',    (_, i)    -> layers.children().eq(i).remove()
     .on 'layer:move',   (_, i, d) -> layers.children().eq(i).insertAfter(layers.children().eq(i + d))
-    .on 'layer:toggle', (_, i)    -> layers.children().eq(i).find('.toggle').toggleClass('fa-eye').toggleClass('fa-eye-slash')
+    .on 'layer:toggle', (_, i)    -> layers.children().eq(i).toggleClass('layer-invisible')
+    .on 'layer:toggle', (_, i) ->
+      if i == area.layer
+        layermenu.find('.layer-hide').toggle()
+        layermenu.find('.layer-show').toggle()
 
     .on 'button:1', (_, e) -> Canvas.Selector.show(area, e.pageX, e.pageY)
 
