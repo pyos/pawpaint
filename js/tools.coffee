@@ -16,7 +16,7 @@ class Tool
 
   crosshair: (ctx) ->
     ctx.lineWidth   = 1
-    ctx.strokeStyle = "#777"
+    ctx.strokeStyle = "#666"
     ctx.stroke()
 
   start: (ctx, x, y) ->
