@@ -2,17 +2,6 @@ evdev =
   # When using tablets, evdev may bug and send the cursor jumping when doing
   # fine movements. To prevent this, we're going to ignore extremely fast
   # mouse movement events.
-  #
-  # Usage:
-  #
-  #   smth.on 'mousedown', (ev) ->
-  #     if evdev.reset ev # !!! new code !!!
-  #       ...
-  #
-  #   smth.on 'mousemove', (ev) ->
-  #     if evdev.ok ev # !!! new code !!!
-  #       ...
-  #
   lastX: 0
   lastY: 0
   reset: (ev) ->
@@ -40,63 +29,51 @@ class Layer
 
 class Area
   constructor: (selector, tools) ->
-    @element   = $ selector
+    @element   = $(selector).eq(0)
     @tools     = tools
     @layer     = 0
     @layers    = []
-    @crosshair = $ '<canvas>'
-      .css 'position', 'absolute'
-      .css 'pointer-events', 'none'
-      .appendTo @element
+    @crosshair = crosshair = $('<canvas class="crosshair">').appendTo(@element)[0]
 
-  event: (name, layer) ->
-    tool    = @tool
-    context = layer.context
+    @onMouseMove = @onMouseMove.bind @
+    @onMouseDown = @onMouseDown.bind @
+    @onMouseUp   = @onMouseUp  .bind @
 
-    switch name
-      when "mousedown" then (ev) =>
-        ev.preventDefault()
+    @element[0].addEventListener 'mousedown', @onMouseDown
+    @element[0].addEventListener 'mousemove', (ev) ->
+      crosshair.style.left = ev.offsetX + 'px'
+      crosshair.style.top  = ev.offsetY + 'px'
 
-        if ev.button == 0 and evdev.reset ev
-          @element.trigger 'stroke:begin', [layer.canvas[0], @layer]
-          layer.drawing = true
-          tool.start context, ev.offsetX, ev.offsetY
-        else if layer.drawing
-          layer.drawing = false
-          tool.stop context, ev.offsetX, ev.offsetY
-          @element.trigger 'stroke:end', [layer.canvas[0], @layer]
+  onMouseMove: (ev) -> @tool.move @context, ev.offsetX, ev.offsetY if evdev.ok ev
+  onMouseUp:   (ev) ->
+    if evdev.ok ev
+      @tool.stop @context, ev.offsetX, ev.offsetY
+      @element[0].removeEventListener 'mousemove',  @onMouseMove
+      @element[0].removeEventListener 'mouseleave', @onMouseUp
+      @element[0].removeEventListener 'mouseup',    @onMouseUp
+      @element.trigger 'stroke:end', [@layers[@layer].canvas[0], @layer]
 
-        if ev.button == 1 then @element.trigger 'button:1', [ev]
-        if ev.button == 2 then @element.trigger 'button:2', [ev]
-
-      when "mousemove" then (ev) =>
-        @crosshair
-          .css 'left', ev.offsetX - @crosshair.sz
-          .css 'top',  ev.offsetY - @crosshair.sz
-
-        if layer.drawing and evdev.ok ev
-          tool.move context, ev.offsetX, ev.offsetY
-
-      when "mouseup", "mouseleave" then (ev) =>
-        if layer.drawing and evdev.ok ev
-          layer.drawing = false
-          tool.stop(context, ev.offsetX, ev.offsetY)
-          @element.trigger 'stroke:end', [layer.canvas[0], @layer]
+  onMouseDown: (ev) ->
+    if ev.button == 0 and evdev.reset ev
+      ev.preventDefault()
+      @element.trigger 'stroke:begin', [@layers[@layer].canvas[0], @layer]
+      @element[0].addEventListener 'mousemove',  @onMouseMove
+      @element[0].addEventListener 'mouseleave', @onMouseUp
+      @element[0].addEventListener 'mouseup',    @onMouseUp
+      @tool.start @context, ev.offsetX, ev.offsetY
+    else if ev.button == 1 then @element.trigger 'button:1', [ev]
+    else if ev.button == 2 then @element.trigger 'button:2', [ev]
 
   addLayer: (name) ->
     layer = new Layer(@element, name, @element.innerWidth(), @element.innerHeight())
-    layer.canvas.appendTo @element
     @layers.push(layer)
-    @element.trigger 'layer:add', [layer]
+    @element.append(layer.canvas).trigger('layer:add', [layer])
     @setLayer(@layers.length - 1)
     @redoLayout()
 
   setLayer: (i) ->
     if 0 <= i < @layers.length
-      @layer = i
-      for ev in ['mousedown', 'mouseup', 'mouseleave', 'mousemove']
-        @element.off ev
-        @element.on  ev, @event(ev, @layers[i])
+      @context = @layers[@layer = i].context
       @element.trigger 'layer:set', [i]
 
   delLayer: (i) ->
@@ -120,24 +97,22 @@ class Area
     @element.trigger 'layer:toggle', [i]
 
   redoLayout: ->
-    for i of @layers
-      @layers[i].canvas.css 'z-index', i - @layers.length
+    x.canvas.css 'z-index', i - @layers.length for i, x of @layers
 
   setTool: (kind, size, color, options) ->
     @tool = new kind(size, color, options)
-    @tool.kind = kind
-    @element.trigger 'tool:kind', [kind]
     @setToolOptions @tool.options
-    @setLayer(@layer)
+    @element.trigger 'tool:kind', [kind]
 
   setToolOptions: (options) ->
     @tool.setOptions options
-    for k of options
-      @element.trigger('tool:' + k, [options[k]])
-    @crosshair.attr 'width',  @tool.options.size
-    @crosshair.attr 'height', @tool.options.size
-    @crosshair.sz = @tool.options.size / 2
-    @tool.crosshair @crosshair[0].getContext('2d')
+    @element.trigger('tool:' + k, [v]) for k, v of options
+    @crosshair.setAttribute 'width',  @tool.options.size
+    @crosshair.setAttribute 'height', @tool.options.size
+    @crosshair.style.marginLeft = -@tool.options.size / 2 + 'px'
+    @crosshair.style.marginTop  = -@tool.options.size / 2 + 'px'
+    @crosshair.style.display = if @tool.options.size > 5 then '' else 'none'
+    @tool.crosshair @crosshair.getContext('2d')
 
 
 window.Canvas or= {}
