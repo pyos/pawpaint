@@ -58,11 +58,13 @@ class Area
         ev.preventDefault()
 
         if ev.button == 0 and evdev.reset ev
+          @element.trigger 'stroke:begin', [layer.canvas[0], @layer]
           layer.drawing = true
           tool.start context, ev.offsetX, ev.offsetY
         else if layer.drawing
           layer.drawing = false
           tool.stop context, ev.offsetX, ev.offsetY
+          @element.trigger 'stroke:end', [layer.canvas[0], @layer]
 
         if ev.button == 1 then @element.trigger 'button:1', [ev]
         if ev.button == 2 then @element.trigger 'button:2', [ev]
@@ -79,6 +81,7 @@ class Area
         if layer.drawing and evdev.ok ev
           layer.drawing = false
           tool.stop(context, ev.offsetX, ev.offsetY)
+          @element.trigger 'stroke:end', [layer.canvas[0], @layer]
 
   addLayer: (name) ->
     layer = new Layer(@element, name, @element.innerWidth(), @element.innerHeight())
@@ -102,7 +105,7 @@ class Area
       layer.canvas.remove()
       @element.trigger 'layer:del', [i]
       @addLayer null if not @layers.length
-      @setLayer @layer
+      @setLayer Math.min(@layer, @layers.length - 1)
       @redoLayout()
 
   moveLayer: (i, delta) ->
