@@ -145,7 +145,7 @@ HueRing = (area, r, d, inner, outer) ->
 
 SizeSlider = (area, height, width, min, max, overshoot = 0) ->
   CanvasSelector(width, height, area.tool.options.size,
-    (x, y) -> max - Math.round(Math.min(max, Math.max(min, ((y - overshoot) / (height - 2 * overshoot)) * max + min)))
+    (x, y) -> Math.min(max, Math.max(min, Math.round(((overshoot - y) / (height - 2 * overshoot) + 1) * max + min)))
     (ctx) ->
       ctx.clearRect(0, 0, width, height)
 
@@ -177,7 +177,7 @@ window.Canvas.Selector =
     for t in area.tools
       $("<li>").append($("<a>").text(t.name)).appendTo(tools)
 
-    tools.children().eq(area.tools.indexOf area.tool.kind).addClass('active')
+    tools.children().eq(area.tools.indexOf area.tool.__proto__.constructor).addClass('active')
 
     cover = $ '<div class="canvas-selector-container">'
       .on 'click', -> $(this).fadeOut(100, $(this).remove.bind($(this)))
