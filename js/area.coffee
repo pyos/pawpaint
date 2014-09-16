@@ -6,7 +6,7 @@ evdev =
   # Usage:
   #
   #   smth.on 'mousedown', (ev) ->
-  #     if evdev.ok ev, true # !!! new code !!!
+  #     if evdev.reset ev # !!! new code !!!
   #       ...
   #
   #   smth.on 'mousemove', (ev) ->
@@ -15,12 +15,16 @@ evdev =
   #
   lastX: 0
   lastY: 0
+  reset: (ev) ->
+    @lastX = ev.pageX
+    @lastY = ev.pageY
+    true
+
   ok: (ev, reset) ->
-    ok = Math.abs(ev.pageX - @lastX) + Math.abs(ev.pageY - @lastY) < 150
-    if reset or ok
-      @lastX = ev.pageX
-      @lastY = ev.pageY
-    reset or ok
+    ok = Math.abs(ev.pageX - @lastX) + Math.abs(ev.pageY - @lastY) < 200
+    @lastX = ev.pageX
+    @lastY = ev.pageY
+    ok
 
 
 class Layer
@@ -53,7 +57,7 @@ class Area
       when "mousedown" then (ev) =>
         ev.preventDefault()
 
-        if ev.button == 0 and evdev.ok ev, true
+        if ev.button == 0 and evdev.reset ev
           layer.drawing = true
           tool.start context, ev.offsetX, ev.offsetY
         else if layer.drawing
@@ -77,7 +81,7 @@ class Area
           tool.stop(context, ev.offsetX, ev.offsetY)
 
   addLayer: (name) ->
-    layer = new Layer(@element, name, @element.width(), @element.height())
+    layer = new Layer(@element, name, @element.innerWidth(), @element.innerHeight())
     layer.canvas.appendTo @element
     @layers.push(layer)
     @element.trigger 'layer:add', [layer]
@@ -118,6 +122,7 @@ class Area
 
   setTool: (kind, size, color, options) ->
     @tool = new kind(size, color, options)
+    @tool.kind = kind
     @element.trigger 'tool:kind', [kind]
     @setToolOptions @tool.options
     @setLayer(@layer)
