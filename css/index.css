@@ -119,7 +119,7 @@ a:not(.fa):not(.glyphicon) {
 }
 
 .canvas-selector-color {
-  cursor: move;
+  cursor: crosshair;
 }
 
 .canvas-selector-tool {
