@@ -149,14 +149,14 @@ SizeSlider = (area, height, width, min, max, overshoot = 0) ->
     (ctx) ->
       ctx.clearRect(0, 0, width, height)
 
-      ctx.fillStyle = "#373737"
+      ctx.fillStyle = "rgba(127, 127, 127, 0.4)"
       ctx.beginPath()
       ctx.arc(width / 2, height / 2, @value / 2, 0, Math.PI * 2, true)
       ctx.fill()
 
       y = ((max - @value) - min) / max * (height - 2 * overshoot) + overshoot
       ctx.lineWidth = 2
-      ctx.strokeStyle = "#999"
+      ctx.strokeStyle = "rgba(127, 127, 127, 0.7)"
       ctx.beginPath()
       ctx.moveTo 0, y
       ctx.lineTo width, y
@@ -180,16 +180,10 @@ window.Canvas.Selector =
     tools.children().eq(area.tools.indexOf area.tool.kind).addClass('active')
 
     cover = $ '<div class="canvas-selector-container">'
-      .css 'position', 'absolute'
-      .css 'left',   0
-      .css 'top',    0
-      .css 'right',  0
-      .css 'bottom', 0
       .on 'click', -> $(this).fadeOut(100, $(this).remove.bind($(this)))
       .appendTo 'body'
       .append(
         $ '<div class="canvas-selector">'
-          .css 'position', 'absolute'
           .css 'left', x - 100
           .css 'top',  y - 100
           .append color

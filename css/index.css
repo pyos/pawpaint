@@ -14,7 +14,7 @@ canvas {
   box-shadow: 0 0 20px -5px #000 inset;
 }
 
-.row {
+.main-container-area {
   position: absolute;
   top: 50px;
   bottom: 0;
@@ -22,6 +22,7 @@ canvas {
   right:  0;
   margin: 0;
   background: #eee;
+  z-index: -65536;
 }
 
 .main-area {
@@ -31,6 +32,7 @@ canvas {
   height: 100%;
   background: white;
   box-shadow: 0 0 20px -5px #000;
+  z-index: -65536;
 }
 
 .main-area.no-cursor {
@@ -61,7 +63,12 @@ canvas {
 
 .layer-menu > li > a {
   padding: 20px 30px;
+  display: block;
+}
+
+.layer-menu > li > a > * {
   display: inline-block;
+  vertical-align: middle;
 }
 
 .layer-menu > li.active {
@@ -69,14 +76,26 @@ canvas {
   box-shadow: 10px 0 20px -5px #000;
 }
 
-.canvas-selector-contaner {
-  z-index: 65536;
+.layer-preview {
+  border: 1px solid #666;
+  position: relative;
+}
+
+.canvas-selector-container {
+  z-index: 65538;
+  position: absolute;
+  top: -50px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin-top: 50px;
 }
 
 .canvas-selector {
   background: #222;
   border-radius: 100px 0 0 100px;
   box-shadow: 0 0 20px -5px #000;
+  position: absolute;
 }
 
 .canvas-selector-fixed .canvas-selector {
