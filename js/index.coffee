@@ -43,7 +43,7 @@ $ ->
       $('.layer-display').text area.layers[index].name
       layers.children().removeClass 'active'
       layers.children().eq(index).addClass 'active'
-      hidden = area.layers[index].canvas.css('display') == 'none'
+      hidden = area.layers[index].css('display') == 'none'
       layermenu.find('.layer-hide').toggle(not hidden)
       layermenu.find('.layer-show').toggle(    hidden)
 
