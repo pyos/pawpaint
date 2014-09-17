@@ -44,7 +44,7 @@ class Pen extends Tool
     steps = 10
     dx    = (x - @lastX) / steps
     dy    = (y - @lastY) / steps
-    @options.dynamic?.start ctx, @lastX, @lastY, x, y, steps
+    @options.dynamic?.start ctx, @, x - @lastX, y - @lastY, steps
     for i in [0...steps]
       @options.dynamic?.step ctx
       ctx.beginPath()

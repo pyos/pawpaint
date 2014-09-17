@@ -3,53 +3,61 @@ exp = Math.exp
 
 
 class Dynamic
-  defaults:
-    init:     0
-    offset:   5
-    multiple: 0.333
+  constructor: (options) ->
+    @options = jQuery.extend (@options || {}), options
 
-  constructor: (tool, init, offset, multiple) ->
-    @tool     = tool
-    @init     = init     || @defaults.init
-    @offset   = offset   || @defaults.offset
-    @multiple = multiple || @defaults.multiple
-
-  start: (ctx, lx, ly, x, y, steps) ->
-    @target = 1 / (1 + exp(@offset - pow(pow(x - lx, 2) + pow(y - ly, 2), 0.5) * @multiple))
-
-  stop:  (ctx) ->
-  step:  (ctx) ->
   reset: (ctx) ->
+  start: (ctx, tool, dx, dy, steps) ->
+  step:  (ctx) ->
+  stop:  (ctx) ->
 
 
-class SizeDynamic extends Dynamic
-  start: (ctx, lx, ly, x, y, steps) ->
+class MovingAverageLinearDynamic extends Dynamic
+  constructor: (options) ->
+    @options = jQuery.extend (@options || {}),
+      k: 0.05
+      a: 1
+      min: 0
+      max: 1
+      avgOf: 30
     super
-    @target *= @tool.options.size
-    @delta   = (@target - ctx.lineWidth) / steps
 
-  step:  (ctx) -> ctx.lineWidth += @delta
-  stop:  (ctx) -> ctx.lineWidth  = @target
-  reset: (ctx) -> ctx.lineWidth  = @init || 0.1
+  reset: (ctx) ->
+    @_v = 0
+    @_c = 0
+    @_n = []
+
+  start: (ctx, tool, dx, dy, steps) ->
+    v = pow(pow(dx, 2) + pow(dy, 2), 0.5)
+    d = @options.avgOf
+
+    if @_n.length == d
+      @_v += (v - @_n[@_c % d]) / d
+      @_n[@_c % d] = v
+    else
+      @_n.push(v)
+      @_v += (v - @_v) / @_n.length
+    @_c++
+
+    Math.max(@options.min, Math.min(@options.max, @_v * @options.k + @options.a))
 
 
-class OpacityDynamic extends Dynamic
-  defaults:
-    init:     1
-    offset:   -5
-    multiple: -0.25
-
-  start: (ctx, lx, ly, x, y, steps) ->
+class OptionDynamic extends MovingAverageLinearDynamic
+  constructor: (options) ->
+    @options = jQuery.extend (@options || {}),
+      option: 'size'
+      prop:   'lineWidth'
     super
-    @target *= @tool.options.opacity
-    @delta   = (@target - ctx.globalAlpha) / steps
 
-  step:  (ctx) -> ctx.globalAlpha += @delta
-  stop:  (ctx) -> ctx.globalAlpha  = @target
-  reset: (ctx) -> ctx.globalAlpha  = @init
+  start: (ctx, tool, dx, dy, steps) ->
+    @_value = super * tool.options[@options.option]
+    @_delta = (@_value - ctx[@options.prop]) / steps
+
+  step:  (ctx) -> ctx[@options.prop] += @_delta
+  stop:  (ctx) -> ctx[@options.prop]  = @_value
+  reset: (ctx) -> super; ctx[@options.prop] = @options.min
 
 
 window.Canvas or= {}
 window.Canvas.Dynamic = Dynamic
-window.Canvas.SizeDynamic = SizeDynamic
-window.Canvas.OpacityDynamic = OpacityDynamic
+window.Canvas.OptionDynamic = OptionDynamic
