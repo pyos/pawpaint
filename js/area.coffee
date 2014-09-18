@@ -42,7 +42,7 @@ class Area
     # A list of subclasses of `Canvas.Tool`.
     # You may use whatever tool you want through `setTool`, but only
     # these will be displayed in the options window.
-    @tools = tools || [Canvas.Pen, Canvas.Eraser]
+    @tools = tools || [Canvas.Tool.Pen, Canvas.Tool.Eraser]
 
     # A complete list of layers ordered by z-index; each one is a `jQuery` object
     # wrapping a single `Canvas`.
@@ -226,5 +226,4 @@ class Area
     @tool.crosshair @crosshair.getContext('2d')
 
 
-window.Canvas or= {}
-window.Canvas.Area = Area
+@Canvas.Area = Area

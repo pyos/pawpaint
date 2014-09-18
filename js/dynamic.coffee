@@ -47,6 +47,5 @@ class OptionDynamic extends MovingAverageLinearDynamic
   reset: (ctx) -> super; ctx[@options.prop] = @options.min
 
 
-window.Canvas or= {}
-window.Canvas.Dynamic = Dynamic
-window.Canvas.OptionDynamic = OptionDynamic
+@Canvas.Dynamic = Dynamic
+@Canvas.Dynamic.Option = OptionDynamic

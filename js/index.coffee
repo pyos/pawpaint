@@ -1,11 +1,13 @@
 $ ->
   tool = $ '.tool-name'
   tool.on 'click', (ev) ->
-    Canvas.Selector.show(area, tool.offset().left, tool.offset().top + tool.outerHeight(), true)
+    if ev.which == 1
+      Canvas.Selector(area, tool.offset().left, tool.offset().top + tool.outerHeight(), true)
 
   layers = $ '.layer-menu'
   layers.on 'click', 'li', (ev) ->
-    area.setLayer $(this).index()
+    if ev.which == 1
+      area.setLayer $(this).index()
 
   layermenu = $ '.layer-global-cmds'
     .on 'click', '.layer-add',  (ev) -> ev.preventDefault(); area.addLayer(null)
@@ -13,9 +15,8 @@ $ ->
     .on 'click', '.layer-hide', (ev) -> ev.preventDefault(); area.toggleLayer(area.layer)
     .on 'click', '.layer-show', (ev) -> ev.preventDefault(); area.toggleLayer(area.layer)
 
-  area = window.area = new Canvas.Area '.main-area', [Canvas.Pen, Canvas.Eraser]
+  area = window.area = new Canvas.Area '.main-area'
   area.element
-    .on 'tool:size',  (_, v) -> area.element.toggleClass('no-cursor') if area.element.hasClass('no-cursor') != (v >= 15)
     .on 'tool:kind',  (_, v) -> tool.text(v.name)
     .on 'tool:H',     (_, v, o) -> tool.css 'background', "hsl(#{o.H}, #{o.S}%, #{o.L}%)"
     .on 'tool:S',     (_, v, o) -> tool.css 'background', "hsl(#{o.H}, #{o.S}%, #{o.L}%)"
@@ -26,22 +27,15 @@ $ ->
       width  = area.element.innerWidth()
       height = area.element.innerHeight()
       msize  = max(width, height)
+      canvas = new Canvas(width / msize * 50, height / msize * 50)
 
-      entry = $ "<li>
-        <a>
-          <canvas class='layer-preview'
-            width='#{round(width / msize * 50)}'
-            height='#{round(height / msize * 50)}'></canvas>
-          <span class='name'></span>
-        </a>
-      </li>"
-      entry
-      entry.find('.name').text 'Layer'  # todo
+      entry = $ "<li><a><span class='name'></span></a></li>"
+      entry.find('.name').before(canvas).text 'Layer'  # todo
       entry.appendTo layers
 
     .on 'layer:set', (_, index) ->
-      layers.children().removeClass 'active'
-      layers.children().eq(index).addClass 'active'
+      layers.children().removeClass('active')
+      layers.children().eq(index).addClass('active')
       hidden = area.layers[index].css('display') == 'none'
       layermenu.find('.layer-hide').toggle(not hidden)
       layermenu.find('.layer-show').toggle(    hidden)
@@ -55,29 +49,18 @@ $ ->
 
     .on 'layer:del',    (_, i)    -> layers.children().eq(i).remove()
     .on 'layer:move',   (_, i, d) -> layers.children().eq(i).insertAfter(layers.children().eq(i + d))
-    .on 'layer:toggle', (_, i)    -> layers.children().eq(i).toggleClass('layer-invisible')
+    .on 'layer:toggle', (_, i)    -> layers.children().eq(i).toggleClass('layer-hidden')
     .on 'layer:toggle', (_, i) ->
       if i == area.layer
         layermenu.find('.layer-hide').toggle()
         layermenu.find('.layer-show').toggle()
 
     .on 'mousedown', (e) ->
-      if e.button == 1
-        Canvas.Selector.show(area, e.pageX, e.pageY)
+      if e.which == 2
+        Canvas.Selector(area, e.pageX, e.pageY)
 
   area.addLayer null
   area.setTool  area.tools[0], {}
 
-  CTRL  = 1 << 11
-  SHIFT = 1 << 10
-  ALT   = 1 << 9
-  META  = 1 << 8
-
-  keyMap = [
-    {key: CTRL | 90,         f: area.undo.bind(area)}  # 90 = Z
-    {key: CTRL | SHIFT | 90, f: area.redo.bind(area)}
-  ]
-
-  $(document).on 'keydown', (ev) ->
-    k = ev.ctrlKey * CTRL | ev.shiftKey * SHIFT | ev.altKey * ALT | ev.metaKey * META | ev.keyCode
-    for spec in keyMap then return spec.f() if k == spec.key
+  $(document).keymap {key: CTRL | 90,         f: area.undo.bind(area)},
+                     {key: CTRL | SHIFT | 90, f: area.redo.bind(area)}

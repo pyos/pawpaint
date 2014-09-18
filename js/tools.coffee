@@ -69,7 +69,6 @@ class Eraser extends Pen
     ctx.globalCompositeOperation = "destination-out"
 
 
-window.Canvas or= {}
-window.Canvas.Tool = Tool
-window.Canvas.Pen = Pen
-window.Canvas.Eraser = Eraser
+@Canvas.Tool = Tool
+@Canvas.Tool.Pen = Pen
+@Canvas.Tool.Eraser = Eraser
