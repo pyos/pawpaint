@@ -1,45 +1,3 @@
-max = Math.max
-min = Math.min
-abs = Math.abs
-cos = Math.cos
-sin = Math.sin
-pi  = Math.PI
-
-
-window.Canvas or= {}
-window.Canvas.HSLtoRGB = HSLtoRGB = (h, s, l) ->
-  H = (h + 360) % 360 / 60
-  C = (1 - Math.abs(l * 2 - 1)) * s
-  X = (1 - Math.abs(H % 2 - 1)) * C
-  R = [C, X, 0, 0, X, C][Math.floor(H)]
-  G = [X, C, C, X, 0, 0][Math.floor(H)]
-  B = [0, 0, X, C, C, X][Math.floor(H)]
-  m = l - C / 2
-  r = Math.round((R + m) * 255 + 256).toString(16).substr(-2)
-  g = Math.round((G + m) * 255 + 256).toString(16).substr(-2)
-  b = Math.round((B + m) * 255 + 256).toString(16).substr(-2)
-  "##{r}#{g}#{b}"
-
-
-window.Canvas.RGBtoHSL = RGBtoHSL = (hex) ->
-  r = parseInt(hex.substr(1, 2), 16) / 255
-  g = parseInt(hex.substr(3, 2), 16) / 255
-  b = parseInt(hex.substr(5, 2), 16) / 255
-
-  M = max(r, g, b)
-  m = min(r, g, b)
-  l = (M + m) / 2
-  d = (M - m)
-
-  return [0, 0, l] if d == 0
-  s = if l > 0.5 then d / (2 - M - m) else d / (M + m)
-  h = switch M
-    when r then (g - b) / d + (if g < b then 6 else 0)
-    when g then (b - r) / d + 2
-    when b then (r - g) / d + 4
-  return [h * 60, s, l]
-
-
 CanvasSelector = (w, h, init, valueAt, redraw) ->
   canvas = $ "<canvas width='#{w}' height='#{h}'>"
   canvas.tracking = false
@@ -81,28 +39,26 @@ CanvasSelector = (w, h, init, valueAt, redraw) ->
 
 
 HueRing = (area, r, d, inner, outer) ->
-  a = (r - d) * Math.sqrt(3) / 2
-  h = a * Math.sqrt(3) / 2
+  a = sqrt(3) / 2 * (r - d)  # half the side of a equilateral triangle
+  h = sqrt(3) / 2 * a        # half its height
 
-  getHSL = (H, x, y) ->
-    m = -H * Math.PI / 180
-    p = (x - r) * Math.cos(m) - (y - r) * Math.sin(m) + h * 2 / 3
-    q = (x - r) * Math.sin(m) + (y - r) * Math.cos(m) + a
-    s = p / 2 / h / (1 - Math.abs(q - a) / a)
-    [H, Math.min(1, Math.max(0, s)), Math.min(1, Math.max(0, q / 2 / a))]
-
-  CanvasSelector r * 2, r * 2, RGBtoHSL(area.tool.options.color),
+  CanvasSelector r * 2, r * 2, {H: area.tool.options.H, S: area.tool.options.S, L: area.tool.options.L},
     (x, y) ->
-      if Math.pow(r - d + inner, 2) <= Math.pow(x - r, 2) + Math.pow(y - r, 2)
-        [Math.floor(Math.atan2(y - r, x - r) * 180 / Math.PI), @value[1], @value[2]]
+      if pow(r - d + inner, 2) <= pow(x - r, 2) + pow(y - r, 2)
+        H: floor(atan2(y - r, x - r) * 180 / PI), S: @value.S, L: @value.L
       else
-        getHSL @value[0], x, y
+        m = -@value.H * PI / 180
+        # Coordinates relative to the black corner of a triangle:
+        p = (x - r) * cos(m) - (y - r) * sin(m) + h * 2 / 3
+        q = (x - r) * sin(m) + (y - r) * cos(m) + a
+        s = p / 2 / h / (1 - abs(q - a) / a)
+        H: @value.H, S: floor(min(1, max(0, s)) * 100), L: floor(min(1, max(0, q / 2 / a)) * 100)
 
     (ctx) ->
       if @_hue is undefined
         for i in [0...10]
-          s_a = i * pi / 5
-          e_a = 1 * pi / 5 + s_a + 0.01  # some overlap to avoid gaps
+          s_a = i * PI / 5
+          e_a = 1 * PI / 5 + s_a + 0.01  # some overlap to avoid gaps
           grad = ctx.fillStyle = ctx.createLinearGradient(r + r * cos(s_a), r + r * sin(s_a), r + r * cos(e_a), r + r * sin(e_a))
           grad.addColorStop 0, "hsl(#{i * 36},      100%, 50%)"
           grad.addColorStop 1, "hsl(#{i * 36 + 36}, 100%, 50%)"
@@ -111,15 +67,15 @@ HueRing = (area, r, d, inner, outer) ->
           ctx.arc(r, r, r + inner - d, e_a, s_a, true)
           ctx.fill()
 
-      if @_hue != @value[0]
+      if @_hue != @value.H
         ctx.beginPath()
-        ctx.arc(r, r, r - d, 0, pi * 2, false)
+        ctx.arc(r, r, r - d, 0, PI * 2, false)
         ctx.clip()
         ctx.clearRect(0, 0, r * 2, r * 2)
 
         ctx.save()
         ctx.translate(r, r)
-        ctx.rotate(@value[0] * Math.PI / 180)
+        ctx.rotate(@value.H * PI / 180)
         ctx.translate(-h * 2 / 3, 0)
         ctx.beginPath()
         ctx.moveTo(0, -a)
@@ -128,7 +84,7 @@ HueRing = (area, r, d, inner, outer) ->
 
         grad = ctx.fillStyle = ctx.createLinearGradient(0, -a / 2, h * 2, 0)
         grad.addColorStop 0, "#000"
-        grad.addColorStop 1, "hsl(#{@value[0]}, 100%, 50%)"
+        grad.addColorStop 1, "hsl(#{@value.H}, 100%, 50%)"
         ctx.fill()
 
         grad = ctx.fillStyle = ctx.createLinearGradient(0, +a, h * 0.8, -a / 2 * 0.8)
@@ -136,21 +92,21 @@ HueRing = (area, r, d, inner, outer) ->
         grad.addColorStop 1, "rgba(255, 255, 255, 0)"
         ctx.fill()
         ctx.restore()
-        @_hue = @value[0]
+        @_hue = @value.H
 
 
-SizeSlider = (area, height, width, min, max, overshoot = 0) ->
+SizeSlider = (area, height, width, low, high, overshoot = 0) ->
   CanvasSelector width, height, area.tool.options.size,
-    (x, y) -> Math.min(max, Math.max(min, Math.round(((overshoot - y) / (height - 2 * overshoot) + 1) * max + min)))
+    (x, y) -> min(high, max(low, floor(((overshoot - y) / (height - 2 * overshoot) + 1) * high + low)))
     (ctx) ->
       ctx.clearRect(0, 0, width, height)
 
       ctx.fillStyle = "rgba(127, 127, 127, 0.4)"
       ctx.beginPath()
-      ctx.arc(width / 2, height / 2, @value / 2, 0, Math.PI * 2, true)
+      ctx.arc(width / 2, height / 2, @value / 2, 0, PI * 2, true)
       ctx.fill()
 
-      y = ((max - @value) - min) / max * (height - 2 * overshoot) + overshoot
+      y = (high - @value - low) / high * (height - 2 * overshoot) + overshoot
       ctx.lineWidth = 2
       ctx.strokeStyle = "rgba(127, 127, 127, 0.7)"
       ctx.beginPath()
@@ -159,6 +115,7 @@ SizeSlider = (area, height, width, min, max, overshoot = 0) ->
       ctx.stroke()
 
 
+window.Canvas or= {}
 window.Canvas.Selector =
   show: (area, x, y, fixed = false) ->
     color = HueRing(area, 100, 30, 10, 1).addClass('canvas-selector-color')
@@ -189,6 +146,6 @@ window.Canvas.Selector =
     if fixed
       cover.addClass 'canvas-selector-fixed'
 
-    width.on 'change', (_, value) -> area.setToolOptions(size:  value)
-    color.on 'change', (_, value) -> area.setToolOptions(color: HSLtoRGB.apply(null, value))
+    width.on 'change', (_, value) -> area.setToolOptions(size: value)
+    color.on 'change', (_, value) -> area.setToolOptions(value)
     cover

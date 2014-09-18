@@ -17,37 +17,37 @@ $ ->
   area.element
     .on 'tool:size',  (_, v) -> area.element.toggleClass('no-cursor') if area.element.hasClass('no-cursor') != (v >= 15)
     .on 'tool:kind',  (_, v) -> tool.text(v.name)
-    .on 'tool:color', (_, v) ->
-      tool
-        .css 'background', v
-        .css 'color', if Canvas.RGBtoHSL(v)[2] > 0.5 then 'black' else 'white'
+    .on 'tool:H',     (_, v, o) -> tool.css 'background', "hsl(#{o.H}, #{o.S}%, #{o.L}%)"
+    .on 'tool:S',     (_, v, o) -> tool.css 'background', "hsl(#{o.H}, #{o.S}%, #{o.L}%)"
+    .on 'tool:L',     (_, v, o) ->
+      tool.css background: "hsl(#{o.H}, #{o.S}%, #{o.L}%)", color: if o.L > 50 then 'black' else 'white'
 
     .on 'layer:add', (_, layer) ->
       width  = area.element.innerWidth()
       height = area.element.innerHeight()
-      max    = Math.max(width, height)
+      msize  = max(width, height)
 
       entry = $ "<li>
         <a>
           <canvas class='layer-preview'
-            width='#{Math.round(width / max * 50)}'
-            height='#{Math.round(height / max * 50)}'></canvas>
+            width='#{round(width / msize * 50)}'
+            height='#{round(height / msize * 50)}'></canvas>
           <span class='name'></span>
         </a>
       </li>"
       entry
-      entry.find('.name').text layer.name
+      entry.find('.name').text 'Layer'  # todo
       entry.appendTo layers
 
     .on 'layer:set', (_, index) ->
-      $('.layer-display').text area.layers[index].name
       layers.children().removeClass 'active'
       layers.children().eq(index).addClass 'active'
       hidden = area.layers[index].css('display') == 'none'
       layermenu.find('.layer-hide').toggle(not hidden)
       layermenu.find('.layer-show').toggle(    hidden)
 
-    .on 'stroke:end', (_, layer, index) ->
+    .on 'stroke:begin',       (_, layer, index) -> area.snap index
+    .on 'stroke:end refresh', (_, layer, index) ->
       cnv = layers.children().eq(index).find('canvas')
       ctx = cnv[0].getContext('2d')
       ctx.clearRect(0, 0, cnv.innerWidth(), cnv.innerHeight())
@@ -61,7 +61,23 @@ $ ->
         layermenu.find('.layer-hide').toggle()
         layermenu.find('.layer-show').toggle()
 
-    .on 'button:1', (_, e) -> Canvas.Selector.show(area, e.pageX, e.pageY)
+    .on 'mousedown', (e) ->
+      if e.button == 1
+        Canvas.Selector.show(area, e.pageX, e.pageY)
 
   area.addLayer null
   area.setTool  area.tools[0], {}
+
+  CTRL  = 1 << 11
+  SHIFT = 1 << 10
+  ALT   = 1 << 9
+  META  = 1 << 8
+
+  keyMap = [
+    {key: CTRL | 90,         f: area.undo.bind(area)}  # 90 = Z
+    {key: CTRL | SHIFT | 90, f: area.redo.bind(area)}
+  ]
+
+  $(document).on 'keydown', (ev) ->
+    k = ev.ctrlKey * CTRL | ev.shiftKey * SHIFT | ev.altKey * ALT | ev.metaKey * META | ev.keyCode
+    for spec in keyMap then return spec.f() if k == spec.key

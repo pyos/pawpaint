@@ -1,0 +1,13 @@
+@min   = Math.min
+@max   = Math.max
+@sin   = Math.sin
+@cos   = Math.cos
+@atan2 = Math.atan2
+@abs   = Math.abs
+@pow   = Math.pow
+@exp   = Math.exp
+@sqrt  = Math.sqrt
+@round = Math.round
+@ceil  = Math.ceil
+@floor = Math.floor
+@PI    = Math.PI

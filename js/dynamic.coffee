@@ -1,10 +1,6 @@
-pow = Math.pow
-exp = Math.exp
-
-
 class Dynamic
   constructor: (options) ->
-    @options = jQuery.extend (@options || {}), options
+    @options = jQuery.extend(@options or {}, options)
 
   reset: (ctx) ->
   start: (ctx, tool, dx, dy, steps) ->
@@ -14,12 +10,7 @@ class Dynamic
 
 class MovingAverageLinearDynamic extends Dynamic
   constructor: (options) ->
-    @options = jQuery.extend (@options || {}),
-      k: 0.05
-      a: 1
-      min: 0
-      max: 1
-      avgOf: 30
+    @options = jQuery.extend(@options or {}, k: 0.05, a: 1, min: 0, max: 1, avgOf: 75)
     super
 
   reset: (ctx) ->
@@ -39,14 +30,12 @@ class MovingAverageLinearDynamic extends Dynamic
       @_v += (v - @_v) / @_n.length
     @_c++
 
-    Math.max(@options.min, Math.min(@options.max, @_v * @options.k + @options.a))
+    max(@options.min, min(@options.max, @_v * @options.k + @options.a))
 
 
 class OptionDynamic extends MovingAverageLinearDynamic
   constructor: (options) ->
-    @options = jQuery.extend (@options || {}),
-      option: 'size'
-      prop:   'lineWidth'
+    @options = jQuery.extend(@options or {}, option: 'size', prop: 'lineWidth')
     super
 
   start: (ctx, tool, dx, dy, steps) ->
