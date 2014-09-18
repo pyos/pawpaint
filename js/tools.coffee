@@ -1,3 +1,14 @@
+# Something to draw with.
+#
+# Options::
+#
+#   dynamic :: Canvas.Dynamic -- see `dynamic.coffee`
+#   opacity :: float -- 0 to 1, transparent to opaque
+#   size    :: float -- greater than 0
+#   H, S, L :: int -- same ranges as in CSS3 `hsl` function. Same purpose, too.
+#
+# Tool :: Object -> Canvas.Tool
+#
 class Tool
   defaults:
     dynamic: null
@@ -13,9 +24,23 @@ class Tool
     @lastY = 0
     @setOptions options
 
+  # Change some of the values. The rest remain intact.
+  #
+  # setOptions :: Object -> Object
+  #
   setOptions: (options) ->
     @options = jQuery.extend @options, options
 
+  # Lifecycle of a tool::
+  #
+  #   * When some options are modified, `crosshair` is called with a context of a
+  #     `options.size`x`options.size` canvas. The tool must use it to draw something
+  #     that represents the outline of whatever it will paint onto the layer.
+  #
+  #   * At the start of a single stroke, `start` is called.
+  #   * Then `move` is called for each movement event. (All positions are absolute.)
+  #   * When the mouse button is released, `stop` is called.
+  #
   crosshair: (ctx) ->
   start: (ctx, x, y) ->
   move:  (ctx, x, y) ->

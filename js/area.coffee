@@ -17,6 +17,14 @@ evdev =
     ok
 
 
+# The main object. Allows the user to draw stuff on an element with either
+# a mouse, a touchscreen, or a pen tablet.
+#
+# WARNING: DO NOT change the element's dimensions after creating an instance
+#   of this type. This will cause the old layers to appear distorted (new ones will be fine.)
+#
+# Area :: (Either str jQuery Node) (Optional [Type extends Canvas.Tool]) -> Canvas.Area
+#
 class Area
   constructor: (selector, tools) ->
     # The main canvas container. Also fires some events; use `.element.on` to react.
@@ -66,11 +74,6 @@ class Area
     @onTouchStart = @onTouchStart .bind @
     @onTouchMove  = @onTouchMove  .bind @
     @onTouchEnd   = @onTouchEnd   .bind @
-
-    # These are used to handle touch events since `Touch`es do not have
-    # `offsetX`/`offsetY` attributes. (Don't move the area around the page.)
-    @offsetX = @element.offset().left
-    @offsetY = @element.offset().top
 
     @element[0].addEventListener 'touchstart', @onTouchStart
     @element[0].addEventListener 'touchstart', (ev) ->
@@ -153,6 +156,8 @@ class Area
       #   interfering with drawing, but will not focus the broswer window
       #   if the user taps the canvas.
       ev.preventDefault()
+      @offsetX = @element.offset().left
+      @offsetY = @element.offset().top
       if @tool.start @context, ev.touches[0].pageX - @offsetX, ev.touches[0].pageY - @offsetY
         @element.trigger 'stroke:begin', [@layers[@layer][0], @layer]
         @element[0].addEventListener 'touchmove', @onTouchMove
@@ -170,7 +175,11 @@ class Area
       @element[0].removeEventListener 'touchend',  @onTouchEnd
       @element.trigger 'stroke:end', [@layers[@layer][0], @layer]
 
-  addLayer: (name) ->
+  # Add an empty layer at the end of the stack. Emits `layer:add`. Resets the undo stack.
+  #
+  # addLayer :: -> a
+  #
+  addLayer: ->
     layer = $ "<canvas class='layer'
       width='#{@element.innerWidth()}'
       height='#{@element.innerHeight()}'>"
@@ -179,11 +188,19 @@ class Area
     @setLayer(@layers.length - 1)
     @redoLayout()
 
+  # Switch to a different layer; all drawing events will go to it. Emits `layer:set`.
+  #
+  # setLayer :: int -> a
+  #
   setLayer: (i) ->
     if 0 <= i < @layers.length
       @context = @layers[@layer = i][0].getContext '2d'
       @element.trigger 'layer:set', [i]
 
+  # Remove a layer. Emits `layer:del`. Resets the undo stack.
+  #
+  # delLayer :: int -> a
+  #
   delLayer: (i) ->
     if 0 <= i < @layers.length
       @layers.splice(i, 1)[0].remove()
@@ -192,6 +209,11 @@ class Area
       @setLayer min(@layer, @layers.length - 1)
       @redoLayout()
 
+  # Move a layer `delta` items closer to the top of the stack. Emits `layer:move`.
+  # Resets the undo stack.
+  #
+  # moveLayer :: int int -> a
+  #
   moveLayer: (i, delta) ->
     if 0 <= i < @layers.length and 0 <= i + delta < @layers.length
       @layers.splice(i + delta, 0, @layers.splice(i, 1)[0])
@@ -199,10 +221,21 @@ class Area
       @setLayer(i + delta)
       @redoLayout()
 
+  # Toggle the visibility of a single layer. Does not actually affect its contents.
+  # Emits `layer:toggle`.
+  #
+  # TODO: an easy way to check whether a layer is visible.
+  #
+  # toggleLayer :: int -> a
+  #
   toggleLayer: (i) ->
     @layers[i].toggle()
     @element.trigger 'layer:toggle', [i]
 
+  # Reassign z-indices to layers based on their order. Resets the undo stack.
+  #
+  # redoLayout :: -> a
+  #
   redoLayout: ->
     x.css('z-index', i - @layers.length) for i, x of @layers
     # Since these reference layers by indices, their contents are
@@ -210,11 +243,22 @@ class Area
     @undos = []
     @redos = []
 
+  # Use a different tool. Tools must implement the `Canvas.Tool` interface
+  # (see `tools.coffee`). Emits `tool:kind` and option-change events.
+  #
+  # setTool :: (Type extends Canvas.Tool) Object -> a
+  #
   setTool: (kind, options) ->
     @tool = new kind(options)
     @setToolOptions @tool.options
     @element.trigger 'tool:kind', [kind, @tool.options]
 
+  # Copy some options from an object over to the currently selected tool.
+  # Emits various events that begin with `tool:` and end with the name of the option
+  # that was changed.
+  #
+  # setToolOptions :: Object ->A
+  #
   setToolOptions: (options) ->
     @tool.setOptions options
     @element.trigger('tool:' + k, [v, @tool.options]) for k, v of options

@@ -1,3 +1,7 @@
+# A Canvas-based configuration widget.
+#
+# Selector :: Canvas.Area int int -> Canvas.Selector
+#
 class Selector
   constructor: (area, @width, @height) ->
     @area  = area
@@ -11,9 +15,9 @@ class Selector
     @redraw true, @element[0].getContext '2d'
 
   onMouseMove: (ev) ->
-    @update ev.offsetX, ev.offsetY
-    @redraw false, @element[0].getContext '2d'
-    @element.trigger 'change', [@value]
+    if @update ev.offsetX, ev.offsetY
+      @redraw false, @element[0].getContext '2d'
+      @element.trigger 'change', [@value]
 
   onMouseDown: (ev) ->
     if ev.button == 0
@@ -29,15 +33,26 @@ class Selector
     @element[0].removeEventListener 'mouseup',    @onMouseUp
     @element[0].removeEventListener 'mouseleave', @onMouseUp
 
+  # Abstract methods:
+  #   * `redraw` must paint with `context`. `initial` is true iff this is the first time.
+  #   * `update` must set `@value` to a new value based on the click coordinates
+  #     and return `true`, or do nothing and return `false`.
+  redraw: (initial, context) ->
+  update: (x, y) ->
 
+
+# A HSL color wheel, i.e. a hue circle around a triangle in which one vertice is white,
+# one is black, and one is colored.
+#
+#   radius    :: int -- outer radius of the hue circle (in px.)
+#   thickness :: int -- you-know-what of the hue circle
+#   margin    :: int -- amount of pixels between the circle and the triangle
+#
+# ColorSelector :: Canvas.Area int int int -> Canvas.Selector
+#
 class ColorSelector extends Selector
   constructor: (area, radius, thickness, margin) ->
     @value = H: area.tool.options.H, S: area.tool.options.S, L: area.tool.options.L
-    #  1. outer radius of the hue selector
-    #  2. inner radius of the hue selector
-    #  3. radius of the saturation/lightness selector
-    #  4. length of the selector's side
-    #  5. and its height
     @outerR = radius
     @innerR = radius - thickness
     @triagR = radius - thickness - margin
@@ -58,6 +73,7 @@ class ColorSelector extends Selector
       dy = x * sin(a) + y * cos(a) + @triagA / 2
       @value.S = floor 100 * min 1, max 0, dx / @triagH / (1 - abs(dy * 2 / @triagA - 1))
       @value.L = floor 100 * min 1, max 0, dy / @triagA
+    return true
 
   redraw: (initial, ctx) ->
     ctx.save()
@@ -104,6 +120,17 @@ class ColorSelector extends Selector
     ctx.restore()
 
 
+# A vertical bar that changes the size of a pen or whatever.
+# The approximate shape of the result is also displayed inside the bar.
+#
+#   width  :: int
+#   height :: int
+#   low    :: int -- (must not be 0)
+#   high   :: int -- limits on the size of the tool
+#   margin :: int -- distance between the end positions and the actual border of the element
+#
+# WidthSelector :: Canvas.Area int int int int int -> Canvas.Selector
+#
 class WidthSelector extends Selector
   constructor: (area, width, height, low, high, margin) ->
     @value = area.tool.options.size
@@ -132,6 +159,12 @@ class WidthSelector extends Selector
     c.stroke()
 
 
+# A list of all available tools.
+#
+# TODO: something fancier.
+#
+# ToolSelector :: Canvas.Area -> Canvas.UglyCrap
+#
 class ToolSelector
   constructor: (area) ->
     @value = area.tools.indexOf area.tool.__proto__.constructor
@@ -147,6 +180,15 @@ class ToolSelector
     @element.children().eq(@value).addClass('active')
 
 
+# Everything crammed together into a single element floating at a given position.
+#
+# For styling, use the following classes::
+#   * `canvas-selector-container` is a big window covering elements that should be inaccessible.
+#   * `canvas-selector` contains all the selectors.
+#   * `canvas-selector-<x>` is an `<x>Selector` (lowercase).
+#
+# Selector :: Canvas.Area int int (Optional int) (Optional bool) -> jQuery
+#
 @Canvas.Selector = (area, x, y, size = 100, fixed = false) ->
   color = new ColorSelector(area, size, size / 4, size / 10)
   width = new WidthSelector(area, size / 2.5, size * 2, 1, size, size / 10)
@@ -160,8 +202,8 @@ class ToolSelector
         .css 'left', x - (if fixed then 0 else size)
         .css 'top',  y - (if fixed then 0 else size)
         .append color.element.addClass 'canvas-selector-color'
-        .append width.element.addClass 'canvas-selector-size'
-        .append tools.element.addClass 'canvas-selector-tools')
+        .append width.element.addClass 'canvas-selector-width'
+        .append tools.element.addClass 'canvas-selector-tool')
     .hide().fadeIn(100)
   cover.addClass 'canvas-selector-fixed' if fixed
 
@@ -169,3 +211,8 @@ class ToolSelector
   width.element.on 'change', (_, value) -> area.setToolOptions(size: value)
   color.element.on 'change', (_, value) -> area.setToolOptions(value)
   cover
+
+
+@Canvas.Selector.Tool  = ToolSelector
+@Canvas.Selector.Color = ColorSelector
+@Canvas.Selector.Width = WidthSelector
