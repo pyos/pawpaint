@@ -1,3 +1,6 @@
+---
+---
+
 # A Canvas-based configuration widget.
 #
 # Selector :: Canvas.Area int int -> Canvas.Selector

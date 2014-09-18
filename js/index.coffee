@@ -1,3 +1,6 @@
+---
+---
+
 $ ->
   tool = $ '.tool-name'
   tool.on 'click', (ev) ->
