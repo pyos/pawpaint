@@ -190,9 +190,9 @@ class ToolSelector
 #   * `canvas-selector` contains all the selectors.
 #   * `canvas-selector-<x>` is an `<x>Selector` (lowercase).
 #
-# Selector :: Canvas.Area int int (Optional int) (Optional bool) -> jQuery
+# Selector :: Canvas.Area int int (Optional bool) (Optional int) -> jQuery
 #
-@Canvas.Selector = (area, x, y, size = 100, fixed = false) ->
+@Canvas.Selector = (area, x, y, fixed = false, size = 100) ->
   color = new ColorSelector(area, size, size / 4, size / 10)
   width = new WidthSelector(area, size / 2.5, size * 2, 1, size, size / 10)
   tools = new ToolSelector(area)
