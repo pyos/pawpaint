@@ -86,8 +86,8 @@ class Area
 
     @element[0].addEventListener 'mousedown', @onMouseDown
     @element[0].addEventListener 'mousemove', (ev) ->
-      crosshair.style.left = ev.offsetX + 'px'
-      crosshair.style.top  = ev.offsetY + 'px'
+      crosshair.style.left = (ev.offsetX || ev.layerX) + 'px'
+      crosshair.style.top  = (ev.offsetY || ev.layerY) + 'px'
 
   # Save a snapshot of a single layer in the undo stack.
   #
@@ -137,16 +137,16 @@ class Area
     if ev.button == 0 and evdev.reset ev
       # FIXME this next line prevents unwanted selection, but breaks focusing.
       ev.preventDefault()
-      if @tool.start @context, ev.offsetX, ev.offsetY
+      if @tool.start(@context, ev.offsetX || ev.layerX, ev.offsetY || ev.layerY)
         @element.trigger 'stroke:begin', [@layers[@layer][0], @layer]
         @element[0].addEventListener 'mousemove',  @onMouseMove
         @element[0].addEventListener 'mouseleave', @onMouseUp
         @element[0].addEventListener 'mouseup',    @onMouseUp
 
-  onMouseMove: (ev) -> @tool.move @context, ev.offsetX, ev.offsetY if evdev.ok ev
+  onMouseMove: (ev) -> @tool.move(@context, ev.offsetX || ev.layerX, ev.offsetY || ev.layerY) if evdev.ok ev
   onMouseUp:   (ev) ->
     if evdev.ok ev
-      @tool.stop @context, ev.offsetX, ev.offsetY
+      @tool.stop(@context, ev.offsetX || ev.layerX, ev.offsetY || ev.layerY)
       @element[0].removeEventListener 'mousemove',  @onMouseMove
       @element[0].removeEventListener 'mouseleave', @onMouseUp
       @element[0].removeEventListener 'mouseup',    @onMouseUp
@@ -169,7 +169,7 @@ class Area
   onTouchMove: (ev) ->
     if ev.which == 0
       # TODO multitouch drawing?
-      @tool.move @context, ev.touches[0].pageX - @offsetX, ev.touches[0].pageY - @offsetY
+      @tool.move @context, ev.touches[0].clientX - @offsetX, ev.touches[0].clientY - @offsetY
 
   onTouchEnd: (ev) ->
     if ev.touches.length == 0

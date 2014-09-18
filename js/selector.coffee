@@ -18,7 +18,7 @@ class Selector
     @redraw true, @element[0].getContext '2d'
 
   onMouseMove: (ev) ->
-    if @update ev.offsetX, ev.offsetY
+    if @update(ev.offsetX || ev.layerX, ev.offsetY || ev.layerY)
       @redraw false, @element[0].getContext '2d'
       @element.trigger 'change', [@value]
 
