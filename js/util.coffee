@@ -32,7 +32,7 @@
 #
 #   element.keymap {key: CTRL | Z, fn: undo}, ...
 #
-# (Mostly useless since browsers hog key combos for themselves.)
+# Mostly useless since browsers hog key combos for themselves.
 #
 # keymap :: *KeySpec -> jQuery
 #

@@ -24,7 +24,7 @@ evdev =
 # a mouse, a touchscreen, or a pen tablet.
 #
 # WARNING: DO NOT change the element's dimensions after creating an instance
-#   of this type. This will cause the old layers to appear distorted (new ones will be fine.)
+#   of this type. This will cause the old layers to appear distorted (new ones will be fine).
 #
 # Area :: (Either str jQuery Node) (Optional [Type extends Canvas.Tool]) -> Canvas.Area
 #
@@ -251,8 +251,9 @@ class Area
   # toggleLayer :: int -> a
   #
   toggleLayer: (i) ->
-    @layers[i].toggle()
-    @element.trigger 'layer:toggle', [i]
+    if 0 <= i < @layers.length
+      @layers[i].toggle()
+      @element.trigger 'layer:toggle', [i]
 
   # Use a different tool. Tools must implement the `Canvas.Tool` interface
   # (see `tools.coffee`). Emits `tool:kind` and option-change events.

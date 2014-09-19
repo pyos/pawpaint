@@ -13,6 +13,8 @@
 # Tool :: Object -> Canvas.Tool
 #
 class Tool
+  name: 'Tool'
+
   defaults:
     dynamic: null
     opacity: 1
@@ -23,8 +25,6 @@ class Tool
 
   constructor: (options) ->
     @options = jQuery.extend {}, @defaults
-    @lastX = 0
-    @lastY = 0
     @setOptions options
 
   # Change some of the values. The rest remain intact.
@@ -51,6 +51,8 @@ class Tool
 
 
 class Pen extends Tool
+  name: 'Pen'
+
   crosshair: (ctx) ->
     ctx.lineWidth   = 1
     ctx.strokeStyle = "#000"
@@ -92,6 +94,8 @@ class Pen extends Tool
 
 
 class Eraser extends Pen
+  name: 'Eraser'
+
   start: (ctx, x, y) ->
     super
     ctx.globalCompositeOperation = "destination-out"

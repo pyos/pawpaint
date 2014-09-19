@@ -62,7 +62,7 @@ class MovingAverageLinearDynamic extends Dynamic
 
 
 # A dynamic that linearly changes some property of the canvas that has an associated
-# tool option (e.g. `context.lineWidth` <=> `tool.options.size`.)
+# tool option (e.g. `context.lineWidth` <=> `tool.options.size`).
 #
 # Options::
 #   option -- the tool side of the property (an upper limit, will not mutate)

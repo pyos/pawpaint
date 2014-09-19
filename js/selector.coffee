@@ -47,7 +47,7 @@ class Selector
 # A HSL color wheel, i.e. a hue circle around a triangle in which one vertice is white,
 # one is black, and one is colored.
 #
-#   radius    :: int -- outer radius of the hue circle (in px.)
+#   radius    :: int -- outer radius of the hue circle (in px)
 #   thickness :: int -- you-know-what of the hue circle
 #   margin    :: int -- amount of pixels between the circle and the triangle
 #
@@ -217,6 +217,84 @@ class ToolSelector
   cover
 
 
-@Canvas.Selector.Tool  = ToolSelector
-@Canvas.Selector.Color = ColorSelector
-@Canvas.Selector.Width = WidthSelector
+# Turn a node into a button that displays the name of the current tool and its
+# color, and displays a complete selector on click.
+#
+# Selector.Button :: Canvas.Area -> a
+#
+class SelectorButton
+  constructor: (area, horizontal) ->
+    @element = $ "<a class='tool-name'>"
+    @element.on 'click', (ev) =>
+      if ev.which == 1
+        Canvas.Selector @area, @element.offset().left, @element.offset().top, true
+
+    @area = area
+    @area.element.on 'tool:kind tool:H tool:S tool:L', @update
+    @update() if @area.tool
+
+  update: =>
+    @element
+      .text @area.tool.name
+      .css 'background', "hsl(#{@area.tool.options.H},#{@area.tool.options.S}%,#{@area.tool.options.L}%)"
+      .css 'color',      if @area.tool.options.L > 50 then '#000' else '#fff'
+
+
+# ...
+#
+# Selector.Layers :: Canvas.Area -> jQuery
+#
+class LayerSelector
+  constructor: (area) ->
+    @element = $ '<ul class="layer-menu">'
+    @element
+      .on 'click', '.layer-add',        (ev) -> area.addLayer()
+      .on 'click', '.layer-del',        (ev) -> area.delLayer    $(this).parents('.layer-menu-entry').index()
+      .on 'click', '.layer-toggle',     (ev) -> area.toggleLayer $(this).parents('.layer-menu-entry').index()
+      .on 'click', '.layer-menu-entry', (ev) -> area.setLayer $(this).index()
+
+    @end = $ '<li class="layer-menu-control">'
+      .append '<a class="layer-add fa fa-plus">'
+      .appendTo @element
+
+    @area = area
+    @area.element
+      .on 'layer:add',    @add
+      .on 'layer:set',    @set
+      .on 'layer:del',    @del
+      .on 'layer:move',   @move
+      .on 'layer:toggle', @toggle
+      .on 'stroke:end refresh', @update
+
+    @add null, layer for layer in area.layers
+    @set null, area.layer
+
+  add: (_, elem) =>
+    sz = 150 / max(elem[0].width, elem[0].height)
+
+    entry = $ '<li class="layer-menu-entry">'
+      .append new Canvas elem[0].width * sz, elem[0].height * sz
+      .append '<a class="layer-del fa fa-trash">'
+      .append '<a class="layer-toggle fa fa-toggle-on">'
+      .append '<a class="layer-config fa fa-adjust">'
+      .insertBefore @end
+    entry.addClass 'layer-hidden' if elem.css('display') == 'none'
+
+  update: (_, canvas, index) =>
+    cnv = @element.children().eq(index).find('canvas')
+    cnv.each ->
+      ctx = @getContext('2d')
+      ctx.clearRect         0, 0, @width, @height
+      ctx.drawImage canvas, 0, 0, @width, @height
+
+  set:    (_, index)    => @element.children().removeClass('active').eq(index).addClass('active')
+  del:    (_, index)    => @element.children().eq(index).remove()
+  move:   (_, index, d) => @element.children().eq(index).insertAfter @element.children().eq(index + d)
+  toggle: (_, index)    => @element.children().eq(index).toggleClass('layer-hidden')
+
+
+@Canvas.Selector.Tool   = ToolSelector
+@Canvas.Selector.Color  = ColorSelector
+@Canvas.Selector.Width  = WidthSelector
+@Canvas.Selector.Button = SelectorButton
+@Canvas.Selector.Layers = LayerSelector

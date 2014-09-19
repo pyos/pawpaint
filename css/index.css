@@ -1,5 +1,11 @@
 body {
+  position: absolute;
+  top:    0;
+  bottom: 0;
+  left:   0;
+  right:  0;
   cursor: default;
+  z-index: -65536;
 }
 
 a:not(.fa):not(.glyphicon) {
@@ -7,29 +13,20 @@ a:not(.fa):not(.glyphicon) {
 }
 
 .tool-name {
+  display: block;
+  font-size: 1.2em;
+  padding: 15px 0;
+  text-align: center;
   box-shadow: 0 0 20px -5px #000 inset;
 }
 
-.main-container-area {
-  position: absolute;
-  top: 50px;
-  bottom: 0;
-  left:   0;
-  right:  0;
-  margin: 0;
-  background: #eee;
-  z-index: -65536;
-}
-
 .main-area {
-  cursor:   crosshair;
   position: relative;
   overflow: hidden;
-  height: 100%;
-  background: white;
-  box-shadow: 0 0 20px -5px #000;
   z-index: -65536;
-  padding: 0;
+  height:   100%;
+  margin:   0;
+  cursor:   crosshair;
 }
 
 .layer {
@@ -44,9 +41,13 @@ a:not(.fa):not(.glyphicon) {
 
 .side-area {
   position: relative;
-  height: 100%;
   overflow-y: auto;
-  padding: 0;
+  width:  90px;
+  height: 100%;
+  float: left;
+
+  box-shadow: -10px 0 20px -10px #000 inset;
+  background: #222;
 }
 
 .layer-menu {
@@ -55,34 +56,54 @@ a:not(.fa):not(.glyphicon) {
   margin: 0;
 }
 
-.layer-menu > li > a {
-  padding: 20px 30px;
-  display: block;
+.layer-hidden .fa-toggle-on:before {
+  content: "\f204";
 }
 
-.layer-menu > li > a > * {
+.layer-menu-entry > a {
+  padding: 10px 5px;
+}
+
+.layer-menu-control > a {
+  padding: 15px;
+}
+
+.layer-menu-entry, .layer-menu-control {
+  display: block;
+  text-align: center;
+}
+
+.layer-menu-entry {
+  background: white;
+  opacity: 0.5;
+  border-top: 1px solid #bbb;
+}
+
+.layer-menu-entry > * {
   display: inline-block;
   vertical-align: middle;
 }
 
-.layer-menu > li.active {
-  background: white;
-  box-shadow: 10px 0 20px -5px #000;
+.layer-menu-entry > canvas {
+  max-height: 90px;
+  max-width:  90px;
+  clear: both;
+  border-bottom: 1px solid #bbb;
 }
 
-.layer-preview {
-  border: 1px solid #666;
-  position: relative;
+.layer-menu-entry.active {
+  border-color: transparent;
+  box-shadow: 10px 0 20px -5px #000;
+  opacity: 1;
 }
 
 .canvas-selector-container {
-  z-index: 65538;
   position: absolute;
-  top: -50px;
-  left: 0;
-  right: 0;
+  z-index: 65538;
+  top:    0;
+  left:   0;
+  right:  0;
   bottom: 0;
-  margin-top: 50px;
 }
 
 .canvas-selector {
@@ -93,8 +114,9 @@ a:not(.fa):not(.glyphicon) {
 }
 
 .canvas-selector-fixed .canvas-selector {
+  margin-left: 90px;
   border-top-left-radius: 0;
-  border-top-right-radius: 0;
+  border-bottom-left-radius: 0;
 }
 
 .canvas-selector, .canvas-selector > * {
@@ -108,7 +130,7 @@ a:not(.fa):not(.glyphicon) {
 
 .canvas-selector-width {
   cursor: ns-resize;
-  border-left: 1px solid #444;
+  border-left:  1px solid #444;
   border-right: 1px solid #444;
 }
 
@@ -117,10 +139,10 @@ a:not(.fa):not(.glyphicon) {
 }
 
 .canvas-selector-tool {
+  overflow-y: auto;
   list-style: none;
   padding: 0;
-  margin-bottom: 0;
-  overflow-y: auto;
+  margin:  0;
   color: #aaa;
 }
 
