@@ -55,24 +55,14 @@
 # drawImageSmooth :: 2DRenderingContext (Either Canvas Image) int int int int -> Canvas
 #
 @Canvas.drawImageSmooth = (ctx, img, x, y, w, h) ->
-  iw = img.width  / 2
-  ih = img.height / 2
-  c1 = new Canvas(iw, ih)[0]
-  c2 = new Canvas(iw, ih)[0]
-  ct = c1.getContext('2d')
-  cq = c2.getContext('2d')
-  cq.drawImage img, 0, 0, iw, ih
-
-  while iw < w and ih < h
-    ct.clearRect(0, 0, iw, ih)
-    ct.drawImage(c2, 0, 0, iw, ih)
-    cp = cq; c3 = c1; iw /= 2
-    cq = ct; c1 = c2; ih /= 2
-    ct = cp; c2 = c3
-
-  ctx.drawImage c2, x, y, w, h
+  # TODO something
+  ctx.drawImage img, x, y, w, h
 
 
+# Create a copy of an image with given dimensions.
+#
+# scale :: (Either Canvas Image) int int -> Canvas
+#
 @Canvas.scale = (img, w, h) ->
   ct = new Canvas(w, h)[0]
   Canvas.drawImageSmooth ct.getContext('2d'), img, 0, 0, w, h
