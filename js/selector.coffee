@@ -166,21 +166,34 @@ class WidthSelector extends Selector
 #
 # TODO: something fancier.
 #
-# ToolSelector :: Canvas.Area -> Canvas.UglyCrap
+# ToolSelector :: Canvas.Area int int int -> Canvas.UglyCrap
 #
-class ToolSelector
-  constructor: (area) ->
-    @value = area.tools.indexOf area.tool.__proto__.constructor
+class ToolSelector extends Selector
+  constructor: (area, height, cellSize) ->
+    @value = area.tools.indexOf area.tool.constructor
+    @cellS = cellSize
+    @cellY = floor(height / cellSize)
+    @cellX = ceil(area.tools.length / @cellY)
+    super area, @cellX * cellSize, @cellY * cellSize
 
-    @element = el = $ '<ul class="canvas-selector-tool">'
-    @element.on 'click', 'li', (ev) ->
-      if ev.button == 0
-        ev.stopPropagation()
-        el.trigger 'change', [area.tools[@value = $(this).index()]]
-        el.children().removeClass('active').eq(@value).addClass('active')
+  update: (x, y) ->
+    index = floor(x / @cellS) * @cellY + floor(y / @cellS)
+    @value = @area.tools[index] if index < @area.tools.length
 
-    @element.append("<li><a>#{t.name}</a></li>") for t in area.tools
-    @element.children().eq(@value).addClass('active')
+  redraw: (i, c) ->
+    c.clearRect 0, 0, @width, @height
+
+    for i, tool of @area.tools
+      x = (floor(i / @cellY) + 0.5) * @cellS
+      y = (floor(i % @cellY) + 0.5) * @cellS
+
+      c.strokeStyle = c.fillStyle = "rgba(127, 127, 127, 0.3)"
+      c.strokeRect x - @cellS / 2 - 1, y - @cellS / 2 - 1, @cellS + 1, @cellS + 1
+      c.fillRect   x - @cellS / 2 - 1, y - @cellS / 2 - 1, @cellS + 1, @cellS + 1 \
+        if tool is @area.tool.constructor
+
+      t = new tool({size: @cellS / 1.6, H: 0, S: 0, L: 80, opacity: 0.75})
+      t.symbol c, x, y
 
 
 # Everything crammed together into a single element floating at a given position.
@@ -196,7 +209,7 @@ class ToolSelector
   return $ [] unless area.tool
   color = new ColorSelector(area, size, size / 4, size / 10)
   width = new WidthSelector(area, size / 2.5, size * 2, 1, size, size / 10)
-  tools = new ToolSelector(area)
+  tools = new ToolSelector(area, size * 2, size / 2)
 
   cover = $ '<div class="canvas-selector-container">'
     .on 'click', -> cover.fadeOut(100, cover.remove.bind cover)
@@ -217,14 +230,15 @@ class ToolSelector
   cover
 
 
-# Turn a node into a button that displays the name of the current tool and its
-# color, and displays a complete selector on click.
+# A button that displays the name of the current tool and its
+# color, and opens a complete selector on click.
 #
 # Selector.Button :: Canvas.Area -> a
 #
 class SelectorButton
-  constructor: (area, horizontal) ->
-    @element = $ "<a class='tool-name'>"
+  constructor: (area) ->
+    @element = new Canvas(90, 50)
+    @element.addClass 'tool-name'
     @element.on 'click', (ev) =>
       if ev.which == 1
         Canvas.Selector @area, @element.offset().left, @element.offset().top, true
@@ -234,10 +248,15 @@ class SelectorButton
     @update() if @area.tool
 
   update: =>
-    @element
-      .text @area.tool.name
-      .css 'background', "hsl(#{@area.tool.options.H},#{@area.tool.options.S}%,#{@area.tool.options.L}%)"
-      .css 'color',      if @area.tool.options.L > 50 then '#000' else '#fff'
+    lv  = if @area.tool.options.L > 50 then 0 else 100
+    w   = @element[0].width
+    h   = @element[0].height
+    ctx = @element[0].getContext('2d')
+    ctx.clearRect 0, 0, w, h
+
+    tool = new @area.tool.constructor({size: min(w, h) / 1.6, H: 0, S: 0, L: lv})
+    tool.symbol ctx, @element[0].width / 2, @element[0].height / 2
+    @element.css 'background', "hsl(#{@area.tool.options.H},#{@area.tool.options.S}%,#{@area.tool.options.L}%)"
 
 
 # ...

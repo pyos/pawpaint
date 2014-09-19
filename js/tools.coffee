@@ -39,7 +39,8 @@ class Tool
   #   * When some options are modified, `crosshair` is called with a context of a
   #     `options.size`x`options.size` canvas. The tool must use it to draw something
   #     that represents the outline of whatever it will paint onto the layer.
-  #
+  #   * `symbol` is basically the same thing, but requires a filled shape at specific
+  #     center coordinates. That shape will be displayed as an "icon" for that tool.
   #   * At the start of a single stroke, `start` is called.
   #   * Then `move` is called for each movement event. (All positions are absolute.)
   #   * When the mouse button is released, `stop` is called.
@@ -49,9 +50,19 @@ class Tool
   move:  (ctx, x, y) ->
   stop:  (ctx, x, y) ->
 
+  symbol: (ctx, x, y) ->
+    if @icon
+      img  = Canvas.getResourceWithTint @icon, @options.H, @options.S, @options.L
+      size = @options.size
+      Canvas.drawImageSmooth ctx, img, x - size / 2, y - size / 2, size, size
+    else
+      @start ctx, x, y
+      @stop  ctx, x + 1, y
+
 
 class Pen extends Tool
   name: 'Pen'
+  icon: 'icon-brush'
 
   crosshair: (ctx) ->
     ctx.lineWidth   = 1
@@ -95,6 +106,7 @@ class Pen extends Tool
 
 class Eraser extends Pen
   name: 'Eraser'
+  icon: 'icon-eraser'
 
   start: (ctx, x, y) ->
     super

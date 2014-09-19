@@ -14,9 +14,6 @@ a:not(.fa):not(.glyphicon) {
 
 .tool-name {
   display: block;
-  font-size: 1.2em;
-  padding: 15px 0;
-  text-align: center;
   box-shadow: 0 0 20px -5px #000 inset;
 }
 
@@ -42,12 +39,13 @@ a:not(.fa):not(.glyphicon) {
 .side-area {
   position: relative;
   overflow-y: auto;
-  width:  90px;
+  width:  91px;
   height: 100%;
   float: left;
 
   box-shadow: -10px 0 20px -10px #000 inset;
   background: #222;
+  border-right: 1px solid #111;
 }
 
 .layer-menu {
