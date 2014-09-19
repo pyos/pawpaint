@@ -193,6 +193,7 @@ class ToolSelector
 # Selector :: Canvas.Area int int (Optional bool) (Optional int) -> jQuery
 #
 @Canvas.Selector = (area, x, y, fixed = false, size = 100) ->
+  return $ [] unless area.tool
   color = new ColorSelector(area, size, size / 4, size / 10)
   width = new WidthSelector(area, size / 2.5, size * 2, 1, size, size / 10)
   tools = new ToolSelector(area)
