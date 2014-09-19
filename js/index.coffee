@@ -2,7 +2,14 @@
 ---
 
 $ ->
-  area = window.area = new Canvas.Area '.main-area'
+  tools = [
+    Canvas.Tool.Pen,
+    Canvas.Tool.Eraser,
+    Canvas.Tool.Resource.make('brush-circle-blur-16'),
+    Canvas.Tool.Resource.make('brush-circle-blur-32'),
+    Canvas.Tool.Resource.make('brush-circle-blur-64')]
+
+  area = window.area = new Canvas.Area '.main-area', tools
   area.addLayer 0
   area.setTool  Canvas.Tool.Pen
 

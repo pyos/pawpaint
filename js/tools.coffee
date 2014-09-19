@@ -104,6 +104,38 @@ class Pen extends Tool
     ctx.restore()
 
 
+class Stamp extends Pen
+  name: 'Stamp'
+  icon: null
+  img:  null
+
+  start: (ctx, x, y) ->
+    @pattern = Canvas.scale @img, @options.size, @options.size
+    super
+
+  move: (ctx, x, y) ->
+    dx    = x - @lastX
+    dy    = y - @lastY
+    steps = ceil(pow(pow(dx, 2) + pow(dy, 2), 0.5) / (@options.size / 3))
+    @options.dynamic?.start ctx, @, dy, dx, steps
+
+    dx /= steps
+    dy /= steps
+    ds  = ctx.lineWidth / 2
+    for i in [0...steps]
+      @options.dynamic?.step  ctx
+      ctx.drawImage(@pattern, (@lastX += dx) - ds, (@lastY += dy) - ds, ds * 2, ds * 2)
+    @options.dynamic?.stop ctx
+
+
+class Resource extends Stamp
+  rsrc: null
+
+  start: (ctx, x, y) ->
+    @img = Canvas.getResourceWithTint @rsrc, @options.H, @options.S, @options.L
+    super
+
+
 class Eraser extends Pen
   name: 'Eraser'
   icon: 'icon-eraser'
@@ -113,6 +145,13 @@ class Eraser extends Pen
     ctx.globalCompositeOperation = "destination-out"
 
 
-@Canvas.Tool = Tool
-@Canvas.Tool.Pen = Pen
-@Canvas.Tool.Eraser = Eraser
+@Canvas.Tool          = Tool
+@Canvas.Tool.Pen      = Pen
+@Canvas.Tool.Eraser   = Eraser
+@Canvas.Tool.Stamp    = Stamp
+@Canvas.Tool.Resource = Resource
+
+@Canvas.Tool.Stamp.make = (img) -> class P extends this
+  img: img
+@Canvas.Tool.Resource.make = (rsrc) -> class R extends this
+  rsrc: rsrc

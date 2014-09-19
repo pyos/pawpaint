@@ -49,6 +49,7 @@
   context.drawImage resource, 0, 0
   canvas
 
+
 # Draw an image using the step-down method.
 #
 # drawImageSmooth :: 2DRenderingContext (Either Canvas Image) int int int int -> Canvas
@@ -70,6 +71,13 @@
     ct = cp; c2 = c3
 
   ctx.drawImage c2, x, y, w, h
+
+
+@Canvas.scale = (img, w, h) ->
+  ct = new Canvas(w, h)[0]
+  Canvas.drawImageSmooth ct.getContext('2d'), img, 0, 0, w, h
+  ct
+
 
 # Listen for key events and react to certain combinations::
 #
