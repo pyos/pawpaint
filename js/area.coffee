@@ -29,6 +29,11 @@ evdev =
 # Area :: (Either str jQuery Node) (Optional [Type extends Canvas.Tool]) -> Canvas.Area
 #
 class Area
+  UNDO_DRAW:       0
+  UNDO_ADD_LAYER:  1
+  UNDO_DEL_LAYER:  2
+  UNDO_MOVE_LAYER: 3
+
   constructor: (selector, tools) ->
     # The main canvas container. Also fires some events; use `.element.on` to react.
     #
@@ -64,7 +69,7 @@ class Area
     # object, where `canvas` is a PNG data URL.
     @undos = []
     @redos = []
-    @undoLimit = 10
+    @undoLimit = 25
 
     # This canvas follows the mouse cursor around. Tools may
     # display something on it.
@@ -91,40 +96,50 @@ class Area
 
   # Save a snapshot of a single layer in the undo stack.
   #
-  # snap :: int -> a
+  # snap :: int (Optional Object) -> a
   #
-  snap: (layer) ->
-    if @layers.length > layer
-      @undos.splice(@undos.length, 0, layer: layer, canvas: @layers[layer][0].toDataURL())
-      @undos.splice(0, @undos.length - @undoLimit) if @undos.length > @undoLimit
+  snap: (layer, options = {}) ->
+    if @layers.length > layer >= 0
       @redos = []
+      @undos.splice 0, 0, jQuery.extend({
+          action: @UNDO_DRAW,
+          canvas: @layers[layer][0].toDataURL()
+          layer:  layer
+        }, options)
+      @undos.splice @undoLimit
 
   # Load a layer from a data URL.
   #
   # load :: int str -> a
   #
-  load: (layer, data) ->
+  load: (layer, data, noSnapshot) ->
     img = new Image
-    img.onload = =>
-      lo  = @layers[layer]
-      ctx = lo[0].getContext '2d'
-      ctx.clearRect(0, 0, lo.innerWidth(), lo.innerHeight())
-      ctx.drawImage(img, 0, 0)
-      @element.trigger 'refresh', [lo[0], layer]
     img.src = data
+    @snap layer, action: @UNDO_DRAW unless noSnapshot
+    ctx = @layers[layer][0].getContext '2d'
+    ctx.clearRect(0, 0, @layers[layer][0].width, @layers[layer][0].height)
+    ctx.drawImage(img, 0, 0)
+    @element.trigger 'refresh', [@layers[layer][0], layer]
 
   # Restore the previous `snap`ped state.
   #
   # undo :: -> a
   #
   undo: (reverse = false) ->
-    if reverse then from = @redos; to = @undos else
-                    from = @undos; to = @redos
+    redos = @redos
+    undos = if reverse then @redos else @undos
 
-    if from.length
-      data = from.splice(from.length - 1, 1)[0]
-      to.push layer: data.layer, canvas: @layers[data.layer][0].toDataURL()
-      @load data.layer, data.canvas
+    for data in undos.splice(0, 1)
+      switch data.action
+        when @UNDO_DRAW       then @load data.layer, data.canvas
+        when @UNDO_DEL_LAYER  then @addLayer data.layer; @load data.layer, data.canvas, true
+        when @UNDO_ADD_LAYER  then @delLayer data.layer
+        when @UNDO_MOVE_LAYER then @moveLayer data.layer + data.delta, -data.delta
+
+    # The above operations all call `@snap`, which resets the redo stack and adds something
+    # to `@undos`. We don't want the former, and possibly the latter, too.
+    @redos = redos
+    @redos.splice(0, 0, @undos.splice(0, 1)[0]) if @undos.length and not reverse
 
   # Cancel an `undo`.
   #
@@ -133,11 +148,12 @@ class Area
   redo: -> @undo true
 
   onMouseDown: (ev) ->
-    @element.focus()
-    if ev.button == 0 and evdev.reset ev
-      # FIXME this next line prevents unwanted selection, but breaks focusing.
-      ev.preventDefault()
+    # FIXME this next line prevents unwanted selection, but breaks focusing.
+    ev.preventDefault()
+    if 0 <= @layer < @layers.length and @tool and ev.button == 0 and evdev.reset ev
+      @context = @layers[@layer][0].getContext '2d'
       if @tool.start(@context, ev.offsetX || ev.layerX, ev.offsetY || ev.layerY)
+        @snap @layer
         @element.trigger 'stroke:begin', [@layers[@layer][0], @layer]
         @element[0].addEventListener 'mousemove',  @onMouseMove
         @element[0].addEventListener 'mouseleave', @onMouseUp
@@ -153,15 +169,17 @@ class Area
       @element.trigger 'stroke:end', [@layers[@layer][0], @layer]
 
   onTouchStart: (ev) ->
-    if ev.which == 0
-      # FIXME this one is even worse depending on the device.
-      #   On Chromium OS, this will prevent "back/forward" gestures from
-      #   interfering with drawing, but will not focus the broswer window
-      #   if the user taps the canvas.
-      ev.preventDefault()
+    # FIXME this one is even worse depending on the device.
+    #   On Chromium OS, this will prevent "back/forward" gestures from
+    #   interfering with drawing, but will not focus the broswer window
+    #   if the user taps the canvas.
+    ev.preventDefault()
+    if 0 <= @layer < @layers.length and @tool and ev.which == 0
+      @context = @layers[@layer][0].getContext '2d'
       @offsetX = @element.offset().left
       @offsetY = @element.offset().top
       if @tool.start @context, ev.touches[0].pageX - @offsetX, ev.touches[0].pageY - @offsetY
+        @snap @layer
         @element.trigger 'stroke:begin', [@layers[@layer][0], @layer]
         @element[0].addEventListener 'touchmove', @onTouchMove
         @element[0].addEventListener 'touchend',  @onTouchEnd
@@ -178,18 +196,20 @@ class Area
       @element[0].removeEventListener 'touchend',  @onTouchEnd
       @element.trigger 'stroke:end', [@layers[@layer][0], @layer]
 
-  # Add an empty layer at the end of the stack. Emits `layer:add`. Resets the undo stack.
+  # Add an empty layer at the end of the stack. Emits `layer:add`.
   #
-  # addLayer :: -> a
+  # addLayer :: (Optional int) -> a
   #
-  addLayer: ->
+  addLayer: (index = -1) ->
+    index = @layers.length if index < 0
     layer = $ "<canvas class='layer'
       width='#{@element.innerWidth()}'
       height='#{@element.innerHeight()}'>"
     layer.appendTo @element.trigger('layer:add', [layer])
-    @layers.push(layer)
-    @setLayer(@layers.length - 1)
-    @redoLayout()
+
+    @layers.splice(index, 0, layer)
+    @setLayer(index)
+    @snap index, action: @UNDO_ADD_LAYER
 
   # Switch to a different layer; all drawing events will go to it. Emits `layer:set`.
   #
@@ -197,32 +217,31 @@ class Area
   #
   setLayer: (i) ->
     if 0 <= i < @layers.length
-      @context = @layers[@layer = i][0].getContext '2d'
+      @layer = i
       @element.trigger 'layer:set', [i]
+    x.css('z-index', i - @layers.length) for i, x of @layers
 
-  # Remove a layer. Emits `layer:del`. Resets the undo stack.
+  # Remove a layer. Emits `layer:del`.
   #
   # delLayer :: int -> a
   #
   delLayer: (i) ->
     if 0 <= i < @layers.length
+      @snap i, action: @UNDO_DEL_LAYER
       @layers.splice(i, 1)[0].remove()
       @element.trigger 'layer:del', [i]
-      @addLayer null if not @layers.length
       @setLayer min(@layer, @layers.length - 1)
-      @redoLayout()
 
   # Move a layer `delta` items closer to the top of the stack. Emits `layer:move`.
-  # Resets the undo stack.
   #
   # moveLayer :: int int -> a
   #
   moveLayer: (i, delta) ->
     if 0 <= i < @layers.length and 0 <= i + delta < @layers.length
+      @snap i, action: @UNDO_MOVE_LAYER, delta: delta
       @layers.splice(i + delta, 0, @layers.splice(i, 1)[0])
       @element.trigger 'layer:move', [i, delta]
       @setLayer(i + delta)
-      @redoLayout()
 
   # Toggle the visibility of a single layer. Does not actually affect its contents.
   # Emits `layer:toggle`.
@@ -234,17 +253,6 @@ class Area
   toggleLayer: (i) ->
     @layers[i].toggle()
     @element.trigger 'layer:toggle', [i]
-
-  # Reassign z-indices to layers based on their order. Resets the undo stack.
-  #
-  # redoLayout :: -> a
-  #
-  redoLayout: ->
-    x.css('z-index', i - @layers.length) for i, x of @layers
-    # Since these reference layers by indices, their contents are
-    # most likely invalid.
-    @undos = []
-    @redos = []
 
   # Use a different tool. Tools must implement the `Canvas.Tool` interface
   # (see `tools.coffee`). Emits `tool:kind` and option-change events.
@@ -260,9 +268,10 @@ class Area
   # Emits various events that begin with `tool:` and end with the name of the option
   # that was changed.
   #
-  # setToolOptions :: Object ->A
+  # setToolOptions :: Object -> a
   #
   setToolOptions: (options) ->
+    return if not @tool
     @tool.setOptions options
     @element.trigger('tool:' + k, [v, @tool.options]) for k, v of options
     @crosshair.setAttribute 'width',  @tool.options.size

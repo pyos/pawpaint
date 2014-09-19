@@ -13,7 +13,7 @@ $ ->
       area.setLayer $(this).index()
 
   layermenu = $ '.layer-global-cmds'
-    .on 'click', '.layer-add',  (ev) -> ev.preventDefault(); area.addLayer(null)
+    .on 'click', '.layer-add',  (ev) -> ev.preventDefault(); area.addLayer()
     .on 'click', '.layer-del',  (ev) -> ev.preventDefault(); area.delLayer(area.layer)
     .on 'click', '.layer-hide', (ev) -> ev.preventDefault(); area.toggleLayer(area.layer)
     .on 'click', '.layer-show', (ev) -> ev.preventDefault(); area.toggleLayer(area.layer)
@@ -43,7 +43,6 @@ $ ->
       layermenu.find('.layer-hide').toggle(not hidden)
       layermenu.find('.layer-show').toggle(    hidden)
 
-    .on 'stroke:begin',       (_, layer, index) -> area.snap index
     .on 'stroke:end refresh', (_, layer, index) ->
       cnv = layers.children().eq(index).find('canvas')
       ctx = cnv[0].getContext('2d')
@@ -62,8 +61,8 @@ $ ->
       if e.which == 2
         Canvas.Selector(area, e.pageX, e.pageY)
 
-  area.addLayer null
-  area.setTool  area.tools[0], {}
+  area.addLayer 0
+  area.setTool  area.tools[0]
 
   $(document).keymap {key: CTRL | 90,         f: area.undo.bind(area)},
                      {key: CTRL | SHIFT | 90, f: area.redo.bind(area)}
