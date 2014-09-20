@@ -139,7 +139,7 @@ class Eraser extends Pen
   name: 'Eraser'
   icon: 'icon-eraser'
 
-  start: ->
+  start: (ctx) ->
     super
     ctx.globalCompositeOperation = "destination-out"
 
