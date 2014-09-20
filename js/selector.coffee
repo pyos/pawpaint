@@ -164,9 +164,7 @@ class WidthSelector extends Selector
 
 # A list of all available tools.
 #
-# TODO: something fancier.
-#
-# ToolSelector :: Canvas.Area int int int -> Canvas.UglyCrap
+# ToolSelector :: Canvas.Area int int int -> Canvas.Selector
 #
 class ToolSelector extends Selector
   constructor: (area, height, cellSize) ->
