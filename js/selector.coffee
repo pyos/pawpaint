@@ -190,7 +190,7 @@ class ToolSelector extends Selector
       c.fillRect   x - @cellS / 2 - 1, y - @cellS / 2 - 1, @cellS + 1, @cellS + 1 \
         if tool is @area.tool.constructor
 
-      t = new tool({size: @cellS / 1.6, H: 0, S: 0, L: 80, opacity: 0.75})
+      t = new tool({size: @cellS * 9 / 20, H: 0, S: 0, L: 80, opacity: 0.75})
       t.symbol c, x, y
 
 
@@ -252,7 +252,7 @@ class SelectorButton
     ctx = @element[0].getContext('2d')
     ctx.clearRect 0, 0, w, h
 
-    tool = new @area.tool.constructor({size: min(w, h) / 1.6, H: 0, S: 0, L: lv})
+    tool = new @area.tool.constructor({size: min(w, h) * 9 / 20, H: 0, S: 0, L: lv})
     tool.symbol ctx, @element[0].width / 2, @element[0].height / 2
     @element.css 'background', "hsl(#{@area.tool.options.H},#{@area.tool.options.S}%,#{@area.tool.options.L}%)"
 

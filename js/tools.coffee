@@ -14,6 +14,7 @@
 #
 class Tool
   name: 'Tool'
+  icon: null
 
   defaults:
     dynamic: []
@@ -62,7 +63,6 @@ class Tool
 
 class Pen extends Tool
   name: 'Pen'
-  icon: 'icon-brush'
 
   crosshair: (ctx) ->
     ctx.lineWidth   = 1
@@ -106,7 +106,6 @@ class Pen extends Tool
 
 class Stamp extends Pen
   name: 'Stamp'
-  icon: null
   img:  null
 
   start: ->
