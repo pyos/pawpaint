@@ -53,7 +53,7 @@ class Area
     #   layer:toggle (ev: Event, index: int)
     #   layer:move   (ev: Event, old: int, delta: int)
     #
-    @element = $(selector).eq(0)
+    @element = $(selector).eq(0).addClass 'background'
 
     # A list of subclasses of `Canvas.Tool`.
     # You may use whatever tool you want through `setTool`, but only

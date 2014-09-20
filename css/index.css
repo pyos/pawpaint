@@ -26,6 +26,10 @@ a:not(.fa):not(.glyphicon) {
   cursor:   crosshair;
 }
 
+.background {
+  background: white;
+}
+
 .layer {
   top:  0;
   left: 0;
@@ -44,7 +48,7 @@ a:not(.fa):not(.glyphicon) {
   height: 100%;
   float: right;
 
-  box-shadow: -10px 0 20px -10px #000 inset;
+  box-shadow: 10px 0 20px -10px #000 inset;
   background: #222;
 }
 
@@ -85,7 +89,6 @@ a:not(.fa):not(.glyphicon) {
 }
 
 .layer-menu-entry {
-  background: white;
   opacity: 0.5;
   border-top: 1px solid #bbb;
 }

@@ -289,7 +289,7 @@ class LayerSelector
   add: (_, elem) =>
     sz = 150 / max(elem[0].width, elem[0].height)
 
-    entry = $ '<li class="layer-menu-entry">'
+    entry = $ '<li class="layer-menu-entry background">'
       .append new Canvas elem[0].width * sz, elem[0].height * sz
       .append '<a class="layer-del fa fa-trash">'
       .append '<a class="layer-toggle fa fa-toggle-on">'
