@@ -152,15 +152,20 @@ class Area
     ev.preventDefault()
     if 0 <= @layer < @layers.length and @tool and ev.button == 0 and evdev.reset ev
       @context = @layers[@layer][0].getContext '2d'
-      if @tool.start(@context, ev.offsetX || ev.layerX, ev.offsetY || ev.layerY)
+      # TODO pressure & rotation
+      if @tool.start(@context, ev.offsetX || ev.layerX, ev.offsetY || ev.layerY, 0, 0)
         @snap @layer
         @element.trigger 'stroke:begin', [@layers[@layer][0], @layer]
         @element[0].addEventListener 'mousemove',  @onMouseMove
         @element[0].addEventListener 'mouseleave', @onMouseUp
         @element[0].addEventListener 'mouseup',    @onMouseUp
 
-  onMouseMove: (ev) -> @tool.move(@context, ev.offsetX || ev.layerX, ev.offsetY || ev.layerY) if evdev.ok ev
-  onMouseUp:   (ev) ->
+  onMouseMove: (ev) ->
+    if evdev.ok ev
+      # TODO pressure & rotation
+      @tool.move(@context, ev.offsetX || ev.layerX, ev.offsetY || ev.layerY, 0, 0)
+
+  onMouseUp: (ev) ->
     if evdev.ok ev
       @tool.stop(@context, ev.offsetX || ev.layerX, ev.offsetY || ev.layerY)
       @element[0].removeEventListener 'mousemove',  @onMouseMove
@@ -178,7 +183,11 @@ class Area
       @context = @layers[@layer][0].getContext '2d'
       @offsetX = @element.offset().left
       @offsetY = @element.offset().top
-      if @tool.start @context, ev.touches[0].pageX - @offsetX, ev.touches[0].pageY - @offsetY
+      x = ev.touches[0].clientX - @offsetX
+      y = ev.touches[0].clientY - @offsetY
+      p = ev.touches[0].force * 10
+      # TODO rotation
+      if @tool.start @context, x, y, p, 0
         @snap @layer
         @element.trigger 'stroke:begin', [@layers[@layer][0], @layer]
         @element[0].addEventListener 'touchmove', @onTouchMove
@@ -187,7 +196,11 @@ class Area
   onTouchMove: (ev) ->
     if ev.which == 0
       # TODO multitouch drawing?
-      @tool.move @context, ev.touches[0].clientX - @offsetX, ev.touches[0].clientY - @offsetY
+      x = ev.touches[0].clientX - @offsetX
+      y = ev.touches[0].clientY - @offsetY
+      p = ev.touches[0].force * 10
+      # TODO rotation
+      @tool.move @context, x, y, p, 0
 
   onTouchEnd: (ev) ->
     if ev.touches.length == 0

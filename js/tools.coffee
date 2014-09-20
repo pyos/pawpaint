@@ -16,7 +16,7 @@ class Tool
   name: 'Tool'
 
   defaults:
-    dynamic: null
+    dynamic: []
     opacity: 1
     size:    1
     H: 0
@@ -75,29 +75,29 @@ class Pen extends Tool
     ctx.arc(@options.size / 2, @options.size / 2, max(0, @options.size / 2 - 1), 0, 2 * PI, false)
     ctx.stroke()
 
-  start: (ctx, x, y) ->
+  start: (ctx, x, y, pressure, rotation) ->
     ctx.save()
     ctx.lineCap     = "round"
     ctx.lineJoin    = "round"
     ctx.lineWidth   = @options.size
     ctx.globalAlpha = @options.opacity
     ctx.strokeStyle = "hsl(#{@options.H}, #{@options.S}%, #{@options.L}%)"
-    @options.dynamic?.reset ctx, x, y
+    dyn.reset ctx, x, y, pressure, rotation for dyn in @options.dynamic
     @lastX = x
     @lastY = y
 
-  move: (ctx, x, y) ->
+  move: (ctx, x, y, pressure, rotation) ->
     steps = 10
     dx = (x - @lastX) / steps
     dy = (y - @lastY) / steps
-    @options.dynamic?.start ctx, @, x - @lastX, y - @lastY, steps
+    dyn.start ctx, @, x - @lastX, y - @lastY, pressure, rotation, steps for dyn in @options.dynamic
     for i in [0...steps]
-      @options.dynamic?.step ctx
+      dyn.step ctx for dyn in @options.dynamic
       ctx.beginPath()
       ctx.moveTo((@lastX),       (@lastY))
       ctx.lineTo((@lastX += dx), (@lastY += dy))
       ctx.stroke()
-    @options.dynamic?.stop ctx
+    dyn.stop ctx for dyn in @options.dynamic
 
   stop: (ctx, x, y) ->
     @move ctx, x, y
@@ -109,29 +109,29 @@ class Stamp extends Pen
   icon: null
   img:  null
 
-  start: (ctx, x, y) ->
+  start: ->
     @pattern = Canvas.scale @img, @options.size, @options.size
     super
 
-  move: (ctx, x, y) ->
+  move: (ctx, x, y, pressure, rotation) ->
     dx    = x - @lastX
     dy    = y - @lastY
     steps = ceil(pow(pow(dx, 2) + pow(dy, 2), 0.5) / (@options.size / 3))
-    @options.dynamic?.start ctx, @, dy, dx, steps
+    dyn.start ctx, @, x - @lastX, y - @lastY, pressure, rotation, steps for dyn in @options.dynamic
 
     dx /= steps
     dy /= steps
     ds  = ctx.lineWidth / 2
     for i in [0...steps]
-      @options.dynamic?.step  ctx
+      dyn.step ctx for dyn in @options.dynamic
       ctx.drawImage(@pattern, (@lastX += dx) - ds, (@lastY += dy) - ds, ds * 2, ds * 2)
-    @options.dynamic?.stop ctx
+    dyn.stop ctx for dyn in @options.dynamic
 
 
 class Resource extends Stamp
   rsrc: null
 
-  start: (ctx, x, y) ->
+  start: ->
     @img = Canvas.getResourceWithTint @rsrc, @options.H, @options.S, @options.L
     super
 
@@ -140,7 +140,7 @@ class Eraser extends Pen
   name: 'Eraser'
   icon: 'icon-eraser'
 
-  start: (ctx, x, y) ->
+  start: ->
     super
     ctx.globalCompositeOperation = "destination-out"
 
