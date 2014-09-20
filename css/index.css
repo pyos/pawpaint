@@ -38,14 +38,27 @@ a:not(.fa):not(.glyphicon) {
 
 .side-area {
   position: relative;
-  overflow-y: auto;
-  width:  91px;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  width:  100px;
   height: 100%;
-  float: left;
+  float: right;
 
   box-shadow: -10px 0 20px -10px #000 inset;
   background: #222;
-  border-right: 1px solid #111;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  /* ??? */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #444;
 }
 
 .layer-menu {
@@ -102,6 +115,7 @@ a:not(.fa):not(.glyphicon) {
   left:   0;
   right:  0;
   bottom: 0;
+  overflow: hidden;
 }
 
 .canvas-selector {
@@ -109,16 +123,16 @@ a:not(.fa):not(.glyphicon) {
   border-radius: 100px 0 0 100px;
   box-shadow: 0 0 20px -5px #000;
   position: absolute;
+  float: left;
+  white-space: nowrap;
 }
 
 .canvas-selector-fixed .canvas-selector {
-  margin-left: 90px;
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
+  left: auto !important;
+  right: 100px;
 }
 
 .canvas-selector, .canvas-selector > * {
-  display: inline-block;
   vertical-align: top;
 }
 
@@ -134,32 +148,4 @@ a:not(.fa):not(.glyphicon) {
 
 .canvas-selector-color {
   cursor: crosshair;
-}
-
-.canvas-selector-tool {
-  overflow-y: auto;
-  list-style: none;
-  padding: 0;
-  margin:  0;
-  color: #aaa;
-}
-
-.canvas-selector-tool > li > a {
-  display: inline-block;
-  padding: 5px 20px;
-}
-
-.canvas-selector-tool > li > a, .canvas-selector-tool > li > a:hover {
-  text-decoration: none;
-  color: inherit;
-}
-
-.canvas-selector-tool > li:hover {
-  background: #333;
-  color: #fff;
-}
-
-.canvas-selector-tool > li.active {
-  background: #444;
-  color: #eee;
 }
