@@ -94,6 +94,66 @@ class Area
       crosshair.style.left = (ev.offsetX || ev.layerX) + 'px'
       crosshair.style.top  = (ev.offsetY || ev.layerY) + 'px'
 
+  # Serialize contents of the area.
+  #
+  # save :: str -> str
+  #
+  saveAll: (type) ->
+    mw = 0
+    mh = 0
+
+    for layer in @layers
+      mw = max mw, layer.innerWidth()
+      mh = max mh, layer.innerHeight()
+
+    switch type
+      when "png"
+        target  = new Canvas(mw, mh)[0]
+        context = target.getContext('2d')
+        context.drawImage layer[0], 0, 0 for layer in @layers
+        return target.toDataURL("image/png")
+      when "svg"
+        target = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+        target.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink')
+        for layer in @layers
+          data  = layer[0].toDataURL("image/png")
+          image = document.createElementNS("http://www.w3.org/2000/svg", "image")
+          image.setAttribute("xlink:href", data)
+          image.setAttribute("x", "0")
+          image.setAttribute("y", "0")
+          image.setAttribute("width", layer.innerWidth() + "px")
+          image.setAttribute("height", layer.innerHeight() + "px")
+          target.appendChild(image)
+        xml = new XMLSerializer().serializeToString target
+        return "data:image/svg+xml;base64," + btoa(xml)
+    return null
+
+  # Load the contents from a previously `save`d file.
+  #
+  # loadAll: str -> a
+  #
+  loadAll: (data) ->
+    colon = data.indexOf ":"
+    semic = data.indexOf ";"
+    comma = data.indexOf ","
+    return false if data.slice(0,         colon) != "data"
+    return false if data.slice(semic + 1, comma) != "base64"
+
+    switch data.slice(colon + 1, semic)
+      when "image/png"
+        @addLayer()
+        @load(@layer, data, true)
+        return true
+      when "image/svg+xml"
+        doc = new DOMParser().parseFromString(atob(data.slice(comma + 1)), "image/svg+xml")
+        for layer in doc.rootElement.childNodes
+          if layer.localName == "image"
+            @addLayer()
+            @load(@layer, layer.getAttribute("xlink:href"), true)
+        return true
+    console.log 3
+    return false
+
   # Save a snapshot of a single layer in the undo stack.
   #
   # snap :: int (Optional Object) -> a
