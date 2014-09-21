@@ -83,10 +83,14 @@ class OptionDynamic extends Dynamic
 
   reset: (ctx, tool) ->
     super
+    @_cache  = tool.options[@options.tgcopy]
     @_target = @options.target
     @_tgcopy = @options.tgcopy
-    @_value  = tool.options[@options.source] * @options.a or 0.01
+    @_value  = tool.options[@options.source] * @options.a
     @stop ctx, tool
+
+  restore: (ctx, tool) ->
+    tool.options[@options.tgcopy] = @_cache if @options.tgcopy
 
 
 # A normalizing function that returns uniformly distributed random values in range [0..1)

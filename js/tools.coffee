@@ -105,6 +105,7 @@ class Pen extends Tool
     dyn.stop ctx, @ for dyn in @options.dynamic
 
   stop: (ctx, x, y) ->
+    dyn.restore ctx, @ for dyn in @options.dynamic
     ctx.restore()
 
 
