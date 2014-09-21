@@ -421,6 +421,11 @@ class DynamicsButton
       .append "<input class='dynamics-selector-k' type='range' min=0 max=2.0 step=0.05 value=1>"
       .appendTo node
 
+    if x.kind == 'size'
+      # Canvas cannot handle zero-width strokes.
+      item.find('.dynamics-selector-a').attr(min: 0.01, max: 2.01, value: 0.01)
+      item.find('.dynamics-selector-b').attr(min: 0.01, max: 2.01, value: 1.01)
+
   node
     .on 'change', '.dynamics-selector-comp', ->
       withItem this, (val, par, dyn) ->
