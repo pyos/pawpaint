@@ -322,19 +322,21 @@ class DynamicsButton
 @Canvas.Selector.Dynamics = (area, x, y, fixed) ->
   opts =
     size:
-      option: 'size'
-      prop:   'lineWidth'
+      kind:   'size'
+      source: 'size'
+      target: 'lineWidth'
       name:   "Size"
 
     opacity:
-      option: 'opacity'
-      prop:   'globalAlpha'
+      kind:   'opacity'
+      source: 'opacity'
+      target: 'globalAlpha'
       name:   "Opacity"
 
-    #rotation:
-    #  option: 'rotation'
-    #  prop:   null
-    #  name:   "Rotation"
+    rotation:
+      kind:   'rotation'
+      tgcopy: 'rotation'
+      name:   "Rotation"
 
   funcs =
     none:
@@ -410,7 +412,7 @@ class DynamicsButton
     type.append "<option value='#{k}'>#{v.name}</option>" for k, v of types
 
     item = $ '<div class="dynamics-selector-item">'
-      .attr 'data-option', x.option
+      .attr 'data-option', x.kind
       .data 'options',     x
       .append "<div class='dynamics-selector-name'>#{x.name}</div>"
       .append comp
@@ -446,7 +448,7 @@ class DynamicsButton
     .on 'click', (ev) -> ev.stopPropagation()
 
   for dyn in area.tool.options.dynamic
-    elem = node.find("[data-option='#{dyn.options.option}']")
+    elem = node.find("[data-option='#{dyn.options.kind}']")
     elem.each -> updateItem $(this), dyn
 
   Canvas.Selector.modal(fixed, x, y, 0, node)

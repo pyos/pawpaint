@@ -18,6 +18,7 @@ class Tool
 
   defaults:
     dynamic: []
+    rotation: 0
     opacity: 1
     size:    1
     H: 0
@@ -86,7 +87,7 @@ class Pen extends Tool
     ctx.lineWidth   = @options.size
     ctx.globalAlpha = @options.opacity
     ctx.strokeStyle = "hsl(#{@options.H}, #{@options.S}%, #{@options.L}%)"
-    dyn.reset ctx, x, y, pressure, rotation for dyn in @options.dynamic
+    dyn.reset ctx, @, x, y, pressure, rotation for dyn in @options.dynamic
     @lastX = x
     @lastY = y
 
@@ -96,12 +97,12 @@ class Pen extends Tool
     dy = (y - @lastY) / steps
     dyn.start ctx, @, x - @lastX, y - @lastY, pressure, rotation, steps for dyn in @options.dynamic
     for i in [0...steps]
-      dyn.step ctx for dyn in @options.dynamic
+      dyn.step ctx, @ for dyn in @options.dynamic
       ctx.beginPath()
       ctx.moveTo((@lastX),       (@lastY))
       ctx.lineTo((@lastX += dx), (@lastY += dy))
       ctx.stroke()
-    dyn.stop ctx for dyn in @options.dynamic
+    dyn.stop ctx, @ for dyn in @options.dynamic
 
   stop: (ctx, x, y) ->
     ctx.restore()
@@ -118,16 +119,20 @@ class Stamp extends Pen
   move: (ctx, x, y, pressure, rotation) ->
     dx    = x - @lastX
     dy    = y - @lastY
-    steps = ceil(pow(pow(dx, 2) + pow(dy, 2), 0.5) / (@options.size / 3))
+    steps = ceil(pow(pow(dx, 2) + pow(dy, 2), 0.5) * 5 / @options.size)
     dyn.start ctx, @, x - @lastX, y - @lastY, pressure, rotation, steps for dyn in @options.dynamic
 
     dx /= steps
     dy /= steps
     ds  = ctx.lineWidth / 2
     for i in [0...steps]
-      dyn.step ctx for dyn in @options.dynamic
-      ctx.drawImage(@pattern, (@lastX += dx) - ds, (@lastY += dy) - ds, ds * 2, ds * 2)
-    dyn.stop ctx for dyn in @options.dynamic
+      dyn.step ctx, @ for dyn in @options.dynamic
+      ctx.save()
+      ctx.translate(@lastX += dx, @lastY += dy)
+      ctx.rotate(@options.rotation * 2 * PI)
+      ctx.drawImage(@pattern, -ds, -ds, ds * 2, ds * 2)
+      ctx.restore()
+    dyn.stop ctx, @ for dyn in @options.dynamic
 
 
 class Resource extends Stamp

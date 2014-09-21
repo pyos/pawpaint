@@ -5,6 +5,7 @@
 #
 # Options::
 #   type -- which parameter to use (VELOCITY, PRESSURE, ...)
+#   kind -- the name of whatever this dynamic changes
 #   k    -- every input (in range 0-1) is multiplied by this value
 #   a    -- this is added to the result
 #   fn   -- a function that returns a function that takes some input
@@ -18,12 +19,14 @@ class Dynamic
   ROTATION: 2
 
   constructor: (options) ->
-    @options = jQuery.extend(@options or {
+    @options = jQuery.extend(@options or {}, {
       type: @VELOCITY
+      kind: 'none'
       a:    0
       k:    1
       fn:   Canvas.Dynamic.movingAverage,
-    }, options)
+    })
+    @options = jQuery.extend(@options, options)
 
   # Lifecycle of a `Dynamic`:
   #
@@ -34,7 +37,7 @@ class Dynamic
   #      something to the desired value.
   #   4. After a path leg is drawn: `stop(context)`.
   #
-  reset: (ctx) -> @_f = @options.fn()
+  reset: (ctx, tool) -> @_f = @options.fn()
   start: (ctx, tool, dx, dy, pressure, rotation, steps) ->
     v = switch @options.type
       when @VELOCITY then pow(pow(dx, 2) + pow(dy, 2), 0.5) / 20
@@ -43,32 +46,47 @@ class Dynamic
       else 0
     @options.a + @options.k * min 1, max 0, @_f(v)
 
-  step:  (ctx) ->
-  stop:  (ctx) ->
+  step:  (ctx, tool) ->
+  stop:  (ctx, tool) ->
 
 
 # A dynamic that changes some property of the canvas that has an associated
 # tool option (e.g. `context.lineWidth` <=> `tool.options.size`).
 #
 # Options::
-#   option -- the tool side of the property (an upper limit, will not mutate)
-#   prop   -- the canvas side of the property (where to store the result)
+#   source -- the option to use as an upper limit (see `Canvas.Tool.options`)
+#   target -- the property of a 2d context to update with the result
+#   tgcopy -- the option of the tool to update with the result
 #
 # OptionDynamic :: Object -> Canvas.Dynamic
 #
 class OptionDynamic extends Dynamic
   constructor: (options) ->
+    @options = jQuery.extend(@options or {}, {
+      source: null
+      target: null
+      tgcopy: null
+    })
     super
-    @options.option or= 'size'
-    @options.prop   or= 'lineWidth'
 
   start: (ctx, tool, dx, dy, pressure, rotation, steps) ->
-    @_value = super * tool.options[@options.option]
-    @_delta = (@_value - ctx[@options.prop]) / steps
+    @_value = super * if @options.source then tool.options[@options.source] else 1
+    @_delta = (@_value - (ctx[@_target] or tool.options[@_tgcopy])) / steps
 
-  step:  (ctx) -> ctx[@options.prop] += @_delta
-  stop:  (ctx) -> ctx[@options.prop]  = @_value
-  reset: (ctx) -> super; ctx[@options.prop] = @options.min || 0.01
+  step: (ctx, tool) ->
+    tool.options[@_tgcopy] += @_delta if @_tgcopy
+    ctx[@_target] += @_delta if @_target
+
+  stop: (ctx, tool) ->
+    tool.options[@_tgcopy] = @_value if @_tgcopy
+    ctx[@_target] = @_value if @_target
+
+  reset: (ctx, tool) ->
+    super
+    @_target = @options.target
+    @_tgcopy = @options.tgcopy
+    @_value  = tool.options[@options.source] * @options.a or 0.01
+    @stop ctx, tool
 
 
 # A normalizing function that returns uniformly distributed random values in range [0..1)
