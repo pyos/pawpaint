@@ -283,21 +283,164 @@ class ExportButton
 
 # ...
 #
-# Selector.Export :: Canvas.Area int int -> Canvas.Selector
+# Selector.DynamicsButton :: Canvas.Area -> Canvas.Selector
+#
+class DynamicsButton
+  constructor: (area) ->
+    @element = $ '<a class="dynamics-button">'
+    @element.on 'click', (e) =>
+      if e.which == 1
+        new Canvas.Selector.Dynamics area, @element.offset().left, @element.offset().top, true
+
+
+# ...
+#
+# Selector.Export :: Canvas.Area int int bool -> Canvas.Selector
 #
 @Canvas.Selector.Export = (area, x, y, fixed) ->
-  node = $ "<ul class='export-selector'>"
+  node = $ "<ul>"
   node.append '<li class="export-selector-header"></li>'
-  node.append '<li><a data-type="png">PNG <span class="text-muted">(Flattened)</span></a></li>'
-  node.append '<li><a data-type="svg">SVG+PNG <span class="text-muted">(Layered)</span></a></li>'
+  node.append '<li><a data-type="png">PNG</a> <span class="text-muted">(Flattened)</span></li>'
+  node.append '<li><a data-type="svg">SVG+PNG</a> <span class="text-muted">(Layered)</span></li>'
   node.on 'click', 'a[data-type]', (ev) ->
     type = $(this).attr 'data-type'
     link = document.createElement 'a'
     link.download = 'image.' + type
     link.href     = area.saveAll(type)
     link.click()
-  Canvas.Selector.modal(fixed, x, y, 0, node)
 
+  root = $ "<div class='export-selector'>"
+  root.append node
+  root.append $(Canvas.getResource('export-warning')).clone()
+  Canvas.Selector.modal(fixed, x, y, 0, root)
+
+
+# ...
+#
+# Selector.Dynamics :: Canvas.Area int int bool -> Canvas.Selector
+#
+@Canvas.Selector.Dynamics = (area, x, y, fixed) ->
+  opts =
+    size:
+      option: 'size'
+      prop:   'lineWidth'
+      name:   "Size"
+
+    opacity:
+      option: 'opacity'
+      prop:   'globalAlpha'
+      name:   "Opacity"
+
+    #rotation:
+    #  option: 'rotation'
+    #  prop:   null
+    #  name:   "Rotation"
+
+  comps =
+    none:
+      fn:   -> -> 1
+      name: "Disabled"
+
+    average:
+      fn:   Canvas.Dynamic.movingAverage
+      name: "Moving average"
+
+    linear:
+      fn:   Canvas.Dynamic.linear
+      name: "Linear mapping"
+
+    random:
+      fn:   Canvas.Dynamic.random
+      name: "Random"
+
+  types =
+    velocity:
+      value: Canvas.Dynamic.prototype.VELOCITY
+      name:  "Velocity"
+
+    pressure:
+      value: Canvas.Dynamic.prototype.PRESSURE
+      name:  "Pressure"
+
+    rotation:
+      value: Canvas.Dynamic.prototype.ROTATION
+      name:  "Rotation"
+
+  withItem = (elem, cb) ->
+    val = $(elem).val()
+    par = $(elem).parents('.dynamics-selector-item')
+    dyn = par.data('dynamic')
+
+    if not dyn and par.find('.dynamics-selector-comp').val() != 'none'
+      dyn = new Canvas.Dynamic.Option(par.data 'options')
+      dyn.options.type        = types[par.find('.dynamics-selector-type').val()].value
+      dyn.options.computation = comps[par.find('.dynamics-selector-comp').val()].fn
+      if par.find('.dynamics-selector-invert')[0].checked
+        dyn.options.k = -1
+        dyn.options.a = +1
+      else
+        dyn.options.k = +1
+        dyn.options.a = +0
+      updateItem par, dyn
+      area.tool.options.dynamic.push(dyn)
+
+    cb val, par, dyn if dyn
+
+  updateItem = (elem, dyn) ->
+    comp = elem.find '.dynamics-selector-comp'
+    type = elem.find '.dynamics-selector-type'
+    inv  = elem.find '.dynamics-selector-invert'
+
+    for c, f of comps then comp.val c if f.fn     is dyn.options.computation
+    for t, f of types then type.val t if f.value  is dyn.options.type
+    inv.prop('checked', dyn.options.k < 0)
+    elem.data 'dynamic', dyn
+
+  node = $ '<div class="dynamics-selector">'
+
+  for o, x of opts
+    comp = $ '<select class="dynamics-selector-comp">'
+    comp.append "<option value='#{k}'>#{v.name}</option>" for k, v of comps
+
+    type = $ '<select class="dynamics-selector-type">'
+    type.append "<option value='#{k}'>#{v.name}</option>" for k, v of types
+
+    item = $ '<div class="dynamics-selector-item">'
+      .attr 'data-option', x.option
+      .data 'options',     x
+      .append "<div class='dynamics-selector-name'>#{x.name}</div>"
+      .append comp
+      .append type
+      .append "<input class='dynamics-selector-invert' type='checkbox'>"
+      .append "<label class='dynamics-selector-invert-label'>"
+      .appendTo node
+
+  node
+    .on 'change', '.dynamics-selector-comp', ->
+      withItem this, (val, par, dyn) ->
+        if val is 'none'
+          i = area.tool.options.dynamic.indexOf(dyn)
+          _ = area.tool.options.dynamic.splice(i, 1)
+          par.data 'dynamic', null
+        else
+          dyn.options.computation = comps[val].fn
+
+    .on 'change', '.dynamics-selector-type', ->
+      withItem this, (val, par, dyn) ->
+        dyn.options.type = types[val].value
+
+    .on 'change', '.dynamics-selector-invert', ->
+      withItem this, (val, par, dyn) =>
+        dyn.options.k = if this.checked then -1 else +1
+        dyn.options.a = if this.checked then +1 else +0
+
+    .on 'click', (ev) -> ev.stopPropagation()
+
+  for dyn in area.tool.options.dynamic
+    elem = node.find("[data-option='#{dyn.options.option}']")
+    elem.each -> updateItem $(this), dyn
+
+  Canvas.Selector.modal(fixed, x, y, 0, node)
 
 # ...
 #
@@ -358,3 +501,4 @@ class LayerSelector
 @Canvas.Selector.Button = SelectorButton
 @Canvas.Selector.Layers = LayerSelector
 @Canvas.Selector.ExportButton = ExportButton
+@Canvas.Selector.DynamicsButton = DynamicsButton

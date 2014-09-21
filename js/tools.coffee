@@ -47,8 +47,8 @@ class Tool
   #   * When the mouse button is released, `stop` is called.
   #
   crosshair: (ctx) ->
-  start: (ctx, x, y) ->
-  move:  (ctx, x, y) ->
+  start: (ctx, x, y, pressure, rotation) ->
+  move:  (ctx, x, y, pressure, rotation) ->
   stop:  (ctx, x, y) ->
 
   symbol: (ctx, x, y) ->
@@ -57,8 +57,12 @@ class Tool
       size = @options.size
       Canvas.drawImageSmooth ctx, img, x - size / 2, y - size / 2, size, size
     else
-      @start ctx, x, y
+      _x = @options.dynamic
+      @options.dynamic = []
+      @start ctx, x,     y, 1, 0
+      @move  ctx, x + 1, y, 1, 0
       @stop  ctx, x + 1, y
+      @options.dynamic = _x
 
 
 class Pen extends Tool
@@ -100,7 +104,6 @@ class Pen extends Tool
     dyn.stop ctx for dyn in @options.dynamic
 
   stop: (ctx, x, y) ->
-    @move ctx, x, y
     ctx.restore()
 
 

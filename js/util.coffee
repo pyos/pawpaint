@@ -30,9 +30,9 @@
 
 # Retrieve a preloaded resource from the page.
 #
-# getResource :: str -> Image
+# getResource :: str -> Element
 #
-@Canvas.getResource = (selector) -> $(".resources img.#{selector}")[0]
+@Canvas.getResource = (selector) -> $(".resources .#{selector}")[0]
 
 
 # Take a color, apply alpha from a resource.

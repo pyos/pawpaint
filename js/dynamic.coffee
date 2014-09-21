@@ -12,13 +12,13 @@
 # Dynamic :: Object -> Canvas.Dynamic
 #
 class Dynamic
-  VELOCITY = 0
-  PRESSURE = 1
-  ROTATION = 2
+  VELOCITY: 0
+  PRESSURE: 1
+  ROTATION: 2
 
   constructor: (options) ->
     @options = jQuery.extend(@options or {
-      computation: movingAverage,
+      computation: Canvas.Dynamic.movingAverage,
       type: @VELOCITY
       min: 0
       max: 1
@@ -35,10 +35,10 @@ class Dynamic
   #      something to the desired value.
   #   4. After a path leg is drawn: `stop(context)`.
   #
-  reset: (ctx) -> @_f = @options.computation.apply this
-  start: (ctx, tool, dx, dy, steps) ->
+  reset: (ctx) -> @_f = @options.computation()
+  start: (ctx, tool, dx, dy, pressure, rotation, steps) ->
     v = switch @options.type
-      when @VELOCITY then pow(pow(dx, 2) + pow(dy, 2), 0.5)
+      when @VELOCITY then pow(pow(dx, 2) + pow(dy, 2), 0.5) / 20
       when @PRESSURE then pressure
       when @ROTATION then rotation
       else 0
@@ -69,14 +69,21 @@ class OptionDynamic extends Dynamic
 
   step:  (ctx) -> ctx[@options.prop] += @_delta
   stop:  (ctx) -> ctx[@options.prop]  = @_value
-  reset: (ctx) -> super; ctx[@options.prop] = @options.min
+  reset: (ctx) -> super; ctx[@options.prop] = @options.min || 0.01
 
 
 # A computation that returns uniformly distributed random values in range [0..1)
 #
 # random :: -> float -> float
 #
-random = -> -> Math.random()
+Dynamic.random = -> -> Math.random()
+
+
+# A computation that returns a value as is.
+#
+# linear :: float -> float
+#
+Dynamic.linear = -> (value) -> value
 
 
 # A computation that returns a value that is a moving average of the previous values.
@@ -86,25 +93,22 @@ random = -> -> Math.random()
 #
 # movingAverage :: -> float -> float
 #
-movingAverage = ->
+Dynamic.movingAverage = ->
+  limit = @avgOf || 75
   value = 0
   count = 0
   array = []
-  limit = @options.avgOf || 75
 
   (current) ->
-    if count >= limit
+    if not count
+      array.push(current) for _ in [0...limit]
+      value = current
+    else
       value += (current - array[count % limit]) / limit
       array[count % limit] = current
-    else
-      array.push(current)
-      value += (current - value) / array.length
     count++
     return value
 
 
 @Canvas.Dynamic = Dynamic
 @Canvas.Dynamic.Option = OptionDynamic
-
-@Canvas.Dynamic.random        = random
-@Canvas.Dynamic.movingAverage = movingAverage

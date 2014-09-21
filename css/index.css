@@ -80,9 +80,10 @@ a:not(.fa):not(.glyphicon) {
   box-shadow: 0 0 10px -5px #000 inset;
 }
 
-.undo-btn:before      { content: "\f0e2"; font-family: FontAwesome; }
-.redo-btn:before      { content: "\f01e"; font-family: FontAwesome; }
-.export-button:before { content: "\f0c7"; font-family: FontAwesome; }
+.undo-btn:before        { content: "\f0e2"; font-family: FontAwesome; }
+.redo-btn:before        { content: "\f01e"; font-family: FontAwesome; }
+.export-button:before   { content: "\f0c7"; font-family: FontAwesome; }
+.dynamics-button:before { content: "\f201"; font-family: FontAwesome; }
 
 .layer-menu {
   list-style: none;
@@ -185,21 +186,86 @@ a:not(.fa):not(.glyphicon) {
   cursor: crosshair;
 }
 
-.export-selector {
+.export-selector ul {
   list-style: none;
   padding:    10px;
   margin:     0;
 }
 
-.export-selector > li {
+.export-selector li {
   padding: 5px;
 }
 
-.export-selector > li:not(.export-selector-header) {
+.export-selector li:not(.export-selector-header) {
   padding-left: 15px;
+}
+
+.export-selector a {
+  text-decoration: underline;
 }
 
 .export-selector-header:before {
   font-weight: bold;
   content: "Export as:";
+}
+
+.export-selector .export-warning {
+  background: #dd9900;
+  padding: 15px;
+  white-space: normal;
+  border-bottom-left-radius: 5px;
+  box-shadow: 0 20px 20px -20px #000 inset;
+}
+
+.export-selector .export-warning .text-warning {
+  color: white;
+  font-weight: bold;
+}
+
+.dynamics-selector {
+}
+
+.dynamics-selector > * {
+  float: left;
+  padding: 10px;
+  margin-right: 10px;
+}
+
+.dynamics-selector-item > *:not(.dynamics-selector-name) {
+  margin-top:  5px;
+  margin-left: 10px;
+}
+
+.dynamics-selector-item > select {
+  display: block;
+  color: black;
+}
+
+.dynamics-selector-name {
+  font-weight: bold;
+}
+
+.dynamics-selector-name:after {
+  content: ":";
+}
+
+.dynamics-selector-invert-label:before {
+  content: "Invert";
+  font-weight: normal;
+  color: #777;
+}
+
+input[type="checkbox"] {
+  visibility: hidden;
+}
+
+input[type="checkbox"]:before {
+  font-size: 18px;
+  font-family: FontAwesome;
+  content: "\f0c8";
+  visibility: visible;
+}
+
+input[type="checkbox"]:checked:before {
+  content: "\f14a" !important;
 }

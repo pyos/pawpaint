@@ -20,8 +20,8 @@ $ ->
   button = new Canvas.Selector.Button area, 45, 45
   button.element.appendTo '.side-area'
 
-  exportb = new Canvas.Selector.ExportButton area
-  exportb.element.appendTo '.side-area'
+  dynamics = new Canvas.Selector.DynamicsButton area
+  dynamics.element.appendTo '.side-area'
 
   undo = $ '<a class="undo-btn">'
     .appendTo '.side-area'
@@ -30,6 +30,9 @@ $ ->
   redo = $ '<a class="redo-btn">'
     .appendTo '.side-area'
     .on 'click', -> area.redo()
+
+  exportb = new Canvas.Selector.ExportButton area
+  exportb.element.appendTo '.side-area'
 
   layers = new Canvas.Selector.Layers area
   layers.element.appendTo '.side-area'
