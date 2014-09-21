@@ -231,13 +231,16 @@ a:not(.fa):not(.glyphicon) {
   margin-right: 10px;
 }
 
+.dynamics-selector-item > * {
+  display: block;
+}
+
 .dynamics-selector-item > *:not(.dynamics-selector-name) {
   margin-top:  5px;
   margin-left: 10px;
 }
 
 .dynamics-selector-item > select {
-  display: block;
   color: black;
 }
 
@@ -245,27 +248,26 @@ a:not(.fa):not(.glyphicon) {
   font-weight: bold;
 }
 
-.dynamics-selector-name:after {
-  content: ":";
+.dynamics-selector-comp-label:before {
+  content: "is a";
 }
 
-.dynamics-selector-invert-label:before {
-  content: "Invert";
-  font-weight: normal;
+.dynamics-selector-type-label:before {
+  content: "of";
+}
+
+.dynamics-selector-a-label:before {
+  content: "low:";
+}
+
+.dynamics-selector-k-label:before {
+  content: "high:";
+}
+
+.dynamics-selector-comp-label,
+.dynamics-selector-type-label,
+.dynamics-selector-a-label,
+.dynamics-selector-k-label {
   color: #777;
-}
-
-input[type="checkbox"] {
-  visibility: hidden;
-}
-
-input[type="checkbox"]:before {
-  font-size: 18px;
-  font-family: FontAwesome;
-  content: "\f0c8";
-  visibility: visible;
-}
-
-input[type="checkbox"]:checked:before {
-  content: "\f14a" !important;
+  text-align: right;
 }

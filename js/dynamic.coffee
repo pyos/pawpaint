@@ -4,10 +4,11 @@
 # A way to change some parameters based on some other parameters.
 #
 # Options::
-#   k   -- every input is multiplied by this value
-#   a   -- this is added to the result
-#   min -- minimum returned value
-#   max -- (the actual value is simply clipped to this range)
+#   type -- which parameter to use (VELOCITY, PRESSURE, ...)
+#   k    -- every input (in range 0-1) is multiplied by this value
+#   a    -- this is added to the result
+#   fn   -- a function that returns a function that takes some input
+#           (most likely in 0-1 range, but not guaraneed) and returns a normalized value
 #
 # Dynamic :: Object -> Canvas.Dynamic
 #
@@ -18,12 +19,10 @@ class Dynamic
 
   constructor: (options) ->
     @options = jQuery.extend(@options or {
-      computation: Canvas.Dynamic.movingAverage,
       type: @VELOCITY
-      min: 0
-      max: 1
-      a:   0
-      k:   1
+      a:    0
+      k:    1
+      fn:   Canvas.Dynamic.movingAverage,
     }, options)
 
   # Lifecycle of a `Dynamic`:
@@ -35,14 +34,14 @@ class Dynamic
   #      something to the desired value.
   #   4. After a path leg is drawn: `stop(context)`.
   #
-  reset: (ctx) -> @_f = @options.computation()
+  reset: (ctx) -> @_f = @options.fn()
   start: (ctx, tool, dx, dy, pressure, rotation, steps) ->
     v = switch @options.type
       when @VELOCITY then pow(pow(dx, 2) + pow(dy, 2), 0.5) / 20
       when @PRESSURE then pressure
-      when @ROTATION then rotation
+      when @ROTATION then rotation / 2 / PI
       else 0
-    min @options.max, max @options.min, @_f(v) * @options.k + @options.a
+    @options.a + @options.k * min 1, max 0, @_f(v)
 
   step:  (ctx) ->
   stop:  (ctx) ->
@@ -72,21 +71,21 @@ class OptionDynamic extends Dynamic
   reset: (ctx) -> super; ctx[@options.prop] = @options.min || 0.01
 
 
-# A computation that returns uniformly distributed random values in range [0..1)
+# A normalizing function that returns uniformly distributed random values in range [0..1)
 #
 # random :: -> float -> float
 #
 Dynamic.random = -> -> Math.random()
 
 
-# A computation that returns a value as is.
+# A normalizing function that does nothing.
 #
 # linear :: float -> float
 #
 Dynamic.linear = -> (value) -> value
 
 
-# A computation that returns a value that is a moving average of the previous values.
+# A normalizing function that returns a value that is a moving average of the previous values.
 #
 # Options::
 #   avgOf -- size of the average window

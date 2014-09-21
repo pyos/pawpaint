@@ -336,7 +336,7 @@ class DynamicsButton
     #  prop:   null
     #  name:   "Rotation"
 
-  comps =
+  funcs =
     none:
       fn:   -> -> 1
       name: "Disabled"
@@ -347,7 +347,7 @@ class DynamicsButton
 
     linear:
       fn:   Canvas.Dynamic.linear
-      name: "Linear mapping"
+      name: "Current value"
 
     random:
       fn:   Canvas.Dynamic.random
@@ -373,14 +373,10 @@ class DynamicsButton
 
     if not dyn and par.find('.dynamics-selector-comp').val() != 'none'
       dyn = new Canvas.Dynamic.Option(par.data 'options')
-      dyn.options.type        = types[par.find('.dynamics-selector-type').val()].value
-      dyn.options.computation = comps[par.find('.dynamics-selector-comp').val()].fn
-      if par.find('.dynamics-selector-invert')[0].checked
-        dyn.options.k = -1
-        dyn.options.a = +1
-      else
-        dyn.options.k = +1
-        dyn.options.a = +0
+      dyn.options.type = types[par.find('.dynamics-selector-type').val()].value
+      dyn.options.fn   = funcs[par.find('.dynamics-selector-comp').val()].fn
+      dyn.options.a    = parseFloat(par.find('.dynamics-selector-a').val())
+      dyn.options.k    = parseFloat(par.find('.dynamics-selector-k').val()) - dyn.options.a
       updateItem par, dyn
       area.tool.options.dynamic.push(dyn)
 
@@ -389,18 +385,26 @@ class DynamicsButton
   updateItem = (elem, dyn) ->
     comp = elem.find '.dynamics-selector-comp'
     type = elem.find '.dynamics-selector-type'
-    inv  = elem.find '.dynamics-selector-invert'
 
-    for c, f of comps then comp.val c if f.fn     is dyn.options.computation
+    for c, f of funcs then comp.val c if f.fn     is dyn.options.fn
     for t, f of types then type.val t if f.value  is dyn.options.type
-    inv.prop('checked', dyn.options.k < 0)
+    elem.find('.dynamics-selector-a').val(dyn.options.a)
+    elem.find('.dynamics-selector-k').val(dyn.options.k + dyn.options.a)
     elem.data 'dynamic', dyn
 
   node = $ '<div class="dynamics-selector">'
+  item = $ '<div class="dynamics-selector-item">'
+    .append '<div class="dynamics-selector-name">&nbsp;</div>'
+    .append '<div class="dynamics-selector-comp-label">'
+    .append '<div class="dynamics-selector-type-label">'
+    .append '<div class="dynamics-selector-a-label">'
+    .append '<div class="dynamics-selector-k-label">'
+    .append '<datalist id="dynamics-selector-range-list">'
+    .appendTo node
 
   for o, x of opts
     comp = $ '<select class="dynamics-selector-comp">'
-    comp.append "<option value='#{k}'>#{v.name}</option>" for k, v of comps
+    comp.append "<option value='#{k}'>#{v.name}</option>" for k, v of funcs
 
     type = $ '<select class="dynamics-selector-type">'
     type.append "<option value='#{k}'>#{v.name}</option>" for k, v of types
@@ -411,8 +415,8 @@ class DynamicsButton
       .append "<div class='dynamics-selector-name'>#{x.name}</div>"
       .append comp
       .append type
-      .append "<input class='dynamics-selector-invert' type='checkbox'>"
-      .append "<label class='dynamics-selector-invert-label'>"
+      .append "<input class='dynamics-selector-a' type='range' min=0 max=2.0 step=0.05 value=0>"
+      .append "<input class='dynamics-selector-k' type='range' min=0 max=2.0 step=0.05 value=1>"
       .appendTo node
 
   node
@@ -423,16 +427,21 @@ class DynamicsButton
           _ = area.tool.options.dynamic.splice(i, 1)
           par.data 'dynamic', null
         else
-          dyn.options.computation = comps[val].fn
+          dyn.options.fn = funcs[val].fn
 
     .on 'change', '.dynamics-selector-type', ->
       withItem this, (val, par, dyn) ->
         dyn.options.type = types[val].value
 
-    .on 'change', '.dynamics-selector-invert', ->
-      withItem this, (val, par, dyn) =>
-        dyn.options.k = if this.checked then -1 else +1
-        dyn.options.a = if this.checked then +1 else +0
+    .on 'change', '.dynamics-selector-a', ->
+      withItem this, (val, par, dyn) ->
+        dyn.options.k += dyn.options.a
+        dyn.options.a  = parseFloat val
+        dyn.options.k -= dyn.options.a
+
+    .on 'change', '.dynamics-selector-k', ->
+      withItem this, (val, par, dyn) ->
+        dyn.options.k = parseFloat val - dyn.options.a
 
     .on 'click', (ev) -> ev.stopPropagation()
 
