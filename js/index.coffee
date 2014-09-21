@@ -17,8 +17,19 @@ $ ->
   area.element
     .on 'contextmenu', (e) -> e.preventDefault(); new Canvas.Selector area, e.clientX, e.clientY
 
-  button = new Canvas.Selector.Button area
+  button = new Canvas.Selector.Button area, 45, 45
   button.element.appendTo '.side-area'
+
+  exportb = new Canvas.Selector.ExportButton area
+  exportb.element.appendTo '.side-area'
+
+  undo = $ '<a class="undo-btn">'
+    .appendTo '.side-area'
+    .on 'click', -> area.undo()
+
+  redo = $ '<a class="redo-btn">'
+    .appendTo '.side-area'
+    .on 'click', -> area.redo()
 
   layers = new Canvas.Selector.Layers area
   layers.element.appendTo '.side-area'

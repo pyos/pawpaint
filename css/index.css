@@ -12,9 +12,17 @@ a:not(.fa):not(.glyphicon) {
   cursor: pointer;
 }
 
-.tool-name {
-  display: block;
-  box-shadow: 0 0 20px -5px #000 inset;
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  /* ??? */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #444;
 }
 
 .main-area {
@@ -50,20 +58,31 @@ a:not(.fa):not(.glyphicon) {
 
   box-shadow: 10px 0 20px -10px #000 inset;
   background: #222;
+  color:      white;
 }
 
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+.side-area > a, .tool-name {
+  display: inline-block;
+  width:   45px;
+  height:  45px;
+  padding: 10px;
+
+  font-size:  20px;
+  text-align: center;
+  color:      inherit;
+  cursor:     pointer;
+
+  vertical-align: middle;
 }
 
-::-webkit-scrollbar-track {
-  /* ??? */
+.tool-name {
+  border-bottom-right-radius: 10px;
+  box-shadow: 0 0 10px -5px #000 inset;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #444;
-}
+.undo-btn:before      { content: "\f0e2"; font-family: FontAwesome; }
+.redo-btn:before      { content: "\f01e"; font-family: FontAwesome; }
+.export-button:before { content: "\f0c7"; font-family: FontAwesome; }
 
 .layer-menu {
   list-style: none;
@@ -81,6 +100,7 @@ a:not(.fa):not(.glyphicon) {
 
 .layer-menu-control > a {
   padding: 15px;
+  color: inherit;
 }
 
 .layer-menu-entry, .layer-menu-control {
@@ -107,7 +127,6 @@ a:not(.fa):not(.glyphicon) {
 
 .layer-menu-entry.active {
   border-color: transparent;
-  box-shadow: 10px 0 20px -5px #000;
   opacity: 1;
 }
 
@@ -121,18 +140,31 @@ a:not(.fa):not(.glyphicon) {
   overflow: hidden;
 }
 
-.canvas-selector {
-  background: #222;
-  border-radius: 100px 0 0 100px;
-  box-shadow: 0 0 20px -5px #000;
+.canvas-selector-container > * {
   position: absolute;
-  float: left;
+  float:    left;
+
   white-space: nowrap;
+  border-radius: 5px;
+
+  background: #000;
+  color:      white;
+  box-shadow: 0 0 20px -5px #000;
 }
 
-.canvas-selector-fixed .canvas-selector {
+.canvas-selector-container a {
+  color: inherit;
+}
+
+.canvas-selector-fixed > * {
   left: auto !important;
   right: 100px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.canvas-selector {
+  border-radius: 100px 0 0 100px;
 }
 
 .canvas-selector, .canvas-selector > * {
@@ -151,4 +183,23 @@ a:not(.fa):not(.glyphicon) {
 
 .canvas-selector-color {
   cursor: crosshair;
+}
+
+.export-selector {
+  list-style: none;
+  padding:    10px;
+  margin:     0;
+}
+
+.export-selector > li {
+  padding: 5px;
+}
+
+.export-selector > li:not(.export-selector-header) {
+  padding-left: 15px;
+}
+
+.export-selector-header:before {
+  font-weight: bold;
+  content: "Export as:";
 }

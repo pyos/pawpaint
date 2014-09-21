@@ -208,19 +208,11 @@ class ToolSelector extends Selector
   color = new ColorSelector(area, size, size / 4, size / 10)
   width = new WidthSelector(area, size / 2.5, size * 2, 1, size, size / 10)
   tools = new ToolSelector(area, size * 2, size / 2)
-
-  cover = $ '<div class="canvas-selector-container">'
-    .on 'click', -> cover.fadeOut(100, cover.remove.bind cover)
-    .appendTo 'body'
-    .append(
-      $ "<div class='canvas-selector'>"
-        .css 'left', x - (if fixed then 0 else size)
-        .css 'top',  y - (if fixed then 0 else size)
-        .append color.element.addClass 'canvas-selector-color'
-        .append width.element.addClass 'canvas-selector-width'
-        .append tools.element.addClass 'canvas-selector-tool')
-    .hide().fadeIn(100)
-  cover.addClass 'canvas-selector-fixed' if fixed
+  cover = Canvas.Selector.modal(fixed, x, y, size,
+    $ "<div class='canvas-selector'>"
+      .append color.element.addClass 'canvas-selector-color'
+      .append width.element.addClass 'canvas-selector-width'
+      .append tools.element.addClass 'canvas-selector-tool')
 
   tools.element.on 'change', (_, value) -> area.setTool(value, area.tool.options)
   width.element.on 'change', (_, value) -> area.setToolOptions(size: value)
@@ -228,14 +220,31 @@ class ToolSelector extends Selector
   cover
 
 
+# Wrap a node in a transparent page cover that dismisses itself on click.
+#
+# Selector.modal :: bool jQuery -> jQuery
+#
+@Canvas.Selector.modal = (fixed, x, y, size, node) ->
+  node
+    .css 'left', x - (if fixed then 0 else size)
+    .css 'top',  y - (if fixed then 0 else size)
+
+  cover = $ '<div class="canvas-selector-container">'
+    .on 'click', -> cover.fadeOut(100, cover.remove.bind cover)
+    .append node
+    .appendTo 'body'
+    .hide().fadeIn(100)
+  cover.addClass 'canvas-selector-fixed' if fixed
+
+
 # A button that displays the name of the current tool and its
 # color, and opens a complete selector on click.
 #
-# Selector.Button :: Canvas.Area -> a
+# Selector.Button :: Canvas.Area -> Canvas.Selector
 #
 class SelectorButton
-  constructor: (area) ->
-    @element = new Canvas(90, 50)
+  constructor: (area, @width, @height, @target = null) ->
+    @element = new Canvas(@width, @height)
     @element.addClass 'tool-name'
     @element.on 'click', (ev) =>
       if ev.which == 1
@@ -252,14 +261,47 @@ class SelectorButton
     ctx = @element[0].getContext('2d')
     ctx.clearRect 0, 0, w, h
 
-    tool = new @area.tool.constructor({size: min(w, h) * 9 / 20, H: 0, S: 0, L: lv})
+    tool = new @area.tool.constructor({size: min(w, h) * 15 / 20, H: 0, S: 0, L: lv})
     tool.symbol ctx, @element[0].width / 2, @element[0].height / 2
-    @element.css 'background', "hsl(#{@area.tool.options.H},#{@area.tool.options.S}%,#{@area.tool.options.L}%)"
+
+    target = @target || @element
+    target.css 'background', "hsl(#{@area.tool.options.H},#{@area.tool.options.S}%,#{@area.tool.options.L}%)"
+          .css 'color', if lv == 100 then "white" else "black"
 
 
 # ...
 #
-# Selector.Layers :: Canvas.Area -> jQuery
+# Selector.ExportButton :: Canvas.Area -> Canvas.Selector
+#
+class ExportButton
+  constructor: (area) ->
+    @element = $ '<a class="export-button">'
+    @element.on 'click', (e) =>
+      if e.which == 1
+        new Canvas.Selector.Export area, @element.offset().left, @element.offset().top, true
+
+
+# ...
+#
+# Selector.Export :: Canvas.Area int int -> Canvas.Selector
+#
+@Canvas.Selector.Export = (area, x, y, fixed) ->
+  node = $ "<ul class='export-selector'>"
+  node.append '<li class="export-selector-header"></li>'
+  node.append '<li><a data-type="png">PNG <span class="text-muted">(Flattened)</span></a></li>'
+  node.append '<li><a data-type="svg">SVG+PNG <span class="text-muted">(Layered)</span></a></li>'
+  node.on 'click', 'a[data-type]', (ev) ->
+    type = $(this).attr 'data-type'
+    link = document.createElement 'a'
+    link.download = 'image.' + type
+    link.href     = area.saveAll(type)
+    link.click()
+  Canvas.Selector.modal(fixed, x, y, 0, node)
+
+
+# ...
+#
+# Selector.Layers :: Canvas.Area -> Canvas.Selector
 #
 class LayerSelector
   constructor: (area) ->
@@ -315,3 +357,4 @@ class LayerSelector
 @Canvas.Selector.Width  = WidthSelector
 @Canvas.Selector.Button = SelectorButton
 @Canvas.Selector.Layers = LayerSelector
+@Canvas.Selector.ExportButton = ExportButton
