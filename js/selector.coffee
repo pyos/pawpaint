@@ -36,6 +36,8 @@ class Selector
     @element[0].removeEventListener 'mouseup',    @onMouseUp
     @element[0].removeEventListener 'mouseleave', @onMouseUp
 
+  forceRedraw: -> @redraw false, @element[0].getContext('2d')
+
   # Abstract methods:
   #   * `redraw` must paint with `context`. `initial` is true iff this is the first time.
   #   * `update` must set `@value` to a new value based on the click coordinates
@@ -136,7 +138,7 @@ class ColorSelector extends Selector
 #
 class WidthSelector extends Selector
   constructor: (area, width, height, low, high, margin) ->
-    @value = area.tool.options.size
+    @value  = area.tool.options.size
     @low    = low     # min. value
     @high   = high    # max. value
     @margin = margin  # spacing between the element's edge and the limits
@@ -146,16 +148,16 @@ class WidthSelector extends Selector
     @value = floor max(0, min(1, (@height - y - @margin) / (@height - 2 * @margin))) * (@high - @low) + @low
 
   redraw: (i, c) ->
-    c.lineWidth = 2
-    c.fillStyle   = "rgba(127, 127, 127, 0.4)"
-    c.strokeStyle = "rgba(127, 127, 127, 0.7)"
     c.clearRect 0, 0, @width, @height
-
-    c.beginPath()
-    c.arc @width / 2, @height / 2, @value / 2, 0, PI * 2, false
-    c.fill()
+    c.save()
+    c.translate((@width - @value) / 2, (@height - @value) / 2)
+    tool = new @area.tool.constructor(size: @value, H: 0, S: 0, L: 50, opacity: 0.5)
+    tool.crosshair c
+    c.restore()
 
     y = (@high - @value) * (@height - 2 * @margin) / (@high - @low) + @margin
+    c.lineWidth = 2
+    c.strokeStyle = "rgba(127, 127, 127, 0.7)"
     c.beginPath()
     c.moveTo 0, y
     c.lineTo @width, y
@@ -214,6 +216,7 @@ class ToolSelector extends Selector
       .append width.element.addClass 'canvas-selector-width'
       .append tools.element.addClass 'canvas-selector-tool')
 
+  tools.element.on 'change', (_, value) -> width.forceRedraw()
   tools.element.on 'change', (_, value) -> area.setTool(value, area.tool.options)
   width.element.on 'change', (_, value) -> area.setToolOptions(size: value)
   color.element.on 'change', (_, value) -> area.setToolOptions(value)
