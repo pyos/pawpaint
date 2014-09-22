@@ -245,7 +245,7 @@ class Area
       @offsetY = @element.offset().top
       x = ev.touches[0].clientX - @offsetX
       y = ev.touches[0].clientY - @offsetY
-      p = ev.touches[0].force * 10
+      p = ev.touches[0].force * 3.3333
       # TODO rotation
       if @tool.start @context, x, y, p, 0
         @snap @layer
@@ -258,7 +258,7 @@ class Area
       # TODO multitouch drawing?
       x = ev.touches[0].clientX - @offsetX
       y = ev.touches[0].clientY - @offsetY
-      p = ev.touches[0].force * 10
+      p = ev.touches[0].force * 3.3333
       # TODO rotation
       @tool.move @context, x, y, p, 0
 
