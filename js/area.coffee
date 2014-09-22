@@ -243,11 +243,10 @@ class Area
       @context = @layers[@layer][0].getContext '2d'
       @offsetX = @element.offset().left
       @offsetY = @element.offset().top
-      x = ev.touches[0].clientX - @offsetX
-      y = ev.touches[0].clientY - @offsetY
-      p = ev.touches[0].force * 3.3333
-      # TODO rotation
-      if @tool.start @context, x, y, p, 0
+      t = ev.touches[0]
+      x = t.clientX - @offsetX
+      y = t.clientY - @offsetY
+      if @tool.start @context, x, y, t.force, t.rotationAngle * PI / 180
         @snap @layer
         @element.trigger 'stroke:begin', [@layers[@layer][0], @layer]
         @element[0].addEventListener 'touchmove', @onTouchMove
@@ -256,11 +255,10 @@ class Area
   onTouchMove: (ev) ->
     if ev.which == 0
       # TODO multitouch drawing?
-      x = ev.touches[0].clientX - @offsetX
-      y = ev.touches[0].clientY - @offsetY
-      p = ev.touches[0].force * 3.3333
-      # TODO rotation
-      @tool.move @context, x, y, p, 0
+      t = ev.touches[0]
+      x = t.clientX - @offsetX
+      y = t.clientY - @offsetY
+      @tool.move @context, x, y, t.force, t.rotationAngle * PI / 180
 
   onTouchEnd: (ev) ->
     if ev.touches.length == 0
