@@ -485,6 +485,7 @@ class LayerSelector
       .on 'layer:del',    @del
       .on 'layer:move',   @move
       .on 'layer:toggle', @toggle
+      .on 'layer:resize', @resize
       .on 'stroke:end refresh', @update
 
     @add null, layer for layer in area.layers
@@ -500,6 +501,12 @@ class LayerSelector
       .append '<a class="layer-config fa fa-adjust">'
       .insertBefore @end
     entry.addClass 'layer-hidden' if elem.css('display') == 'none'
+
+  resize: (_, canvas, index) =>
+    nsz = 150 / max(canvas.width, canvas.height)
+    cnv = @element.children().eq(index).find('canvas')
+    cnv.replaceWith(cnv = new Canvas(canvas.width * nsz, canvas.height * nsz)).remove()
+    @update _, canvas, index
 
   update: (_, canvas, index) =>
     cnv = @element.children().eq(index).find('canvas')

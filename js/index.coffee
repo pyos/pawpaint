@@ -39,5 +39,7 @@ $ ->
   layers = new Canvas.Selector.Layers area
   layers.element.appendTo '.side-area'
 
+  $(window).on 'resize', -> area.resize()
+
   $(document).keymap {key: CTRL | 90,         f: area.undo.bind(area)},
                      {key: CTRL | SHIFT | 90, f: area.redo.bind(area)}

@@ -94,17 +94,32 @@ class Area
       crosshair.style.left = (ev.offsetX || ev.layerX) + 'px'
       crosshair.style.top  = (ev.offsetY || ev.layerY) + 'px'
 
+  # Extend all canvases to at least fill the element.
+  #
+  # resize :: (Optional int) (Optional int) -> a
+  #
+  resize: (w, h) ->
+    w or= @element.innerWidth()
+    h or= @element.innerHeight()
+
+    for index, c of @layers
+      if c[0].width < w or c[0].height < h
+        cnv = new Canvas(max(w, c[0].width), max(h, c[0].height))
+        cnv.addClass('layer')
+        ctx = cnv[0].getContext('2d')
+        ctx.drawImage c[0], 0, 0
+        c.replaceWith(@layers[index] = cnv).remove()
+        @element.trigger 'layer:resize', [cnv[0], index]
+    # Invalidate the layout.
+    @setLayer @layer
+
   # Serialize contents of the area.
   #
   # save :: str -> str
   #
   saveAll: (type) ->
-    mw = 0
-    mh = 0
-
-    for layer in @layers
-      mw = max mw, layer.innerWidth()
-      mh = max mh, layer.innerHeight()
+    mw = @element.innerWidth()
+    mh = @element.innerHeight()
 
     switch type
       when "png"
