@@ -6,9 +6,11 @@
 # Options::
 #
 #   dynamic :: Canvas.Dynamic -- see `dynamic.coffee`
-#   opacity :: float -- 0 to 1, transparent to opaque
-#   size    :: float -- greater than 0
-#   H, S, L :: int -- same ranges as in CSS3 `hsl` function. Same purpose, too.
+#   size     :: float -- greater than 0
+#   H, S, L  :: int -- same ranges as in CSS3 `hsl` function. Same purpose, too.
+#   opacity  :: float -- 0 to 1, transparent to opaque
+#   rotation :: float -- 0 to 2pi
+#   spacing  :: float -- greater or equal to 1, only affects pattern brushes
 #
 # Tool :: Object -> Canvas.Tool
 #
@@ -19,6 +21,7 @@ class Tool
   defaults:
     dynamic: []
     rotation: 0
+    spacing: 1
     opacity: 1
     size:    1
     H: 0
@@ -70,15 +73,22 @@ class Pen extends Tool
   name: 'Pen'
 
   crosshair: (ctx) ->
-    ctx.lineWidth   = 1
-    ctx.strokeStyle = "#000"
-    ctx.beginPath()
-    ctx.arc(@options.size / 2, @options.size / 2, @options.size / 2, 0, 2 * PI, false)
-    ctx.stroke()
-    ctx.strokeStyle = "#fff"
-    ctx.beginPath()
-    ctx.arc(@options.size / 2, @options.size / 2, max(0, @options.size / 2 - 1), 0, 2 * PI, false)
-    ctx.stroke()
+    x = @options.size / 2
+    h = @options.H
+    s = @options.S
+    l = @options.L
+    o = @options.opacity
+    @options.H = 0
+    @options.S = 0
+    @options.L = 50
+    @options.opacity = 0.5
+    @start ctx, x, x,     1, 0
+    @move  ctx, x, x + 1, 1, 0
+    @stop  ctx, x, x + 1, 1, 0
+    @options.H = h
+    @options.S = s
+    @options.L = l
+    @options.opacity = o
 
   start: (ctx, x, y, pressure, rotation) ->
     ctx.save()
@@ -92,10 +102,12 @@ class Pen extends Tool
     @lastY = y
 
   move: (ctx, x, y, pressure, rotation) ->
-    steps = 10
-    dx = (x - @lastX) / steps
-    dy = (y - @lastY) / steps
-    dyn.start ctx, @, x - @lastX, y - @lastY, pressure, rotation, steps for dyn in @options.dynamic
+    dx = x - @lastX
+    dy = y - @lastY
+    steps = max 1, min 10, round dx + dy
+    dyn.start ctx, @, dx, dy, pressure, rotation, steps for dyn in @options.dynamic
+    dx /= steps
+    dy /= steps
     for i in [0...steps]
       dyn.step ctx, @ for dyn in @options.dynamic
       ctx.beginPath()
@@ -120,7 +132,7 @@ class Stamp extends Pen
   move: (ctx, x, y, pressure, rotation) ->
     dx    = x - @lastX
     dy    = y - @lastY
-    steps = ceil(pow(pow(dx, 2) + pow(dy, 2), 0.5) * 5 / @options.size)
+    steps = ceil(pow(pow(dx, 2) + pow(dy, 2), 0.5) / @options.spacing)
     dyn.start ctx, @, x - @lastX, y - @lastY, pressure, rotation, steps for dyn in @options.dynamic
 
     dx /= steps
@@ -147,6 +159,16 @@ class Resource extends Stamp
 class Eraser extends Pen
   name: 'Eraser'
   icon: 'icon-eraser'
+
+  crosshair: (ctx) ->
+    ctx.save()
+    ctx.lineWidth   = 1
+    ctx.globalAlpha = 0.5
+    ctx.strokeStyle = "hsl(0, 0%, 50%)"
+    ctx.beginPath()
+    ctx.arc(@options.size / 2, @options.size / 2, @options.size / 2, 0, 2 * PI, false)
+    ctx.stroke()
+    ctx.restore()
 
   start: (ctx) ->
     super
