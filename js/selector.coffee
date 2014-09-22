@@ -322,21 +322,21 @@ class DynamicsButton
 @Canvas.Selector.Dynamics = (area, x, y, fixed) ->
   opts =
     size:
-      kind:   'size'
       source: 'size'
       target: 'lineWidth'
       name:   "Size"
+      min: 0.01, max: 2.01, a: 0.01, k: 1
 
     opacity:
-      kind:   'opacity'
       source: 'opacity'
       target: 'globalAlpha'
       name:   "Opacity"
+      min: 0, max: 2, a: 1, k: -1
 
     rotation:
-      kind:   'rotation'
       tgcopy: 'rotation'
       name:   "Rotation"
+      min: 0, max: 2 * PI, a: 0, k: 2 * PI
 
   funcs =
     none:
@@ -375,6 +375,7 @@ class DynamicsButton
 
     if not dyn and par.find('.dynamics-selector-comp').val() != 'none'
       dyn = new Canvas.Dynamic.Option(par.data 'options')
+      dyn.options.kind = par.attr('data-option')
       dyn.options.type = types[par.find('.dynamics-selector-type').val()].value
       dyn.options.fn   = funcs[par.find('.dynamics-selector-comp').val()].fn
       dyn.options.a    = parseFloat(par.find('.dynamics-selector-a').val())
@@ -411,20 +412,18 @@ class DynamicsButton
     type = $ '<select class="dynamics-selector-type">'
     type.append "<option value='#{k}'>#{v.name}</option>" for k, v of types
 
-    item = $ '<div class="dynamics-selector-item">'
-      .attr 'data-option', x.kind
-      .data 'options',     x
+    item = $ "<div class='dynamics-selector-item' data-option='#{o}'>"
+      .data 'options', x
       .append "<div class='dynamics-selector-name'>#{x.name}</div>"
       .append comp
       .append type
-      .append "<input class='dynamics-selector-a' type='range' min=0 max=2.0 step=0.05 value=0>"
-      .append "<input class='dynamics-selector-k' type='range' min=0 max=2.0 step=0.05 value=1>"
+      .append "<input class='dynamics-selector-a' type='range' step='0.05'>"
+      .append "<input class='dynamics-selector-k' type='range' step='0.05'>"
+      .append "<div class='dynamics-selector"
       .appendTo node
 
-    if x.kind == 'size'
-      # Canvas cannot handle zero-width strokes.
-      item.find('.dynamics-selector-a').attr(min: 0.01, max: 2.01, value: 0.01)
-      item.find('.dynamics-selector-b').attr(min: 0.01, max: 2.01, value: 1.01)
+    item.find('.dynamics-selector-a').attr(min: x.min, max: x.max, value: x.a)
+    item.find('.dynamics-selector-k').attr(min: x.min, max: x.max, value: x.k + x.a)
 
   node
     .on 'change', '.dynamics-selector-comp', ->

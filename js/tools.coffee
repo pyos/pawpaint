@@ -130,7 +130,7 @@ class Stamp extends Pen
       dyn.step ctx, @ for dyn in @options.dynamic
       ctx.save()
       ctx.translate(@lastX += dx, @lastY += dy)
-      ctx.rotate(@options.rotation * 2 * PI)
+      ctx.rotate(@options.rotation)
       ctx.drawImage(@pattern, -ds, -ds, ds * 2, ds * 2)
       ctx.restore()
     dyn.stop ctx, @ for dyn in @options.dynamic
