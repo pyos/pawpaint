@@ -112,6 +112,7 @@ a:not(.fa):not(.glyphicon) {
 .layer-menu-entry {
   opacity: 0.5;
   border-top: 1px solid #bbb;
+  text-align: center;
 }
 
 .layer-menu-entry > * {
@@ -122,7 +123,9 @@ a:not(.fa):not(.glyphicon) {
 .layer-menu-entry > canvas {
   max-height: 90px;
   max-width:  90px;
-  clear: both;
+  display: block;
+  clear:  both;
+  margin: auto;
   border-bottom: 1px solid #bbb;
 }
 
@@ -209,23 +212,32 @@ a:not(.fa):not(.glyphicon) {
   content: "Export as:";
 }
 
-.export-selector .export-warning {
+.canvas-selector-container .warning {
   background: #dd9900;
+  display: block;
+  float: none;
+  clear: both;
   padding: 15px;
   white-space: normal;
+  box-shadow: 0 0 20px -10px #000 inset;
+}
+
+.canvas-selector-container .warning:last-child {
   border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
   box-shadow: 0 20px 20px -20px #000 inset;
 }
 
-.export-selector .export-warning .text-warning {
+.canvas-selector-fixed .warning:last-child {
+  border-bottom-right-radius: 0;
+}
+
+.canvas-selector-container .warning .text-warning {
   color: white;
   font-weight: bold;
 }
 
-.dynamics-selector {
-}
-
-.dynamics-selector > * {
+.dynamics-selector-item {
   float: left;
   padding: 10px;
   margin-right: 10px;
@@ -270,4 +282,10 @@ a:not(.fa):not(.glyphicon) {
 .dynamics-selector-k-label {
   color: #777;
   text-align: right;
+}
+
+@media (max-width: 640px) {
+  .dynamics-selector-item:first-child {
+    display: none;
+  }
 }

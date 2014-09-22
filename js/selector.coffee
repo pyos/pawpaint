@@ -325,18 +325,18 @@ class DynamicsButton
       source: 'size'
       target: 'lineWidth'
       name:   "Size"
-      min: 0.01, max: 2.01, a: 0.01, k: 1
+      min: 0.01, max: 2.01, step: 0.05, a: 0.01, k: 1
 
     opacity:
       source: 'opacity'
       target: 'globalAlpha'
       name:   "Opacity"
-      min: 0, max: 2, a: 1, k: -1
+      min: 0, max: 2, step: 0.05, a: 1, k: -1
 
     rotation:
       tgcopy: 'rotation'
       name:   "Rotation"
-      min: 0, max: 2 * PI, a: 0, k: 2 * PI
+      min: 0, max: 2 * PI, step: PI / 90, a: 0, k: 2 * PI
 
   funcs =
     none:
@@ -422,9 +422,10 @@ class DynamicsButton
       .append "<div class='dynamics-selector"
       .appendTo node
 
-    item.find('.dynamics-selector-a').attr(min: x.min, max: x.max, value: x.a)
-    item.find('.dynamics-selector-k').attr(min: x.min, max: x.max, value: x.k + x.a)
+    item.find('.dynamics-selector-a').attr(min: x.min, max: x.max, step: x.step, value: x.a)
+    item.find('.dynamics-selector-k').attr(min: x.min, max: x.max, step: x.step, value: x.k + x.a)
 
+  node.append $(Canvas.getResource('dynamics-warning')).clone()
   node
     .on 'change', '.dynamics-selector-comp', ->
       withItem this, (val, par, dyn) ->
