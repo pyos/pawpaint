@@ -100,21 +100,26 @@ class Pen extends Tool
     dyn.reset ctx, @, x, y, pressure, rotation for dyn in @options.dynamic
     @lastX = x
     @lastY = y
+    @empty = true
 
   move: (ctx, x, y, pressure, rotation) ->
     dx = x - @lastX
     dy = y - @lastY
-    steps = max 1, min 10, round dx + dy
-    dyn.start ctx, @, dx, dy, pressure, rotation, steps for dyn in @options.dynamic
-    dx /= steps
-    dy /= steps
-    for i in [0...steps]
-      dyn.step ctx, @ for dyn in @options.dynamic
-      ctx.beginPath()
-      ctx.moveTo((@lastX),       (@lastY))
-      ctx.lineTo((@lastX += dx), (@lastY += dy))
-      ctx.stroke()
-    dyn.stop ctx, @ for dyn in @options.dynamic
+    if steps = floor(pow(pow(dx, 2) + pow(dy, 2), 0.5) / @options.spacing) or @empty
+      dyn.start ctx, @, dx, dy, pressure, rotation, steps for dyn in @options.dynamic
+      dx /= steps
+      dy /= steps
+      for i in [0...steps]
+        dyn.step ctx, @ for dyn in @options.dynamic
+        @step(ctx, @lastX, @lastY, @lastX += dx, @lastY += dy)
+      dyn.stop ctx, @ for dyn in @options.dynamic
+      @empty = false
+
+  step: (ctx, x, y, nx, ny) ->
+    ctx.beginPath()
+    ctx.moveTo(x, y)
+    ctx.lineTo(nx, ny)
+    ctx.stroke()
 
   stop: (ctx, x, y) ->
     dyn.restore ctx, @ for dyn in @options.dynamic
@@ -129,23 +134,13 @@ class Stamp extends Pen
     @pattern = Canvas.scale @img, @options.size, @options.size
     super
 
-  move: (ctx, x, y, pressure, rotation) ->
-    dx    = x - @lastX
-    dy    = y - @lastY
-    steps = ceil(pow(pow(dx, 2) + pow(dy, 2), 0.5) / @options.spacing)
-    dyn.start ctx, @, x - @lastX, y - @lastY, pressure, rotation, steps for dyn in @options.dynamic
-
-    dx /= steps
-    dy /= steps
-    ds  = ctx.lineWidth / 2
-    for i in [0...steps]
-      dyn.step ctx, @ for dyn in @options.dynamic
-      ctx.save()
-      ctx.translate(@lastX += dx, @lastY += dy)
-      ctx.rotate(@options.rotation)
-      ctx.drawImage(@pattern, -ds, -ds, ds * 2, ds * 2)
-      ctx.restore()
-    dyn.stop ctx, @ for dyn in @options.dynamic
+  step: (ctx, x, y, nx, ny) ->
+    ds = ctx.lineWidth
+    ctx.save()
+    ctx.translate(nx, ny)
+    ctx.rotate(@options.rotation)
+    ctx.drawImage(@pattern, -ds / 2, -ds / 2, ds, ds)
+    ctx.restore()
 
 
 class Resource extends Stamp
