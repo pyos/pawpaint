@@ -19,8 +19,8 @@ class Selector
 
   onMouseMove: (ev) ->
     if @update(ev.offsetX || ev.layerX, ev.offsetY || ev.layerY)
-      @redraw false, @element[0].getContext '2d'
       @element.trigger 'change', [@value]
+      @redraw false, @element[0].getContext '2d'
 
   onMouseDown: (ev) ->
     if ev.button == 0
@@ -125,7 +125,7 @@ class ColorSelector extends Selector
     ctx.restore()
 
 
-# A vertical bar that changes the size of a pen or whatever.
+# A vertical bar that controls one value.
 # The approximate shape of the result is also displayed inside the bar.
 #
 #   width  :: int
@@ -134,14 +134,14 @@ class ColorSelector extends Selector
 #   high   :: int -- limits on the size of the tool
 #   margin :: int -- distance between the end positions and the actual border of the element
 #
-# WidthSelector :: Canvas.Area int int int int int -> Canvas.Selector
+# VerticalSelector :: Canvas.Area int int int int int -> Canvas.Selector
 #
-class WidthSelector extends Selector
+class VerticalSelector extends Selector
   constructor: (area, width, height, low, high, margin) ->
-    @value  = area.tool.options.size
     @low    = low     # min. value
     @high   = high    # max. value
     @margin = margin  # spacing between the element's edge and the limits
+    @value  = @init area
     super area, width, height
 
   update: (x, y) ->
@@ -150,9 +150,10 @@ class WidthSelector extends Selector
   redraw: (i, c) ->
     c.clearRect 0, 0, @width, @height
     c.save()
-    c.translate((@width - @value) / 2, (@height - @value) / 2)
-    tool = new @area.tool.constructor(size: @value, H: 0, S: 0, L: 50, opacity: 0.5)
-    tool.crosshair c
+    c.translate(@width / 2, @height / 2)
+    tool = new @area.tool.constructor(@area.tool.options)
+    tool.setOptions dynamic: [], opacity: 0.5, H: 0, S: 0, L: 50
+    @draw(tool, c)
     c.restore()
 
     y = (@high - @value) * (@height - 2 * @margin) / (@high - @low) + @margin
@@ -162,6 +163,15 @@ class WidthSelector extends Selector
     c.moveTo 0, y
     c.lineTo @width, y
     c.stroke()
+
+
+# A vertical bar that changes the size of a pen or whatever.
+#
+# WidthSelector :: typeof VerticalSelector
+#
+class WidthSelector extends VerticalSelector
+  init: (area)      -> area.tool.options.size
+  draw: (tool, ctx) -> tool.crosshair ctx
 
 
 # A list of all available tools.
@@ -216,10 +226,10 @@ class ToolSelector extends Selector
       .append width.element.addClass 'canvas-selector-width'
       .append tools.element.addClass 'canvas-selector-tool')
 
-  tools.element.on 'change', (_, value) -> width.forceRedraw()
-  tools.element.on 'change', (_, value) -> area.setTool(value, area.tool.options)
   width.element.on 'change', (_, value) -> area.setToolOptions(size: value)
   color.element.on 'change', (_, value) -> area.setToolOptions(value)
+  tools.element.on 'change', (_, value) -> area.setTool(value, area.tool.options)
+  tools.element.on 'change', width.forceRedraw.bind(width)
   cover
 
 
