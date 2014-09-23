@@ -73,7 +73,6 @@ class Pen extends Tool
   name: 'Pen'
 
   crosshair: (ctx) ->
-    x = @options.size / 2
     h = @options.H
     s = @options.S
     l = @options.L
@@ -82,9 +81,9 @@ class Pen extends Tool
     @options.S = 0
     @options.L = 50
     @options.opacity = 0.5
-    @start ctx, x, x,     1, 0
-    @move  ctx, x, x + 1, 1, 0
-    @stop  ctx, x, x + 1, 1, 0
+    @start ctx, 0, 0, 1, 0
+    @move  ctx, 0, 1, 1, 0
+    @stop  ctx, 0, 1, 1, 0
     @options.H = h
     @options.S = s
     @options.L = l

@@ -366,7 +366,9 @@ class Area
     @crosshair.style.marginLeft = -@tool.options.size / 2 + 'px'
     @crosshair.style.marginTop  = -@tool.options.size / 2 + 'px'
     @crosshair.style.display = if @tool.options.size > 5 then '' else 'none'
-    @tool.crosshair @crosshair.getContext('2d')
+    ctx = @crosshair.getContext('2d')
+    ctx.translate @tool.options.size / 2, @tool.options.size / 2
+    @tool.crosshair ctx
 
 
 @Canvas.Area = Area
