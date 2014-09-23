@@ -14,9 +14,10 @@
 # Dynamic :: Object -> Canvas.Dynamic
 #
 class Dynamic
-  VELOCITY: 0
-  PRESSURE: 1
-  ROTATION: 2
+  VELOCITY:  0
+  DIRECTION: 1
+  PRESSURE:  2
+  ROTATION:  3
 
   constructor: (options) ->
     @options = jQuery.extend(@options or {}, {
@@ -40,9 +41,10 @@ class Dynamic
   reset: (ctx, tool) -> @_f = @options.fn()
   start: (ctx, tool, dx, dy, pressure, rotation, steps) ->
     v = switch @options.type
-      when @VELOCITY then pow(pow(dx, 2) + pow(dy, 2), 0.5) / 20
-      when @PRESSURE then pressure
-      when @ROTATION then rotation / 2 / PI
+      when @VELOCITY  then pow(pow(dx, 2) + pow(dy, 2), 0.5) / 20
+      when @DIRECTION then atan2(dy, dx) / 2 / PI
+      when @PRESSURE  then pressure
+      when @ROTATION  then rotation / 2 / PI
       else 0
     @options.a + @options.k * min 1, max 0, @_f(v)
 

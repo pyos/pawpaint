@@ -373,6 +373,10 @@ class DynamicsButton
       value: Canvas.Dynamic.prototype.VELOCITY
       name:  "Velocity"
 
+    direction:
+      value: Canvas.Dynamic.prototype.DIRECTION
+      name:  "Direction"
+
     pressure:
       value: Canvas.Dynamic.prototype.PRESSURE
       name:  "Pressure"
