@@ -192,41 +192,38 @@ $.fn.selector_dynamics = (area, x, y, fixed) ->
 
   t = @clone()
     .on 'change', '.comp', ->
-      self = $(@).parents '.item'
-      dobj = self.data 'dynamic'
-      dobj.options.fn = funcs[@value] if dobj and @value
+      self = $(@).parents('.item')
+      data = self.data('dynamic')
+      data.options.fn = funcs[@value] if data and @value
 
-      if dobj and not @value
-        i = area.tool.options.dynamic.indexOf(dobj)
+      if data and not @value
+        i = area.tool.options.dynamic.indexOf(data)
         _ = area.tool.options.dynamic.splice(i, 1)
-        return self.data 'dynamic', null
-      else if not dobj
-        dobj = new Canvas.Dynamic.Option
+        return self.data('dynamic', null)
+      else if not data
+        data = new Canvas.Dynamic.Option
           source: self.attr('data-source')
           target: self.attr('data-target')
           tgcopy: self.attr('data-tgcopy')
           kind  : self.attr('data-kind')
-        self.data('dynamic', dobj)
+        self.data('dynamic', data)
         self.find('.comp, .type, .min, .max').trigger('change')
-        area.tool.options.dynamic.push(dobj)
+        area.tool.options.dynamic.push(data)
 
     .on 'change', '.type', ->
-      self = $(@).parents '.item'
-      dobj = self.data 'dynamic'
-      dobj.options.type = types[@value] if dobj
+      data = $(@).parents('.item').data('dynamic')
+      data.options.type = types[@value] if data
 
     .on 'change', '.min', ->
-      self = $(@).parents '.item'
-      dobj = self.data 'dynamic'
-      if dobj
-        dobj.options.k += dobj.options.a
-        dobj.options.a  = parseFloat @value
-        dobj.options.k -= dobj.options.a
+      data = $(@).parents('.item').data('dynamic')
+      if data
+        data.options.k += data.options.a
+        data.options.a  = parseFloat @value
+        data.options.k -= data.options.a
 
     .on 'change', '.max', ->
-      self = $(@).parents '.item'
-      dobj = self.data 'dynamic'
-      dobj.options.k = parseFloat @value - dobj.options.a if dobj
+      data = $(@).parents('.item').data('dynamic')
+      data.options.k = parseFloat @value - data.options.a if data
 
     .on 'click', (ev) -> ev.stopPropagation()
 
@@ -241,29 +238,27 @@ $.fn.selector_dynamics = (area, x, y, fixed) ->
   t.selector_modal(x, y, fixed)
 
 
-$.fn.selector_layers = (area) ->
-  @on 'click', '.action-add',    (ev) -> area.addLayer()
-  @on 'click', '.action-del',    (ev) -> area.delLayer    $(@).parents('li').index()
-  @on 'click', '.action-toggle', (ev) -> area.toggleLayer $(@).parents('li').index()
-  @on 'click', 'li',             (ev) -> area.setLayer    $(@).index()
+$.fn.selector_layers = (area, template) ->
+  @append '<li class="hidden">'
+  @on 'click',       'li', (ev) -> area.setLayer $(@).index()
+  @on 'contextmenu', 'li', (ev) ->
+    ev.preventDefault()
+    index  = $(@).index()
+    offset = $(@).offset()
+    $(template).selector_layer_config(area, index, offset.left, offset.top, true).appendTo('body')
 
   area.element
     .on 'layer:add', (_, canvas, index) =>
       sz = 150 / max(canvas.width, canvas.height)
-
       entry = $ '<li class="background">'
-        .append new Canvas canvas.width * sz, canvas.height * sz
-        .append '<a class="action-del fa fa-trash">'
-        .append '<a class="action-toggle fa fa-toggle-on">'
-        .append '<a class="action-config fa fa-adjust">'
-        .insertBefore @children().eq(index)
-      entry.addClass 'layer-hidden' if canvas.style.display == 'none'
+      entry.addClass 'hidden' if canvas.style.display == 'none'
+      entry.append new Canvas canvas.width * sz, canvas.height * sz
+      entry.insertBefore @children().eq(index)
 
     .on 'layer:resize', (_, canvas, index) =>
-      nsz = 150 / max(canvas.width, canvas.height)
-      cnv = @children().eq(index).find('canvas')
-      cnv.replaceWith(cnv = new Canvas(canvas.width * nsz, canvas.height * nsz)).remove()
-      @trigger 'update', [canvas, index]
+      sz = 150 / max(canvas.width, canvas.height)
+      entry = @children().eq(index).find('canvas')
+      entry.replaceWith new Canvas canvas.width * sz, canvas.height * sz
 
     .on 'layer:redraw', (_, canvas, index) =>
       cnv = @children().eq(index).find('canvas')
@@ -276,3 +271,8 @@ $.fn.selector_layers = (area) ->
     .on 'layer:del',    (_, index)    => @children().eq(index).remove()
     .on 'layer:move',   (_, index, d) => @children().eq(index).insertAfter @element.children().eq(index + d)
     .on 'layer:toggle', (_, index)    => @children().eq(index).toggleClass('layer-hidden')
+
+
+$.fn.selector_layer_config = (area, index, x, y, fixed) ->
+  t = @clone()
+  t.selector_modal(x, y, fixed)

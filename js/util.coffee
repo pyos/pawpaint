@@ -69,16 +69,14 @@
   ct
 
 
-# Listen for key events and react to certain combinations::
-#
-#   element.keymap {key: CTRL | Z, fn: undo}, ...
-#
+# Listen for key events and emit events such as `key:ctrl+shift+127`.
 # Mostly useless since browsers hog key combos for themselves.
 #
-# keymap :: *KeySpec -> jQuery
+# keymappable :: -> jQuery
 #
-$.fn.keymap = (maps...) ->
-  this.on 'keydown', (ev) ->
-    k = ev.ctrlKey * CTRL | ev.shiftKey * SHIFT | ev.altKey * ALT | ev.metaKey * META | ev.keyCode
-    for spec in maps
-      return spec.f() if k == spec.key
+$.fn.keymappable = -> @on 'keydown', (ev) ->
+  n  = if ev.ctrlKey  then 'ctrl+'  else ''
+  n += if ev.shiftKey then 'shift+' else ''
+  n += if ev.altKey   then 'alt+'   else ''
+  n += if ev.metaKey  then 'meta+'  else ''
+  $(@).trigger "key:#{n}#{ev.keyCode}", [ev]

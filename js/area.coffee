@@ -34,7 +34,7 @@ class Area
   UNDO_DEL_LAYER:  2
   UNDO_MOVE_LAYER: 3
 
-  constructor: (selector, tools) ->
+  constructor: (selector, tools...) ->
     # The main canvas container. Also fires some events; use `.element.on` to react.
     #
     # Drawing-related:
@@ -59,7 +59,7 @@ class Area
     # A list of subclasses of `Canvas.Tool`.
     # You may use whatever tool you want through `setTool`, but only
     # these will be displayed in the options window.
-    @tools = tools || [Canvas.Tool.Pen, Canvas.Tool.Eraser]
+    @tools = tools
 
     # A complete list of layers ordered by z-index; each one is a `jQuery` object
     # wrapping a single `Canvas`.
@@ -111,6 +111,7 @@ class Area
         ctx.drawImage c[0], 0, 0
         c.replaceWith(@layers[index] = cnv).remove()
         @element.trigger 'layer:resize', [cnv[0], index]
+        @element.trigger 'layer:redraw', [cnv[0], index]
     # Invalidate the layout.
     @setLayer @layer
 

@@ -85,13 +85,10 @@ a:not(.fa):not(.glyphicon) {
 }
 
 .layer-menu {
+  clear: both;
   list-style: none;
   padding: 0;
   margin: 0;
-}
-
-.layer-hidden .fa-toggle-on:before {
-  content: "\f204";
 }
 
 .layer-menu li {
@@ -103,12 +100,7 @@ a:not(.fa):not(.glyphicon) {
   padding: 10px 5px;
 }
 
-.layer-menu .action-add > a {
-  padding: 15px;
-  color: inherit;
-}
-
-.layer-menu li:not(.action-add) {
+.layer-menu li {
   opacity: 0.5;
   border-top: 1px solid #bbb;
   text-align: center;
@@ -195,7 +187,7 @@ a:not(.fa):not(.glyphicon) {
 
 .selector-text .header {
   font-weight: bold;
-  padding: 15px 15px 0 15px;
+  padding: 15px;
 }
 
 .selector-text .warning {
@@ -220,12 +212,12 @@ a:not(.fa):not(.glyphicon) {
 
 .selector-export ul {
   list-style: none;
-  padding:    10px;
+  padding:    0 10px 15px 25px;
   margin:     0;
 }
 
 .selector-export li {
-  padding: 5px 5px 5px 15px;
+  padding-bottom: 5px;
 }
 
 .selector-export a {

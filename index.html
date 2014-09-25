@@ -19,14 +19,14 @@
   </head>
   <body>
     <div class="side-area">
-      <canvas class="action-tool" width="45" height="45"></canvas>
-      <a class="action-dynamics fa fa-line-chart"></a>
-      <a class="action-undo fa fa-undo"></a>
-      <a class="action-redo fa fa-repeat"></a>
-      <a class="action-export fa fa-save"></a>
-      <ul class="layer-menu">
-        <li class="action-add"><a class="fa fa-plus"></a></li>
-      </ul>
+      <canvas class="action-tool" width="45" height="45" title="Tools and colors..."></canvas>
+      <a class="action-dynamics fa fa-line-chart" title="Dynamics..."></a>
+      <a class="action-undo fa fa-undo" title="Undo"></a>
+      <a class="action-redo fa fa-repeat" title="Redo"></a>
+      <a class="action-export fa fa-save" title="Export as..."></a>
+      <ul class="layer-menu"></ul>
+      <a class="action-add-layer fa fa-asterisk" title="New layer"></a>
+      <a class="action-del-layer fa fa-trash" title="Remove layer"></a>
     </div>
     <div class="main-area"></div>
 
@@ -109,6 +109,10 @@
         </div>
       </div>
 
+      <div class="selector-layer-config selector-text">
+        <div class="header">Layer options</div>
+        <div class="warning"><b>Not implemented</b></div>
+      </div>
     </div>
 
     <div class="hidden resources">
