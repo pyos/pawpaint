@@ -18,18 +18,17 @@ class Tool
   name: 'Tool'
   icon: null
 
-  defaults:
-    dynamic: []
-    rotation: 0
-    spacing: 1
-    opacity: 1
-    size:    1
-    H: 0
-    S: 0
-    L: 0
-
   constructor: (options) ->
-    @options = jQuery.extend {}, @defaults
+    @options = {}
+    @setOptions
+      dynamic: []
+      rotation: 0
+      spacing: 1
+      opacity: 1
+      size:    1
+      H: 0
+      S: 0
+      L: 0
     @setOptions options
 
   # Change some of the values. The rest remain intact.
@@ -160,7 +159,7 @@ class Eraser extends Pen
     ctx.globalAlpha = 0.5
     ctx.strokeStyle = "hsl(0, 0%, 50%)"
     ctx.beginPath()
-    ctx.arc(@options.size / 2, @options.size / 2, @options.size / 2, 0, 2 * PI, false)
+    ctx.arc(0, 0, @options.size / 2, 0, 2 * PI, false)
     ctx.stroke()
     ctx.restore()
 

@@ -40,20 +40,21 @@ class Area
     # Drawing-related:
     #   stroke:begin (ev: Event, layer: Canvas, index: int) - before drawing
     #   stroke:end   (ev: Event, layer: Canvas, index: int) - after drawing
-    #   refresh      (ev: Event, layer: Canvas, index: int) - when using `drawImage`
     #
     # Configuration:
     #   tool:kind    (ev: Event, kind: Class, opts: Object) - when a new tool is assigned
     #   tool:<name>  (ev: Event, value: any, opts: Object) - when a setting is modified
     #
     # Layers:
-    #   layer:add    (ev: Event, layer: jQuery[Canvas])
+    #   layer:add    (ev: Event, layer: Canvas, index: int)
+    #   layer:redraw (ev: Event, layer: Canvas, index: int)
     #   layer:del    (ev: Event, index: int)
     #   layer:set    (ev: Event, index: int)
     #   layer:toggle (ev: Event, index: int)
     #   layer:move   (ev: Event, old: int, delta: int)
     #
     @element = $(selector).eq(0).addClass 'background'
+    @element.on 'stroke:end', (_, c, i) -> $(@).trigger 'layer:redraw', [c, i]
 
     # A list of subclasses of `Canvas.Tool`.
     # You may use whatever tool you want through `setTool`, but only
@@ -166,7 +167,6 @@ class Area
             @addLayer()
             @load(@layer, layer.getAttribute("xlink:href"), true)
         return true
-    console.log 3
     return false
 
   # Save a snapshot of a single layer in the undo stack.
@@ -194,7 +194,7 @@ class Area
     ctx = @layers[layer][0].getContext '2d'
     ctx.clearRect(0, 0, @layers[layer][0].width, @layers[layer][0].height)
     ctx.drawImage(img, 0, 0)
-    @element.trigger 'refresh', [@layers[layer][0], layer]
+    @element.trigger 'layer:redraw', [@layers[layer][0], layer]
 
   # Restore the previous `snap`ped state.
   #
@@ -291,7 +291,7 @@ class Area
     layer = $ "<canvas class='layer'
       width='#{@element.innerWidth()}'
       height='#{@element.innerHeight()}'>"
-    layer.appendTo @element.trigger('layer:add', [layer])
+    layer.appendTo @element.trigger('layer:add', [layer[0], index])
 
     @layers.splice(index, 0, layer)
     @setLayer(index)

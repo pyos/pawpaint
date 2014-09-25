@@ -61,8 +61,7 @@ a:not(.fa):not(.glyphicon) {
   color:      white;
 }
 
-.side-area > a, .tool-name {
-  display: inline-block;
+.side-area > a, .side-area > canvas {
   width:   45px;
   height:  45px;
   padding: 10px;
@@ -75,15 +74,15 @@ a:not(.fa):not(.glyphicon) {
   vertical-align: middle;
 }
 
-.tool-name {
+.side-area > *, .selector-main > * {
+  display: block;
+  float: left;
+}
+
+.action-tool {
   border-bottom-right-radius: 10px;
   box-shadow: 0 0 10px -5px #000 inset;
 }
-
-.undo-btn:before        { content: "\f0e2"; font-family: FontAwesome; }
-.redo-btn:before        { content: "\f01e"; font-family: FontAwesome; }
-.export-button:before   { content: "\f0c7"; font-family: FontAwesome; }
-.dynamics-button:before { content: "\f201"; font-family: FontAwesome; }
 
 .layer-menu {
   list-style: none;
@@ -95,32 +94,32 @@ a:not(.fa):not(.glyphicon) {
   content: "\f204";
 }
 
-.layer-menu-entry > a {
-  padding: 10px 5px;
-}
-
-.layer-menu-control > a {
-  padding: 15px;
-  color: inherit;
-}
-
-.layer-menu-entry, .layer-menu-control {
+.layer-menu li {
   display: block;
   text-align: center;
 }
 
-.layer-menu-entry {
+.layer-menu li > a {
+  padding: 10px 5px;
+}
+
+.layer-menu .action-add > a {
+  padding: 15px;
+  color: inherit;
+}
+
+.layer-menu li:not(.action-add) {
   opacity: 0.5;
   border-top: 1px solid #bbb;
   text-align: center;
 }
 
-.layer-menu-entry > * {
+.layer-menu li > * {
   display: inline-block;
   vertical-align: middle;
 }
 
-.layer-menu-entry > canvas {
+.layer-menu li > canvas {
   max-height: 90px;
   max-width:  90px;
   display: block;
@@ -129,12 +128,12 @@ a:not(.fa):not(.glyphicon) {
   border-bottom: 1px solid #bbb;
 }
 
-.layer-menu-entry.active {
+.layer-menu li.active {
   border-color: transparent;
   opacity: 1;
 }
 
-.canvas-selector-container {
+.cover {
   position: absolute;
   z-index: 65538;
   top:    0;
@@ -144,72 +143,62 @@ a:not(.fa):not(.glyphicon) {
   overflow: hidden;
 }
 
-.canvas-selector-container > * {
-  position: absolute;
-  float:    left;
-
-  white-space: nowrap;
-  border-radius: 5px;
-
-  background: #000;
-  color:      white;
-  box-shadow: 0 0 20px -5px #000;
-}
-
-.canvas-selector-container a {
+.cover a {
   color: inherit;
 }
 
-.canvas-selector-fixed > * {
-  left: auto !important;
+.cover > * {
+  position: absolute;
+  /* Don't scale to window, don't break lines if displayed
+   * with not enough space to the right.
+   */
+  float: left;
+  white-space: nowrap;
+
+  color: white;
+  background: #000;
+  box-shadow: 0 0 20px -5px #000;
+  border-radius: 5px;
+}
+
+.cover > .fixed {
+  /* Must sync up with .side-area{width} */
   right: 100px;
+  left: auto !important;
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
 }
 
-.canvas-selector {
+.selector-main {
   border-radius: 100px 0 0 100px;
 }
 
-.canvas-selector, .canvas-selector > * {
+.selector-main:not(.fixed) {
+  margin-left: -100px;
+  margin-top: -100px;
+}
+
+.selector-main > * {
   vertical-align: top;
 }
 
-.canvas-selector-width {
+.selector-width {
   cursor: ns-resize;
   margin-left: 10px;
   border-left:  1px solid #444;
   border-right: 1px solid #444;
 }
 
-.canvas-selector-color {
+.selector-color {
   cursor: crosshair;
 }
 
-.export-selector ul {
-  list-style: none;
-  padding:    10px;
-  margin:     0;
-}
-
-.export-selector li {
-  padding: 5px;
-}
-
-.export-selector li:not(.export-selector-header) {
-  padding-left: 15px;
-}
-
-.export-selector a {
-  text-decoration: underline;
-}
-
-.export-selector-header:before {
+.selector-text .header {
   font-weight: bold;
-  content: "Export as:";
+  padding: 15px 15px 0 15px;
 }
 
-.canvas-selector-container .warning {
+.selector-text .warning {
   background: #dd9900;
   display: block;
   float: none;
@@ -219,70 +208,49 @@ a:not(.fa):not(.glyphicon) {
   box-shadow: 0 0 20px -10px #000 inset;
 }
 
-.canvas-selector-container .warning:last-child {
+.selector-text .warning:last-child {
   border-bottom-left-radius: 5px;
   border-bottom-right-radius: 5px;
   box-shadow: 0 20px 20px -20px #000 inset;
 }
 
-.canvas-selector-fixed .warning:last-child {
+.selector-text .warning:last-child {
   border-bottom-right-radius: 0;
 }
 
-.canvas-selector-container .warning .text-warning {
-  color: white;
-  font-weight: bold;
+.selector-export ul {
+  list-style: none;
+  padding:    10px;
+  margin:     0;
 }
 
-.dynamics-selector-item {
+.selector-export li {
+  padding: 5px 5px 5px 15px;
+}
+
+.selector-export a {
+  text-decoration: underline;
+}
+
+.selector-dynamics .item {
   float: left;
   padding: 10px;
   margin-right: 10px;
 }
 
-.dynamics-selector-item > * {
+.selector-dynamics .item > * {
   display: block;
 }
 
-.dynamics-selector-item > *:not(.dynamics-selector-name) {
+.selector-dynamics .item > *:not(.name) {
   margin-top:  5px;
   margin-left: 10px;
 }
 
-.dynamics-selector-item > select {
-  color: black;
-}
-
-.dynamics-selector-name {
+.selector-dynamics .name {
   font-weight: bold;
 }
 
-.dynamics-selector-comp-label:before {
-  content: "is a";
-}
-
-.dynamics-selector-type-label:before {
-  content: "of";
-}
-
-.dynamics-selector-a-label:before {
-  content: "low:";
-}
-
-.dynamics-selector-k-label:before {
-  content: "high:";
-}
-
-.dynamics-selector-comp-label,
-.dynamics-selector-type-label,
-.dynamics-selector-a-label,
-.dynamics-selector-k-label {
-  color: #777;
-  text-align: right;
-}
-
-@media (max-width: 640px) {
-  .dynamics-selector-item:first-child {
-    display: none;
-  }
+.selector-dynamics select {
+  color: black;
 }

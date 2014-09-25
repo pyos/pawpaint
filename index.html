@@ -4,12 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
     <title>HTML5 cannot into pressure</title>
-    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
-    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="3rdparty/css/bootstrap.min.css">
+    <link rel="stylesheet" href="3rdparty/css/font-awesome.min.css">
     <link rel="stylesheet" href="css/index.css">
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
 
+    <script src="3rdparty/js/jquery.min.js"></script>
+    <script src="3rdparty/js/bootstrap.min.js"></script>
     <script src="js/util.js"></script>
     <script src="js/area.js"></script>
     <script src="js/tools.js"></script>
@@ -18,8 +18,99 @@
     <script src="js/index.js"></script>
   </head>
   <body>
-    <div class="side-area"></div>
+    <div class="side-area">
+      <canvas class="action-tool" width="45" height="45"></canvas>
+      <a class="action-dynamics fa fa-line-chart"></a>
+      <a class="action-undo fa fa-undo"></a>
+      <a class="action-redo fa fa-repeat"></a>
+      <a class="action-export fa fa-save"></a>
+      <ul class="layer-menu">
+        <li class="action-add"><a class="fa fa-plus"></a></li>
+      </ul>
+    </div>
     <div class="main-area"></div>
+
+    <div class="hidden templates">
+      <div class="selector-main">
+        <canvas width="200" height="200" class="selector-color"></canvas>
+        <canvas width="40"  height="200" class="selector-width"></canvas>
+        <canvas width="100" height="200" class="selector-tools"></canvas>
+      </div>
+
+      <div class="selector-export selector-text">
+        <div class="header">
+          Export as:
+        </div>
+        <ul>
+          <li><a data-type='png'>PNG</a> <span class='text-muted'>(Flattened)</span></li>
+          <li><a data-type='svg'>SVG+PNG</a> <span class='text-muted'>(Layered)</span></li>
+        </ul>
+        <div class="warning">
+          <b>Warning:</b> these links generate long <code>data:</code> URLs.
+        </div>
+      </div>
+
+      <div class="selector-dynamics selector-text">
+        <div class="item" data-kind="size" data-source="size" data-target="lineWidth">
+          <div class="name">Size</div>
+          <select class="comp">
+            <option value="">Disabled</option>
+            <option value="linear">Current value</option>
+            <option value="movingAverage">Moving average</option>
+            <option value="random">Random</option>
+          </select>
+          <select class="type">
+            <option value="VELOCITY">Velocity</option>
+            <option value="DIRECTION">Direction</option>
+            <option value="PRESSURE">Pressure</option>
+            <option value="ROTATION">Rotation</option>
+          </select>
+          <input type="range" class="min" min="0.01" max="2.01" step="0.05" value="0.01" />
+          <input type="range" class="max" min="0.01" max="2.01" step="0.05" value="1.01" />
+        </div>
+
+        <div class="item" data-kind="opacity" data-source="opacity" data-target="globalAlpha">
+          <div class="name">Opacity</div>
+          <select class="comp">
+            <option value="">Disabled</option>
+            <option value="linear">Current value</option>
+            <option value="movingAverage">Moving average</option>
+            <option value="random">Random</option>
+          </select>
+          <select class="type">
+            <option value="VELOCITY">Velocity</option>
+            <option value="DIRECTION">Direction</option>
+            <option value="PRESSURE">Pressure</option>
+            <option value="ROTATION">Rotation</option>
+          </select>
+          <input type="range" class="min" min="0" max="2" step="0.05" value="1" />
+          <input type="range" class="max" min="0" max="2" step="0.05" value="0" />
+        </div>
+
+        <div class="item" data-kind="rotation" data-tgcopy="rotation">
+          <div class="name">Rotation</div>
+          <select class="comp">
+            <option value="">Disabled</option>
+            <option value="linear">Current value</option>
+            <option value="movingAverage">Moving average</option>
+            <option value="random">Random</option>
+          </select>
+          <select class="type">
+            <option value="VELOCITY">Velocity</option>
+            <option value="DIRECTION">Direction</option>
+            <option value="PRESSURE">Pressure</option>
+            <option value="ROTATION">Rotation</option>
+          </select>
+          <input type="range" class="min" min="0" max="6.28" step="0.063" value="0" />
+          <input type="range" class="max" min="0" max="6.28" step="0.063" value="6.28" />
+        </div>
+        <div class="warning">
+          <b>Pressure and rotation</b> are only supported on some touchscreens.
+        </div>
+      </div>
+
+    </div>
+
     <div class="hidden resources">
       <!-- icons -->
       <img src="img/icon.eraser.png" class="icon-eraser" />
@@ -30,13 +121,6 @@
       <img src="img/brush.circle-blur-64.png" class="brush-circle-blur-64" />
       <img src="img/brush.skewed-ellipse.png" class="brush-skewed-ellipse" />
       <img src="img/brush.star.png" class="brush-star" />
-      <!-- misc text -->
-      <div class="warning dynamics-warning">
-        <span class="text-warning">Pressure and rotation</span> are only supported on some touchscreens.
-      </div>
-      <div class="warning export-warning">
-        <span class="text-warning">Warning:</span> these links generate long <code>data:</code> URLs.
-      </div>
     </div>
   </body>
 </html>
