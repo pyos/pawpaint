@@ -6,6 +6,7 @@ body {
   right:  0;
   cursor: default;
   z-index: -65536;
+  -ms-touch-action: none;
 }
 
 a:not(.fa):not(.glyphicon) {
@@ -28,10 +29,18 @@ a:not(.fa):not(.glyphicon) {
 .main-area {
   position: relative;
   overflow: hidden;
-  z-index: -65536;
+  z-index:  65535;
   height:   100%;
   margin:   0;
   cursor:   crosshair;
+}
+
+.main-area .warning {
+  position: relative;
+  z-index: -65536;
+  opacity: 0.2;
+  padding: 50px;
+  font-size: 20px;
 }
 
 .background {
@@ -222,6 +231,13 @@ a:not(.fa):not(.glyphicon) {
 
 .selector-export a {
   text-decoration: underline;
+}
+
+body:not(.no-data-url) .no-data-url,
+body:not(.no-canvas)   .no-canvas,
+body.no-data-url       .data-url-only,
+body.no-canvas         .canvas-only {
+  display: none;
 }
 
 .selector-dynamics .item {

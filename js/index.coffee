@@ -19,6 +19,8 @@ $ ->
     .on 'click', '.action-del-layer', -> area.delLayer(area.layer)
     .on 'click', '.action-undo',      -> area.undo()
     .on 'click', '.action-redo',      -> area.redo()
+  $('body').addClass('no-canvas')   if !Canvas.exists()
+  $('body').addClass('no-data-url') if !Canvas.hasDataURL()
 
   $('.action-tool')     .selector_button(area, $.fn.selector_main,     '.templates .selector-main')
   $('.action-export')   .selector_button(area, $.fn.selector_export,   '.templates .selector-export')

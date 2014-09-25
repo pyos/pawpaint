@@ -269,7 +269,7 @@ $.fn.selector_layers = (area, template) ->
 
     .on 'layer:set',    (_, index)    => @children().removeClass('active').eq(index).addClass('active')
     .on 'layer:del',    (_, index)    => @children().eq(index).remove()
-    .on 'layer:move',   (_, index, d) => @children().eq(index).insertAfter @element.children().eq(index + d)
+    .on 'layer:move',   (_, index, d) => @children().eq(index).insertBefore @children().eq(index + d)
     .on 'layer:toggle', (_, index)    => @children().eq(index).toggleClass('layer-hidden')
 
 
