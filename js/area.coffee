@@ -255,7 +255,7 @@ class Area
     #   interfering with drawing, but will not focus the broswer window
     #   if the user taps the canvas.
     ev.preventDefault()
-    if 0 <= @layer < @layers.length and @tool and ev.which == 0
+    if ev.touches.length == 1 and 0 <= @layer < @layers.length and @tool and ev.which == 0
       @context = @layers[@layer][0].getContext '2d'
       @offsetX = @element.offset().left
       @offsetY = @element.offset().top
@@ -269,12 +269,10 @@ class Area
         @element[0].addEventListener 'touchend',  @onTouchEnd
 
   onTouchMove: (ev) ->
-    if ev.which == 0
-      # TODO multitouch drawing?
-      t = ev.touches[0]
-      x = t.clientX - @offsetX
-      y = t.clientY - @offsetY
-      @tool.move @context, x, y, t.force, t.rotationAngle * PI / 180
+    t = ev.touches[0]
+    x = t.clientX - @offsetX
+    y = t.clientY - @offsetY
+    @tool.move @context, x, y, t.force, t.rotationAngle * PI / 180
 
   onTouchEnd: (ev) ->
     if ev.touches.length == 0
