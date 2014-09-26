@@ -54,7 +54,7 @@ $ ->
       h3(ev) if _getC(ev) > 1
 
     h2 = (ev) ->
-      if offset is null and _getY(ev) - startC > deltaC
+      if offset is null and abs(_getY(ev) - startC) > deltaC
         zindex = elem.css('z-index')
         oldpos = elem.css('position')
         oldtop = elem.css('top')
