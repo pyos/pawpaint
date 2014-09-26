@@ -58,11 +58,11 @@ $ ->
         oldtop = elem.css('top')
 
     h2 = (ev) ->
-      if _getC(ev) <= 1
-        body.off 'mousemove touchmove', h1
-        body.off 'mousemove touchmove', h3
-        body.off 'mouseup   touchend',  h2
-        body.off 'mouseup   touchend',  h4
+      body.off 'mousedown touchstart', h5
+      body.off 'mousemove touchmove',  h1
+      body.off 'mousemove touchmove',  h3
+      body.off 'mouseup   touchend',   h2
+      body.off 'mouseup   touchend',   h4
 
     h3 = (ev) ->
       offset = _getY(ev) - startC
@@ -83,8 +83,14 @@ $ ->
         elem.css('top',      elem.data('dragoff') or '')
         elem.data('no-layer-menu', true)
 
-    body.on 'mousemove touchmove', h1
-    body.on 'mouseup   touchend',  h2
+    h5 = (ev) ->
+      # Another touch/click detected, abort. (If `_getC` returns the same value,
+      # though, that's the initial event. We need to ignore it.)
+      h2(ev) if _getC(ev) > 1
+
+    body.on 'mousedown touchstart', h5
+    body.on 'mousemove touchmove',  h1
+    body.on 'mouseup   touchend',   h2
 
   area.element
     .on 'contextmenu', (e) ->
