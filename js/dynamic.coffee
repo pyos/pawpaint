@@ -74,6 +74,8 @@ class OptionDynamic extends Dynamic
   start: (ctx, tool, dx, dy, pressure, rotation, steps) ->
     @_value = super * if @options.source then tool.options[@options.source] else 1
     @_delta = (@_value - (ctx[@_target] or tool.options[@_tgcopy])) / steps
+    @stop ctx, tool if @_first
+    @_first = false
 
   step: (ctx, tool) ->
     tool.options[@_tgcopy] += @_delta if @_tgcopy
@@ -88,7 +90,7 @@ class OptionDynamic extends Dynamic
     @_cache  = tool.options[@options.tgcopy]
     @_target = @options.target
     @_tgcopy = @options.tgcopy
-    @_value  = tool.options[@options.source] * @options.a
+    @_first  = true
     @stop ctx, tool
 
   restore: (ctx, tool) ->
