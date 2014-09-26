@@ -30,6 +30,62 @@ $ ->
   button = $ '.action-tool'
   layers = $ '.layer-menu'
 
+  layers.on 'mousedown touchstart', 'li', (ev) ->
+    # This will make stuff work with both touchscreens and mice.
+    _getY = (ev) -> (ev.originalEvent.touches?[0] or ev).pageY
+    _getC = (ev) -> ev.originalEvent.touches?.length or ev.which
+    return if _getC(ev) != 1
+
+    body = $('body')
+    elem = $(@).removeData('no-layer-menu')
+
+    deltaC = 15
+    startC = _getY(ev)
+    startP = elem.position().top
+
+    offset = 0
+    zindex = ''
+    oldpos = ''
+    oldtop = ''
+
+    h1 = (ev) ->
+      if _getY(ev) - startC > deltaC
+        body.off 'mousemove touchmove', h1
+        body.on  'mousemove touchmove', h3
+        body.on  'mouseup   touchend',  h4
+        zindex = elem.css('z-index')
+        oldpos = elem.css('position')
+        oldtop = elem.css('top')
+
+    h2 = (ev) ->
+      if _getC(ev) <= 1
+        body.off 'mousemove touchmove', h1
+        body.off 'mousemove touchmove', h3
+        body.off 'mouseup   touchend',  h2
+        body.off 'mouseup   touchend',  h4
+
+    h3 = (ev) ->
+      offset = _getY(ev) - startC
+      elem.css 'position', 'absolute'
+      elem.css 'z-index', '65539'
+      elem.css 'top', offset + startP
+
+    h4 = (ev) ->
+      if _getC(ev) <= 1
+        elem.parent().children().each (i) ->
+          if i != elem.index() and $(@).hasClass('hidden') or offset + startP < $(@).position().top
+            area.moveLayer(elem.index(), i - elem.index() - (i >= elem.index()))
+            # Stop iterating.
+            return false
+          return true
+        elem.css('position', elem.data('dragpos') or '')
+        elem.css('z-index',  elem.data('dragind') or '')
+        elem.css('top',      elem.data('dragoff') or '')
+        elem.data('no-layer-menu', true)
+
+    body.on 'mousemove touchmove', h1
+    body.on 'mouseup   touchend',  h2
+
   area.element
     .on 'contextmenu', (e) ->
       e.preventDefault()

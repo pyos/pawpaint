@@ -239,14 +239,18 @@ $.fn.selector_dynamics = (area, x, y, fixed) ->
 
 $.fn.selector_layers = (area, template) ->
   @append '<li class="hidden">'
+
   @on 'click', 'li', (ev) ->
     ev.preventDefault()
     if area.layer == $(@).index() then $(@).trigger 'contextmenu' else area.setLayer $(@).index()
+
   @on 'contextmenu', 'li', (ev) ->
     ev.preventDefault()
-    index  = $(@).index()
-    offset = $(@).offset()
-    $(template).selector_layer_config(area, index, offset.left, offset.top, true).appendTo('body')
+    if not $(@).data('no-layer-menu')
+      index  = $(@).index()
+      offset = $(@).offset()
+      $(template).selector_layer_config(area, index, offset.left, offset.top, true).appendTo('body')
+    $(@).removeData('no-layer-menu')
 
   area.element
     .on 'layer:add', (_, canvas, index) =>
@@ -270,7 +274,7 @@ $.fn.selector_layers = (area, template) ->
 
     .on 'layer:set',    (_, index)    => @children().removeClass('active').eq(index).addClass('active')
     .on 'layer:del',    (_, index)    => @children().eq(index).remove()
-    .on 'layer:move',   (_, index, d) => @children().eq(index).insertBefore @children().eq(index + d)
+    .on 'layer:move',   (_, index, d) => @children().eq(index).detach().insertBefore @children().eq(index + d)
     .on 'layer:toggle', (_, index)    => @children().eq(index).toggleClass('disabled')
 
 
