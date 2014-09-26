@@ -122,7 +122,42 @@
 
       <div class="selector-layer-config selector-text">
         <div class="header">Layer options</div>
-        <div class="warning"><b>Not implemented</b></div>
+        <table class="table">
+          <tr>
+            <td>Visible</td>
+            <td><input type="checkbox" data-func="toggleLayer" data-css="display" data-invert="true" value="none" /></td>
+          </tr>
+          <tr>
+            <td>Blend mode</td>
+            <td>
+              <select class="blend" data-css="mix-blend-mode" value="normal">
+                <option value="normal">Normal</option>
+                <option disabled>──────────</option>
+                <option value="lighten">Lighten</option>
+                <option value="darken">Darken</option>
+                <option value="multiply">Multiply</option>
+                <option value="screen">Screen</option>
+                <option value="overlay">Overlay</option>
+                <option value="color-dodge">Color Dodge</option>
+                <option value="color-burn">Color Burn</option>
+                <option value="hard-light">Hard Light</option>
+                <option value="soft-light">Soft Light</option>
+                <option disabled>──────────</option>
+                <option value="difference">Difference</option>
+                <option value="exclusion">Exclusion</option>
+                <option disabled>──────────</option>
+                <option value="hue">Hue</option>
+                <option value="saturation">Saturation</option>
+                <option value="color">Color</option>
+                <option value="luminosity">Luminosity</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td>Opacity</td>
+            <td><input type="range" data-css="opacity" min="0.0" max="1.0" step="0.05" value="1.0" /></td>
+          </tr>
+        </table>
       </div>
     </div>
 

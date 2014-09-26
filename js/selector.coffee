@@ -191,6 +191,7 @@ $.fn.selector_dynamics = (area, x, y, fixed) ->
   types = Canvas.Dynamic.prototype
 
   t = @clone()
+    .on 'click', (ev) -> ev.stopPropagation()
     .on 'change', '.comp', ->
       self = $(@).parents('.item')
       data = self.data('dynamic')
@@ -225,8 +226,6 @@ $.fn.selector_dynamics = (area, x, y, fixed) ->
       data = $(@).parents('.item').data('dynamic')
       data.options.k = parseFloat @value - data.options.a if data
 
-    .on 'click', (ev) -> ev.stopPropagation()
-
   for dyn in area.tool.options.dynamic
     elem = t.find "[data-kind='#{dyn.options.kind}']"
     for x, f of funcs then elem.find('.comp').val x if f is dyn.options.fn
@@ -240,7 +239,9 @@ $.fn.selector_dynamics = (area, x, y, fixed) ->
 
 $.fn.selector_layers = (area, template) ->
   @append '<li class="hidden">'
-  @on 'click',       'li', (ev) -> area.setLayer $(@).index()
+  @on 'click', 'li', (ev) ->
+    ev.preventDefault()
+    if area.layer == $(@).index() then $(@).trigger 'contextmenu' else area.setLayer $(@).index()
   @on 'contextmenu', 'li', (ev) ->
     ev.preventDefault()
     index  = $(@).index()
@@ -251,7 +252,7 @@ $.fn.selector_layers = (area, template) ->
     .on 'layer:add', (_, canvas, index) =>
       sz = 150 / max(canvas.width, canvas.height)
       entry = $ '<li class="background">'
-      entry.addClass 'hidden' if canvas.style.display == 'none'
+      entry.addClass 'disabled' if canvas.style.display == 'none'
       entry.append new Canvas canvas.width * sz, canvas.height * sz
       entry.insertBefore @children().eq(index)
 
@@ -270,9 +271,30 @@ $.fn.selector_layers = (area, template) ->
     .on 'layer:set',    (_, index)    => @children().removeClass('active').eq(index).addClass('active')
     .on 'layer:del',    (_, index)    => @children().eq(index).remove()
     .on 'layer:move',   (_, index, d) => @children().eq(index).insertBefore @children().eq(index + d)
-    .on 'layer:toggle', (_, index)    => @children().eq(index).toggleClass('layer-hidden')
+    .on 'layer:toggle', (_, index)    => @children().eq(index).toggleClass('disabled')
 
 
 $.fn.selector_layer_config = (area, index, x, y, fixed) ->
+  layer = area.layers[index]
+
   t = @clone()
+  t.on 'click', (ev) -> ev.stopPropagation()
+   .on 'change', '[data-css]', ->
+    expect = @value
+
+    if @getAttribute('type') == 'checkbox'
+      invert = !!@getAttribute('data-invert')
+      func   =   @getAttribute('data-func')
+      expect = if @checked == invert then @getAttribute('data-null') or '' else @value
+      return area[func](index) if expect != layer.css @getAttribute('data-css') if func
+
+    layer.css @getAttribute('data-css'), @value
+
+  t.find('[data-css]').each ->
+    if @getAttribute('type') == 'checkbox'
+      @checked = (layer.css(@getAttribute('data-css')) == @value) == !@getAttribute('data-invert')
+    else
+      @value = layer.css(@getAttribute('data-css')) or @value
+    # `false` breaks iteration. `@checked` may be `false`. You get the idea.
+    return true
   t.selector_modal(x, y, fixed)
