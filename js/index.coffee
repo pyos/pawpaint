@@ -43,54 +43,49 @@ $ ->
     startC = _getY(ev)
     startP = elem.position().top
 
-    offset = 0
+    offset = null
     zindex = ''
     oldpos = ''
     oldtop = ''
 
     h1 = (ev) ->
-      if _getY(ev) - startC > deltaC
-        body.off 'mousemove touchmove', h1
-        body.on  'mousemove touchmove', h3
-        body.on  'mouseup   touchend',  h4
+      # Another touch/click detected, abort. (If `_getC` returns the same value,
+      # though, that's the initial event. We need to ignore it.)
+      h3(ev) if _getC(ev) > 1
+
+    h2 = (ev) ->
+      if offset is null and _getY(ev) - startC > deltaC
         zindex = elem.css('z-index')
         oldpos = elem.css('position')
         oldtop = elem.css('top')
-
-    h2 = (ev) ->
-      body.off 'mousedown touchstart', h5
-      body.off 'mousemove touchmove',  h1
-      body.off 'mousemove touchmove',  h3
-      body.off 'mouseup   touchend',   h2
-      body.off 'mouseup   touchend',   h4
+        offset = 0
+        elem.css 'z-index', '65539'
+        elem.css 'position', 'absolute'
+      if offset isnt null
+        offset = _getY(ev) - startC
+        elem.css 'top', offset + startP
 
     h3 = (ev) ->
-      offset = _getY(ev) - startC
-      elem.css 'position', 'absolute'
-      elem.css 'z-index', '65539'
-      elem.css 'top', offset + startP
+      body.off 'mousedown touchstart', h1
+      body.off 'mousemove touchmove',  h2
+      body.off 'mouseup   touchend',   h3
 
-    h4 = (ev) ->
-      if _getC(ev) <= 1
+      if offset isnt null and _getC(ev) <= 1
+        elem.data('no-layer-menu', true)
         elem.parent().children().each (i) ->
           if i != elem.index() and $(@).hasClass('hidden') or offset + startP < $(@).position().top
             area.moveLayer(elem.index(), i - elem.index() - (i >= elem.index()))
             # Stop iterating.
             return false
           return true
-        elem.css('position', elem.data('dragpos') or '')
-        elem.css('z-index',  elem.data('dragind') or '')
-        elem.css('top',      elem.data('dragoff') or '')
-        elem.data('no-layer-menu', true)
 
-    h5 = (ev) ->
-      # Another touch/click detected, abort. (If `_getC` returns the same value,
-      # though, that's the initial event. We need to ignore it.)
-      h2(ev) if _getC(ev) > 1
+      elem.css('position', oldpos or '')
+      elem.css('z-index',  zindex or '')
+      elem.css('top',      oldtop or '')
 
-    body.on 'mousedown touchstart', h5
-    body.on 'mousemove touchmove',  h1
-    body.on 'mouseup   touchend',   h2
+    body.on 'mousedown touchstart', h1
+    body.on 'mousemove touchmove',  h2
+    body.on 'mouseup   touchend',   h3
 
   area.element
     .on 'contextmenu', (e) ->
