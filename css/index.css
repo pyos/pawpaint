@@ -28,6 +28,22 @@ select {
   color: black;
 }
 
+select.fa {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: none;
+  border: none;
+  color: white;
+}
+
+select.fa option {
+  color: black;
+}
+
+select.fa:focus, select.fa:active {
+  outline: none;
+}
+
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -200,13 +216,20 @@ select {
 
 .selector-main > * {
   vertical-align: top;
+  display: inline-block;
 }
 
-.selector-width {
-  cursor: ns-resize;
+.selector-main > .either > * {
+  display: block;
   margin-left: 10px;
   border-left:  1px solid #444;
   border-right: 1px solid #444;
+  text-align: center;
+  box-sizing: content-box;
+}
+
+.selector-width, .selector-spacing, .selector-opacity {
+  cursor: ns-resize;
 }
 
 .selector-color {

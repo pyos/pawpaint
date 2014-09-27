@@ -45,9 +45,16 @@
 
     <div class="hidden templates">
       <div class="selector-main">
-        <canvas width="200" height="200" class="selector-color"></canvas>
-        <canvas width="40"  height="200" class="selector-width"></canvas>
-        <canvas width="100" height="200" class="selector-tools"></canvas>
+        <canvas width="200" height="200" class="selector selector-color"></canvas>
+        <div class="either">
+          <canvas width="40" height="170" data-name="Width" class="selector selector-width"></canvas>
+          <canvas width="40" height="170" data-name="Opacity" class="selector selector-opacity"></canvas>
+          <canvas width="40" height="170" data-name="Spacing" class="selector selector-spacing"></canvas>
+          <select style="width:40px; height:30px" class="selector-switch fa fa-ellipsis-h">
+            <option>&#xf141;</option>
+          </select>
+        </div>
+        <canvas width="100" height="200" class="selector selector-tools"></canvas>
       </div>
 
       <div class="selector-export selector-text">

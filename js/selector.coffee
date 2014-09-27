@@ -89,34 +89,67 @@ $.fn.selector_color = (area) ->
       ctx.restore()
 
 
-$.fn.selector_width = (area) ->
+$.fn.selector_vertical = (area, options) ->
+  opt    = options.what
+  ondraw = options.ondraw
+
   @each ->
-    @low    = 1
-    @high   = @height + @low
+    @low    = if options.min then options.min.call(this) else 1
+    @high   = if options.max then options.max.call(this) else @low + @height
     @margin = @height / 20
 
-  @selector_canvas area, {size: area.tool.options.size},
+  value = {}
+  value[opt] = area.tool.options[opt]
+
+  @selector_canvas area, value,
     (value, x, y) ->
-      value.size = floor max(0, min(1, (@height - y - @margin) / (@height - 2 * @margin))) * (@high - @low) + @low
+      value[opt] = v = max(0, min(1, (@height - y - @margin) / (@height - 2 * @margin))) * (@high - @low) + @low
+      value[opt] = floor v unless options.float
 
     (value, ctx, init) ->
       ctx.save()
       ctx.clearRect(0, 0, @width, @height)
       ctx.translate(@width / 2, @height / 2)
-
       tool = new area.tool.constructor(area.tool.options)
+      tool.setOptions dynamic: [], opacity: 0.5, H: 0, S: 0, L: 50, size: @width * 0.75
       tool.setOptions value
-      tool.setOptions dynamic: [], opacity: 0.5, H: 0, S: 0, L: 50
-      tool.crosshair ctx
+      ondraw?.call this, value, ctx, init, tool
       ctx.restore()
 
-      y = (@high - value.size) * (@height - 2 * @margin) / (@high - @low) + @margin
+      y = (@high - value[opt]) * (@height - 2 * @margin) / (@high - @low) + @margin
       ctx.lineWidth = 2
       ctx.strokeStyle = "rgba(127, 127, 127, 0.7)"
       ctx.beginPath()
-      ctx.moveTo(0, y)
-      ctx.lineTo(@width, y)
+      ctx.moveTo(0, floor y)
+      ctx.lineTo(@width, floor y)
       ctx.stroke()
+
+
+$.fn.selector_width = (area) -> @selector_vertical area,
+  what:   'size'
+  ondraw: (value, ctx, init, tool) ->
+    tool.crosshair ctx
+
+
+$.fn.selector_spacing = (area) -> @selector_vertical area,
+  min: -> 1
+  max: -> @low + @height / 2
+  what:   'spacing'
+  ondraw: (value, ctx, init, tool) ->
+    tool.start ctx, 0, -@height * 0.4, 1, 0
+    tool.move  ctx, 0,  @height * 0.4, 1, 0
+    tool.stop  ctx, 0,  @height * 0.4
+
+
+$.fn.selector_opacity = (area) -> @selector_vertical area,
+  float: true
+  min: -> 0
+  max: -> 1
+  what: 'opacity'
+  ondraw: (value, ctx, init, tool) ->
+    tool.start ctx, 0, 0, 1, 0
+    tool.move  ctx, 0, 1, 1, 0
+    tool.stop  ctx, 0, 1
 
 
 $.fn.selector_tools = (area) ->
@@ -163,15 +196,37 @@ $.fn.selector_modal = (x, y, fixed) ->
 
 
 $.fn.selector_main = (area, x, y, fixed) ->
-  t = @clone()
+  t = @clone().on 'click', (ev) -> ev.stopPropagation()
   color = t.find('.selector-color').selector_color(area)
   width = t.find('.selector-width').selector_width(area)
   tools = t.find('.selector-tools').selector_tools(area)
+  space = t.find('.selector-spacing').selector_spacing(area)
+  trans = t.find('.selector-opacity').selector_opacity(area)
+
+  t.find('.either').each ->
+    self = $(@)
+    self.find('.selector:not(:eq(0))').hide()
+
+    link = self.find('.selector-switch')
+    link.find('.selector-switch').each -> $(@).css('font-size', $(@).innerHeight() * 0.75)
+
+    link.append($('<option>').attr('value', $(el).attr('class')).text($(el).attr('data-name'))) \
+      for el in self.find('.selector')
+
+    link.on 'change', ->
+      x = self.find(".selector[class='#{@value}']")
+      y = self.find('.selector')
+      if x.length
+        y.hide()
+        x.show()
+      @value = $(@).children().eq(0).val() or $(@).children().eq(0).text()
 
   width.on 'change', (_, value) -> area.setToolOptions(value)
+  space.on 'change', (_, value) -> area.setToolOptions(value)
+  trans.on 'change', (_, value) -> area.setToolOptions(value)
   color.on 'change', (_, value) -> area.setToolOptions(value)
   tools.on 'change', (_, value) -> area.setTool(value.kind, area.tool.options)
-  tools.on 'change', -> width.trigger('redraw')
+  tools.on 'change', -> width.trigger('redraw'); space.trigger('redraw'); trans.trigger('redraw')
   t.selector_modal(x, y, fixed)
 
 
