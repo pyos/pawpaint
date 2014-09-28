@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
-    <title>HTML5 cannot into pressure</title>
+    <title>WebKit + pen tablet = nope</title>
     <link rel="stylesheet" href="3rdparty/css/bootstrap.min.css">
     <link rel="stylesheet" href="3rdparty/css/font-awesome.min.css">
     <link rel="stylesheet" href="css/index.css">
@@ -18,12 +18,25 @@
     <script src="js/index.js"></script>
   </head>
   <body>
+    <div class="first-time cover canvas-only">
+        <div class="text-right">
+          <p>tools and pen dynamics</p>
+          <p>undo and redo</p>
+          <p>export</p>
+          <p>layers <small>click for options</small></p>
+        </div>
+        <div class="text-center">
+          <p>click anywhere to start</p>
+          <p><small>right-click the canvas for tool options</small></p>
+        </div>
+    </div>
+
     <div class="side-area canvas-only">
       <canvas class="action-tool" width="45" height="45" title="Tools and colors..."></canvas>
       <a class="action-dynamics fa fa-line-chart" title="Dynamics..."></a>
-      <a class="data-url-only action-undo fa fa-undo" title="Undo"></a>
-      <a class="data-url-only action-redo fa fa-repeat" title="Redo"></a>
-      <a class="data-url-only action-export fa fa-save" title="Export as..."></a>
+      <a class="action-undo fa fa-undo" title="Undo"></a>
+      <a class="action-redo fa fa-repeat" title="Redo"></a>
+      <a class="action-export fa fa-save" title="Export as..."></a>
       <ul class="layer-menu"></ul>
       <a class="action-add-layer fa fa-asterisk" title="New layer"></a>
       <a class="action-del-layer fa fa-trash" title="Remove layer"></a>
@@ -42,12 +55,12 @@
       <div class="selector-main">
         <canvas width="200" height="200" class="selector selector-color"></canvas>
         <div class="either">
-          <canvas width="40" height="170" data-name="Width" class="selector selector-width"></canvas>
-          <canvas width="40" height="170" data-name="Opacity" class="selector selector-opacity"></canvas>
+          <canvas width="40" height="200" data-name="Width" class="selector selector-width"></canvas>
+          <!--canvas width="40" height="170" data-name="Opacity" class="selector selector-opacity"></canvas>
           <canvas width="40" height="170" data-name="Spacing" class="selector selector-spacing"></canvas>
           <select style="width:40px; height:30px" class="selector-switch fa fa-ellipsis-h">
             <option>&#xf141;</option>
-          </select>
+          </select-->
         </div>
         <canvas width="100" height="200" class="selector selector-tools"></canvas>
       </div>

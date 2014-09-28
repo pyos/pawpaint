@@ -11,9 +11,7 @@ $ ->
     Canvas.Tool.Resource.make('brush-skewed-ellipse')
     Canvas.Tool.Resource.make('brush-star')
 
-  $(window)
-    .on 'unload', -> @localStorage?.image = area.export("svg") if area
-
+  $(window).on 'unload', -> @localStorage?.image = area.export("svg") if area
   $(document).keymappable()
     .on 'key:ctrl+90',       (_, e) -> e.preventDefault(); area.undo()
     .on 'key:ctrl+shift+90', (_, e) -> e.preventDefault(); area.redo()
@@ -22,18 +20,15 @@ $ ->
     .on 'click', '.action-undo',      -> area.undo()
     .on 'click', '.action-redo',      -> area.redo()
 
-  $('body').addClass('no-canvas')   if !Canvas.exists()
-  $('body').addClass('no-data-url') if !Canvas.hasDataURL()
-
+  button = $ '.action-tool'
+  $('body').addClass('no-canvas')  if not Canvas.exists()
+  $('body').addClass('first-time') if not window.localStorage?.image
+  $('body').on 'click', '.cover', -> $(@).fadeOut(100, $(@).remove.bind $(@))
   $('.action-tool')     .selector_button(area, $.fn.selector_main,     '.templates .selector-main')
   $('.action-export')   .selector_button(area, $.fn.selector_export,   '.templates .selector-export')
   $('.action-dynamics') .selector_button(area, $.fn.selector_dynamics, '.templates .selector-dynamics')
   $('.layer-menu')      .selector_layers(area, '.templates .selector-layer-config')
-
-  button = $ '.action-tool'
-  layers = $ '.layer-menu'
-
-  layers.on 'mousedown touchstart', 'li', (ev) ->
+  $('.layer-menu').on 'mousedown touchstart', 'li', (ev) ->
     # This will make stuff work with both touchscreens and mice.
     _getY = (ev) -> (ev.originalEvent.touches?[0] or ev).pageY
     _getC = (ev) -> ev.originalEvent.touches?.length or ev.which
@@ -106,5 +101,11 @@ $ ->
       button.css 'background', "hsl(#{area.tool.options.H},#{area.tool.options.S}%,#{area.tool.options.L}%)"
 
   area.setTool Canvas.Tool.Pen
-  area.import window.localStorage.image if window.localStorage?.image
-  area.createLayer() if not area.layers.length
+  if window.localStorage?.image
+    area.import window.localStorage.image
+  else
+    img = new Image
+    img.onload = ->
+      area.createLayer()
+      area.resizeLayer(0, area.layers[0][0].width, area.layers[0][0].height, 0, 0, img, true)
+    img.src = 'img/initial.png'

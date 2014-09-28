@@ -190,9 +190,7 @@ $.fn.selector_modal = (x, y, fixed) ->
   @css 'left', x
   @css 'top',  y
   @addClass 'fixed' if fixed
-  cover = $('<div class="cover">').append(@).hide().fadeIn(100)
-  cover.on 'click', -> cover.fadeOut(100, cover.remove.bind cover)
-  return cover
+  return $('<div class="cover selector">').append(@).hide().fadeIn(100)
 
 
 $.fn.selector_main = (area, x, y, fixed) ->

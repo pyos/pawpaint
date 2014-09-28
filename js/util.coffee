@@ -28,20 +28,13 @@
 @Canvas = (width, height) -> $ "<canvas width='#{width}' height='#{height}'>"
 
 
-# Whether `<canvas>` is actually supported.
+# Whether `<canvas>` is actually supported enough for this to work.
 #
 # Canvas.exists :: -> bool
 #
-@Canvas.exists = -> !!document.createElement('canvas').getContext
-
-
-# Whether `<canvas>` supports `toDataURL`.
-#
-# Canvas.hasDataURL :: -> bool
-#
-@Canvas.hasDataURL = ->
-  return false if !Canvas.exists()
-  return document.createElement('canvas').toDataURL('image/png').indexOf('data:image/png') == 0
+@Canvas.exists = ->
+  elem = document.createElement('canvas')
+  return elem.getContext and elem.toDataURL('image/png').indexOf('data:image/png') == 0
 
 
 # Retrieve a preloaded resource from the page.
