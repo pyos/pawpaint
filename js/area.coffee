@@ -55,6 +55,7 @@ class Area
     #
     @element = $('<div>').addClass('area').appendTo $(selector).eq(0).addClass 'background'
     @element.on 'stroke:end', (_, c, i) -> $(@).trigger 'layer:redraw', [c, i]
+    @element.data 'area', @
 
     # A list of subclasses of `Canvas.Tool`.
     # You may use whatever tool you want through `setTool`, but only
@@ -199,8 +200,10 @@ class Area
     if 0 <= layer < @layers.length
       @redos = []
       @undos.splice 0, 0, jQuery.extend({
-          action: @UNDO_DRAW,
+          action: @UNDO_DRAW
           canvas: @layers[layer][0].toDataURL()
+          x: @layers[layer].position().x
+          y: @layers[layer].position().y
           layer:  layer
         }, options)
       @undos.splice @undoLimit
@@ -216,7 +219,7 @@ class Area
     for data in undos.splice(0, 1)
       switch data.action
         when @UNDO_DRAW       then @reloadLayer data.layer, data.canvas
-        when @UNDO_DEL_LAYER  then @createLayer data.layer; @reloadLayer data.layer, data.canvas, true
+        when @UNDO_DEL_LAYER  then @createLayer data.layer; @reloadLayer data.layer, data.canvas, data.x, data.y, true
         when @UNDO_ADD_LAYER  then @deleteLayer data.layer
         when @UNDO_MOVE_LAYER then @moveLayer   data.layer + data.delta, -data.delta
 
