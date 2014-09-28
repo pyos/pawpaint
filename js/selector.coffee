@@ -236,7 +236,7 @@ $.fn.selector_export = (area, x, y, fixed) ->
     type = $(@).attr 'data-type'
     link = document.createElement 'a'
     link.download = 'image.' + type
-    link.href     = area.saveAll(type)
+    link.href     = area.export(type)
     link.click()
   t.selector_modal(x, y, fixed)
 
@@ -297,7 +297,7 @@ $.fn.selector_layers = (area, template) ->
 
   @on 'click', 'li', (ev) ->
     ev.preventDefault()
-    if area.layer == $(@).index() then $(@).trigger 'contextmenu' else area.setLayer $(@).index()
+    if area.layer == $(@).index() then $(@).trigger 'contextmenu' else area.changeLayer $(@).index()
 
   @on 'contextmenu', 'li', (ev) ->
     ev.preventDefault()
@@ -312,7 +312,7 @@ $.fn.selector_layers = (area, template) ->
       sz = 150 / max(canvas.width, canvas.height)
       entry = $ '<li class="background">'
       entry.addClass 'disabled' if canvas.style.display == 'none'
-      entry.append new Canvas canvas.width * sz, canvas.height * sz
+      entry.append new Canvas floor(canvas.width * sz), floor(canvas.height * sz)
       entry.insertBefore @children().eq(index)
 
     .on 'layer:resize', (_, canvas, index) =>

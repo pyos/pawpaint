@@ -25,7 +25,7 @@
 #
 # Canvas :: int int -> Canvas
 #
-@Canvas = (width, height) -> $ "<canvas width='#{floor(width)}' height='#{floor(height)}'>"
+@Canvas = (width, height) -> $ "<canvas width='#{width}' height='#{height}'>"
 
 
 # Whether `<canvas>` is actually supported.

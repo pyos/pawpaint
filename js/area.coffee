@@ -53,7 +53,7 @@ class Area
     #   layer:toggle (ev: Event, index: int)
     #   layer:move   (ev: Event, old: int, delta: int)
     #
-    @element = $(selector).eq(0).addClass 'background'
+    @element = $('<div>').addClass('area').appendTo $(selector).eq(0).addClass 'background'
     @element.on 'stroke:end', (_, c, i) -> $(@).trigger 'layer:redraw', [c, i]
 
     # A list of subclasses of `Canvas.Tool`.
@@ -84,6 +84,14 @@ class Area
     @onTouchMove  = @onTouchMove  .bind @
     @onTouchEnd   = @onTouchEnd   .bind @
 
+    @element.on 'layer:resize layer:add layer:del', =>
+      mw = 0
+      mh = 0
+      for layer in @layers
+        mw = max(mw, layer.innerWidth()  + layer.position().left)
+        mh = max(mh, layer.innerHeight() + layer.position().top)
+      @element.css('width', mw).css('height', mh)
+
     @element[0].addEventListener 'touchstart', @onTouchStart
     @element[0].addEventListener 'touchstart', (ev) ->
       # Hide the crosshair, it's useless.
@@ -95,87 +103,100 @@ class Area
       crosshair.style.left = (ev.offsetX || ev.layerX) + 'px'
       crosshair.style.top  = (ev.offsetY || ev.layerY) + 'px'
 
-  # Extend all canvases to at least fill the element.
+  # Add an empty layer at the end of the stack. Emits `layer:add`.
   #
-  # resize :: (Optional int) (Optional int) -> a
+  # createLayer :: (Optional int) (Optional int) (Optional int) (Optional int) -> a
   #
-  resize: (w, h) ->
-    w or= @element.innerWidth()
-    h or= @element.innerHeight()
+  createLayer: (index = -1, w, h, x = 0, y = 0) ->
+    w or= @element.parent().innerWidth()
+    h or= @element.parent().innerHeight()
+    index = @layers.length if index < 0
+    layer = new Canvas(w, h).css('top', y).css('left', x).addClass('layer')
+    @layers.splice(index, 0, layer)
+    @element.append(layer).trigger('layer:add', [layer[0], index])
+    @changeLayer(index)
+    @snap index, action: @UNDO_ADD_LAYER
 
-    for index, c of @layers
-      if c[0].width < w or c[0].height < h
-        cnv = new Canvas(max(w, c[0].width), max(h, c[0].height))
-        cnv.addClass('layer')
-        ctx = cnv[0].getContext('2d')
-        ctx.drawImage c[0], 0, 0
-        c.replaceWith(@layers[index] = cnv).remove()
-        @element.trigger 'layer:resize', [cnv[0], index]
-        @element.trigger 'layer:redraw', [cnv[0], index]
-    # Invalidate the layout.
-    @setLayer @layer
-
-  # Serialize contents of the area.
+  # Switch to a different layer; all drawing events will go to it. Emits `layer:set`.
   #
-  # save :: str -> str
+  # changeLayer :: int -> a
   #
-  saveAll: (type) ->
-    mw = @element.innerWidth()
-    mh = @element.innerHeight()
+  changeLayer: (i) ->
+    if 0 <= i < @layers.length
+      @layer = i
+      @element.children('.layer').removeClass('active').eq(i).addClass('active')
+      @element.trigger 'layer:set', [i]
+    x.css('z-index', i - @layers.length) for i, x of @layers
 
-    switch type
-      when "png"
-        target  = new Canvas(mw, mh)[0]
-        context = target.getContext('2d')
-        context.drawImage layer[0], 0, 0 for layer in @layers
-        return target.toDataURL("image/png")
-      when "svg"
-        target = document.createElementNS("http://www.w3.org/2000/svg", "svg")
-        target.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink')
-        for layer in @layers
-          data  = layer[0].toDataURL("image/png")
-          image = document.createElementNS("http://www.w3.org/2000/svg", "image")
-          image.setAttribute("xlink:href", data)
-          image.setAttribute("x", "0")
-          image.setAttribute("y", "0")
-          image.setAttribute("width", layer.innerWidth() + "px")
-          image.setAttribute("height", layer.innerHeight() + "px")
-          target.appendChild(image)
-        xml = new XMLSerializer().serializeToString target
-        return "data:image/svg+xml;base64," + btoa(xml)
-    return null
-
-  # Load the contents from a previously `save`d file.
+  # Remove a layer. Emits `layer:del`.
   #
-  # loadAll: str -> a
+  # deleteLayer :: int -> a
   #
-  loadAll: (data) ->
-    colon = data.indexOf ":"
-    semic = data.indexOf ";"
-    comma = data.indexOf ","
-    return false if data.slice(0,         colon) != "data"
-    return false if data.slice(semic + 1, comma) != "base64"
+  deleteLayer: (i) ->
+    if 0 <= i < @layers.length
+      @snap i, action: @UNDO_DEL_LAYER
+      @layers.splice(i, 1)[0].remove()
+      @element.trigger 'layer:del', [i]
+      @changeLayer min(@layer, @layers.length - 1)
 
-    switch data.slice(colon + 1, semic)
-      when "image/png"
-        @addLayer()
-        @load(@layer, data, true)
-        return true
-      when "image/svg+xml"
-        doc = new DOMParser().parseFromString(atob(data.slice(comma + 1)), "image/svg+xml")
-        for layer in doc.rootElement.childNodes
-          if layer.localName == "image"
-            @addLayer()
-            @load(@layer, layer.getAttribute("xlink:href"), true)
-        return true
-    return false
+  # Move a layer `delta` items closer to the top of the stack. Emits `layer:move`.
+  #
+  # moveLayer :: int int -> a
+  #
+  moveLayer: (i, delta) ->
+    if 0 <= i < @layers.length and 0 <= i + delta < @layers.length
+      @snap i, action: @UNDO_MOVE_LAYER, delta: delta
+      @layers.splice(i + delta, 0, @layers.splice(i, 1)[0])
+      @element.trigger 'layer:move', [i, delta]
+      @changeLayer(i + delta)
+
+  # Toggle the visibility of a single layer. Does not actually affect its contents.
+  # Emits `layer:toggle`.
+  #
+  # toggleLayer :: int -> a
+  #
+  toggleLayer: (i) ->
+    if 0 <= i < @layers.length
+      @layers[i].toggle()
+      @element.trigger 'layer:toggle', [i]
+
+  # Change the dimensions of a layer.
+  #
+  # resizeLayer :: int int int -> a
+  #
+  resizeLayer: (layer, w, h, x = 0, y = 0, im = @layers[layer][0], noSnapshot) ->
+    if 0 <= layer < @layers.length
+      @snap layer, action: @UNDO_DRAW unless noSnapshot
+      @layers[layer].replaceWith(@layers[layer] = cnv = @fromImage im, w, h, x, y).remove()
+      @element.trigger 'layer:resize', [cnv[0], layer]
+      @element.trigger 'layer:redraw', [cnv[0], layer]
+      @changeLayer @layer
+
+  # Load a layer from a data URL.
+  #
+  # load :: int str -> a
+  #
+  reloadLayer: (layer, data, x = 0, y = 0, noSnapshot) ->
+    img = new Image
+    img.src = data
+    @resizeLayer layer, img.width, img.height, x, y, img, noSnapshot
+
+  # Create a layer from an image.
+  #
+  # fromImage :: Image -> Canvas
+  #
+  fromImage: (img, w = img.width, h = img.height, x = 0, y = 0) ->
+    cnv = new Canvas(w, h).css('left', x).css('top', y).addClass('layer')
+    ctx = cnv[0].getContext('2d')
+    ctx.drawImage img, 0, 0
+    return cnv
 
   # Save a snapshot of a single layer in the undo stack.
   #
   # snap :: int (Optional Object) -> a
   #
   snap: (layer, options = {}) ->
-    if @layers.length > layer >= 0
+    if 0 <= layer < @layers.length
       @redos = []
       @undos.splice 0, 0, jQuery.extend({
           action: @UNDO_DRAW,
@@ -183,19 +204,6 @@ class Area
           layer:  layer
         }, options)
       @undos.splice @undoLimit
-
-  # Load a layer from a data URL.
-  #
-  # load :: int str -> a
-  #
-  load: (layer, data, noSnapshot) ->
-    img = new Image
-    img.src = data
-    @snap layer, action: @UNDO_DRAW unless noSnapshot
-    ctx = @layers[layer][0].getContext '2d'
-    ctx.clearRect(0, 0, @layers[layer][0].width, @layers[layer][0].height)
-    ctx.drawImage(img, 0, 0)
-    @element.trigger 'layer:redraw', [@layers[layer][0], layer]
 
   # Restore the previous `snap`ped state.
   #
@@ -207,10 +215,10 @@ class Area
 
     for data in undos.splice(0, 1)
       switch data.action
-        when @UNDO_DRAW       then @load data.layer, data.canvas
-        when @UNDO_DEL_LAYER  then @addLayer data.layer; @load data.layer, data.canvas, true
-        when @UNDO_ADD_LAYER  then @delLayer data.layer
-        when @UNDO_MOVE_LAYER then @moveLayer data.layer + data.delta, -data.delta
+        when @UNDO_DRAW       then @reloadLayer data.layer, data.canvas
+        when @UNDO_DEL_LAYER  then @createLayer data.layer; @reloadLayer data.layer, data.canvas, true
+        when @UNDO_ADD_LAYER  then @deleteLayer data.layer
+        when @UNDO_MOVE_LAYER then @moveLayer   data.layer + data.delta, -data.delta
 
     # The above operations all call `@snap`, which resets the redo stack and adds something
     # to `@undos`. We don't want the former, and possibly the latter, too.
@@ -222,6 +230,35 @@ class Area
   # redo :: -> a
   #
   redo: -> @undo true
+
+  # Use a different tool. Tools must implement the `Canvas.Tool` interface
+  # (see `tools.coffee`). Emits `tool:kind` and option-change events.
+  #
+  # setTool :: (Type extends Canvas.Tool) Object -> a
+  #
+  setTool: (kind, options) ->
+    @tool = new kind(options)
+    @setToolOptions @tool.options
+    @element.trigger 'tool:kind', [kind, @tool.options]
+
+  # Copy some options from an object over to the currently selected tool.
+  # Emits various events that begin with `tool:` and end with the name of the option
+  # that was changed.
+  #
+  # setToolOptions :: Object -> a
+  #
+  setToolOptions: (options) ->
+    return if not @tool
+    @tool.setOptions options
+    @element.trigger('tool:' + k, [v, @tool.options]) for k, v of options
+    @crosshair.setAttribute 'width',  @tool.options.size
+    @crosshair.setAttribute 'height', @tool.options.size
+    @crosshair.style.marginLeft = -@tool.options.size / 2 + 'px'
+    @crosshair.style.marginTop  = -@tool.options.size / 2 + 'px'
+    @crosshair.style.display = if @tool.options.size > 5 then '' else 'none'
+    ctx = @crosshair.getContext('2d')
+    ctx.translate @tool.options.size / 2, @tool.options.size / 2
+    @tool.crosshair ctx
 
   onMouseDown: (ev) ->
     # FIXME this next line prevents unwanted selection, but breaks focusing.
@@ -281,93 +318,53 @@ class Area
       @element[0].removeEventListener 'touchend',  @onTouchEnd
       @element.trigger 'stroke:end', [@layers[@layer][0], @layer]
 
-  # Add an empty layer at the end of the stack. Emits `layer:add`.
+  # Serialize contents of the area.
   #
-  # addLayer :: (Optional int) -> a
+  # export :: str -> str
   #
-  addLayer: (index = -1) ->
-    index = @layers.length if index < 0
-    layer = $ "<canvas class='layer'
-      width='#{@element.innerWidth()}'
-      height='#{@element.innerHeight()}'>"
-    layer.appendTo @element.trigger('layer:add', [layer[0], index])
+  export: (type) ->
+    switch type
+      when "png"
+        target  = new Canvas(@element.innerWidth(), @element.innerHeight())[0]
+        context = target.getContext('2d')
+        context.drawImage layer[0], layer.position().left, layer.position().top for layer in @layers
+        return target.toDataURL("image/png")
+      when "svg"
+        target = $("<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'>")
+        for layer in @layers
+          $('<image>').appendTo(target)
+            .attr('xlink:href', layer[0].toDataURL("image/png"))
+            .attr("x",      layer.position().left + "px")
+            .attr("y",      layer.position().top  + "px")
+            .attr("width",  layer.innerWidth()    + "px")
+            .attr("height", layer.innerHeight()   + "px")
+        xml = new XMLSerializer().serializeToString target[0]
+        return "data:image/svg+xml;base64," + btoa(xml)
+    return null
 
-    @layers.splice(index, 0, layer)
-    @setLayer(index)
-    @snap index, action: @UNDO_ADD_LAYER
+  # Load the contents from a previously `export`ed file.
+  #
+  # import: str -> a
+  #
+  import: (data) ->
+    colon = data.indexOf ":"
+    semic = data.indexOf ";"
+    comma = data.indexOf ","
+    return false if data.slice(0,         colon) != "data"
+    return false if data.slice(semic + 1, comma) != "base64"
 
-  # Switch to a different layer; all drawing events will go to it. Emits `layer:set`.
-  #
-  # setLayer :: int -> a
-  #
-  setLayer: (i) ->
-    if 0 <= i < @layers.length
-      @layer = i
-      @element.trigger 'layer:set', [i]
-    x.css('z-index', i - @layers.length) for i, x of @layers
-
-  # Remove a layer. Emits `layer:del`.
-  #
-  # delLayer :: int -> a
-  #
-  delLayer: (i) ->
-    if 0 <= i < @layers.length
-      @snap i, action: @UNDO_DEL_LAYER
-      @layers.splice(i, 1)[0].remove()
-      @element.trigger 'layer:del', [i]
-      @setLayer min(@layer, @layers.length - 1)
-
-  # Move a layer `delta` items closer to the top of the stack. Emits `layer:move`.
-  #
-  # moveLayer :: int int -> a
-  #
-  moveLayer: (i, delta) ->
-    if 0 <= i < @layers.length and 0 <= i + delta < @layers.length
-      @snap i, action: @UNDO_MOVE_LAYER, delta: delta
-      @layers.splice(i + delta, 0, @layers.splice(i, 1)[0])
-      @element.trigger 'layer:move', [i, delta]
-      @setLayer(i + delta)
-
-  # Toggle the visibility of a single layer. Does not actually affect its contents.
-  # Emits `layer:toggle`.
-  #
-  # TODO: an easy way to check whether a layer is visible.
-  #
-  # toggleLayer :: int -> a
-  #
-  toggleLayer: (i) ->
-    if 0 <= i < @layers.length
-      @layers[i].toggle()
-      @element.trigger 'layer:toggle', [i]
-
-  # Use a different tool. Tools must implement the `Canvas.Tool` interface
-  # (see `tools.coffee`). Emits `tool:kind` and option-change events.
-  #
-  # setTool :: (Type extends Canvas.Tool) Object -> a
-  #
-  setTool: (kind, options) ->
-    @tool = new kind(options)
-    @setToolOptions @tool.options
-    @element.trigger 'tool:kind', [kind, @tool.options]
-
-  # Copy some options from an object over to the currently selected tool.
-  # Emits various events that begin with `tool:` and end with the name of the option
-  # that was changed.
-  #
-  # setToolOptions :: Object -> a
-  #
-  setToolOptions: (options) ->
-    return if not @tool
-    @tool.setOptions options
-    @element.trigger('tool:' + k, [v, @tool.options]) for k, v of options
-    @crosshair.setAttribute 'width',  @tool.options.size
-    @crosshair.setAttribute 'height', @tool.options.size
-    @crosshair.style.marginLeft = -@tool.options.size / 2 + 'px'
-    @crosshair.style.marginTop  = -@tool.options.size / 2 + 'px'
-    @crosshair.style.display = if @tool.options.size > 5 then '' else 'none'
-    ctx = @crosshair.getContext('2d')
-    ctx.translate @tool.options.size / 2, @tool.options.size / 2
-    @tool.crosshair ctx
+    switch data.slice(colon + 1, semic)
+      when "image/png"
+        @createLayer()
+        @reloadLayer(@layer, data, true)
+        return true
+      when "image/svg+xml"
+        doc = $ atob(data.slice(comma + 1))
+        doc.children('image').each (_, x) =>
+          @createLayer()
+          @reloadLayer(@layer, $(x).attr("xlink:href"), $(x).attr("x"), $(x).attr("y"), true)
+        return true
+    return false
 
 
 @Canvas.Area = Area

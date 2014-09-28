@@ -67,28 +67,19 @@ select.fa:focus, select.fa:active {
 
 .main-area {
   position: relative;
-  overflow: hidden;
-  z-index:  65535;
+  overflow: auto;
+  z-index:  -65568;
   height:   100%;
   margin:   0;
-  cursor:   crosshair;
 }
 
-.main-area .warning {
-  position: relative;
-  z-index: -65536;
-  opacity: 0.2;
-  padding: 50px;
-  font-size: 20px;
+.area {
+  display: inline-block;
+  cursor:  crosshair;
 }
 
 .background {
   background: white;
-}
-
-.layer {
-  top:  0;
-  left: 0;
 }
 
 .layer, .crosshair {
