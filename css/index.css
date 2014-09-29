@@ -1,9 +1,3 @@
-@font-face {
-  /* Demo version + personal use means no copyright violation. Yay! */
-  font-family: NellaSue;
-  src: url("../3rdparty/fonts/NellaSue.ttf") format('truetype');
-}
-
 body {
   position: absolute;
   top:    0;
@@ -15,8 +9,7 @@ body {
   -ms-touch-action: none;
 }
 
-body:not(.no-canvas) .no-canvas, body.no-canvas .canvas-only,
-body:not(.first-time) .first-time {
+body:not(.no-canvas) .no-canvas, body.no-canvas .canvas-only {
   display: none;
 }
 
@@ -46,23 +39,6 @@ select.fa option {
 
 select.fa:focus, select.fa:active {
   outline: none;
-}
-
-body .first-time {
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
-  font-family: NellaSue;
-  font-size: 28px;
-  padding-right: 110px;
-}
-
-body .first-time .text-center {
-  padding-top: 0.7em;
-  font-size: 2em;
-}
-
-body .first-time small {
-  font-size: 0.6em;
 }
 
 .main-area, .side-area, .cover {
@@ -164,11 +140,11 @@ body .first-time small {
   display: block;
 }
 
-.layer-menu li.active {
+.layer-menu > .active {
   opacity: 1;
 }
 
-.layer-menu li.disabled {
+.layer-menu > .disabled {
   opacity: 0.3;
 }
 
@@ -186,7 +162,7 @@ body .first-time small {
   color: inherit;
 }
 
-.cover.selector > * {
+.cover > * {
   position: absolute;
   /* Don't scale to window, don't break lines if displayed
    * with not enough space to the right.
@@ -199,7 +175,7 @@ body .first-time small {
   box-shadow: 0 0 20px -5px #000;
 }
 
-.cover.selector > .fixed {
+.cover > .fixed {
   /* Must sync up with .side-area{width} */
   right: 100px;
   left: auto !important;

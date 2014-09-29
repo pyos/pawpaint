@@ -22,8 +22,6 @@ $ ->
 
   button = $ '.action-tool'
   $('body').addClass('no-canvas')  if not Canvas.exists()
-  $('body').addClass('first-time') if not window.localStorage?.image
-  $('body').on 'click', '.cover', -> $(@).fadeOut(100, $(@).remove.bind $(@))
   $('.action-tool')     .selector_button(area, $.fn.selector_main,     '.templates .selector-main')
   $('.action-export')   .selector_button(area, $.fn.selector_export,   '.templates .selector-export')
   $('.action-dynamics') .selector_button(area, $.fn.selector_dynamics, '.templates .selector-dynamics')
