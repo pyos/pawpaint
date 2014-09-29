@@ -99,11 +99,12 @@ $ ->
       button.css 'background', "hsl(#{area.tool.options.H},#{area.tool.options.S}%,#{area.tool.options.L}%)"
 
   area.setTool Canvas.Tool.Pen
-  if window.localStorage?.image
-    area.import window.localStorage.image
-  else
+  area.import window.localStorage.image if window.localStorage?.image
+  if not area.layers.length
     img = new Image
     img.onload = ->
       area.createLayer()
-      area.resizeLayer(0, area.layers[0][0].width, area.layers[0][0].height, 0, 0, img, true)
+      w = max area.layers[0][0].width,  img.width
+      h = max area.layers[0][0].height, img.height
+      area.resizeLayer(0, w, h, 0, 0, img, true)
     img.src = 'img/initial.png'
