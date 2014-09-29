@@ -53,7 +53,7 @@ class Area
     #   layer:toggle (ev: Event, index: int)
     #   layer:move   (ev: Event, old: int, delta: int)
     #
-    @element = $('<div>').addClass('area').appendTo $(selector).eq(0).addClass 'background'
+    @element = $('<div class="area background">').appendTo $(selector).eq(0)
     @element.on 'stroke:end', (_, c, i) -> $(@).trigger 'layer:redraw', [c, i]
     @element.data 'area', @
 
@@ -66,6 +66,7 @@ class Area
     # wrapping a single `Canvas`.
     @layers = []
     @layer  = 0
+    @scale  = 1
 
     # An undo is a complete snapshot of a layer as a {layer: int, canvas: str}
     # object, where `canvas` is a PNG data URL.
@@ -75,7 +76,7 @@ class Area
 
     # This canvas follows the mouse cursor around. Tools may
     # display something on it.
-    @crosshair = crosshair = $('<canvas class="crosshair">').appendTo(@element)[0]
+    @crosshair = crosshair = $('<canvas class="crosshair">').appendTo('body')[0]
 
     # CoffeeScript's `=>` results in an ugly `__bind` wrapper.
     @onMouseMove  = @onMouseMove  .bind @
@@ -85,24 +86,34 @@ class Area
     @onTouchMove  = @onTouchMove  .bind @
     @onTouchEnd   = @onTouchEnd   .bind @
 
-    @element.on 'layer:resize layer:add layer:del', =>
+    @element.on 'layer:del layer:set', =>
+      ep = @element.position()
       mw = 0
       mh = 0
       for layer in @layers
-        mw = max(mw, layer.innerWidth()  + layer.position().left)
-        mh = max(mh, layer.innerHeight() + layer.position().top)
+        lp = layer.position()
+        mw = max(mw, layer.innerWidth()  + lp.left - ep.left)
+        mh = max(mh, layer.innerHeight() + lp.top  - ep.top)
       @element.css('width', mw).css('height', mh)
-
-    @element[0].addEventListener 'touchstart', @onTouchStart
-    @element[0].addEventListener 'touchstart', (ev) ->
-      # Hide the crosshair, it's useless.
-      crosshair.style.left = '-100%'
-      crosshair.style.top  = '-100%'
+      @setToolOptions {}  # rescale the crosshair
 
     @element[0].addEventListener 'mousedown', @onMouseDown
     @element[0].addEventListener 'mousemove', (ev) ->
-      crosshair.style.left = (ev.offsetX || ev.layerX) + 'px'
-      crosshair.style.top  = (ev.offsetY || ev.layerY) + 'px'
+      crosshair.style.left = ev.pageX + 'px'
+      crosshair.style.top  = ev.pageY + 'px'
+      crosshair.style.visibility = 'visible'
+    @element[0].addEventListener 'mouseleave', (ev) -> crosshair.style.visibility = 'hidden'
+    @element[0].addEventListener 'touchstart', (ev) -> crosshair.style.visibility = 'hidden'
+    @element[0].addEventListener 'touchstart', @onTouchStart
+
+  # Scale the area.
+  #
+  # setScale :: float -> a
+  #
+  setScale: (x) ->
+    if x > 0
+      @scale = x
+      @changeLayer(@layer)
 
   # Add an empty layer at the end of the stack. Emits `layer:add`.
   #
@@ -112,7 +123,7 @@ class Area
     w or= @element.parent().innerWidth()
     h or= @element.parent().innerHeight()
     index = @layers.length if index < 0
-    layer = new Canvas(w, h).css('top', y).css('left', x).addClass('layer')
+    layer = new Canvas(w, h).data('x', x).data('y', y).addClass('layer')
     @layers.splice(index, 0, layer)
     @element.append(layer).trigger('layer:add', [layer[0], index])
     @changeLayer(index)
@@ -123,11 +134,17 @@ class Area
   # changeLayer :: int -> a
   #
   changeLayer: (i) ->
+    for n, x of @layers
+      x.css('z-index', n - @layers.length)
+       .css('left',   x.data('x') * @scale)
+       .css('top',    x.data('y') * @scale)
+       .css('width',  x[0].width  * @scale)
+       .css('height', x[0].height * @scale)
+
     if 0 <= i < @layers.length
       @layer = i
       @element.children('.layer').removeClass('active').eq(i).addClass('active')
       @element.trigger 'layer:set', [i]
-    x.css('z-index', i - @layers.length) for i, x of @layers
 
   # Remove a layer. Emits `layer:del`.
   #
@@ -171,7 +188,7 @@ class Area
       @layers[layer].replaceWith(@layers[layer] = cnv = @fromImage im, w, h, x, y).remove()
       @element.trigger 'layer:resize', [cnv[0], layer]
       @element.trigger 'layer:redraw', [cnv[0], layer]
-      @changeLayer @layer
+      @changeLayer(@layer)
 
   # Load a layer from a data URL.
   #
@@ -187,7 +204,7 @@ class Area
   # fromImage :: Image -> Canvas
   #
   fromImage: (img, w = img.width, h = img.height, x = 0, y = 0) ->
-    cnv = new Canvas(w, h).css('left', x).css('top', y).addClass('layer')
+    cnv = new Canvas(w, h).data('x', x).data('y', y).addClass('layer')
     ctx = cnv[0].getContext('2d')
     ctx.drawImage img, 0, 0
     return cnv
@@ -254,14 +271,19 @@ class Area
     return if not @tool
     @tool.setOptions options
     @element.trigger('tool:' + k, [v, @tool.options]) for k, v of options
-    @crosshair.setAttribute 'width',  @tool.options.size
-    @crosshair.setAttribute 'height', @tool.options.size
-    @crosshair.style.marginLeft = -@tool.options.size / 2 + 'px'
-    @crosshair.style.marginTop  = -@tool.options.size / 2 + 'px'
-    @crosshair.style.display = if @tool.options.size > 5 then '' else 'none'
+
+    sp = @tool.options.size
+    sz = @tool.options.size * @scale
+    $(@crosshair).attr 'width',  sz + 1
+                 .attr 'height', sz + 1
+                 .css 'margin-left', -sz / 2
+                 .css 'margin-top',  -sz / 2
+                 .css 'display', if @tool.options.size > 5 then '' else 'none'
     ctx = @crosshair.getContext('2d')
-    ctx.translate @tool.options.size / 2, @tool.options.size / 2
+    ctx.translate sz / 2, sz / 2
+    @tool.options.size = sz
     @tool.crosshair ctx
+    @tool.options.size = sp
 
   onMouseDown: (ev) ->
     # FIXME this next line prevents unwanted selection, but breaks focusing.
@@ -269,7 +291,7 @@ class Area
     if 0 <= @layer < @layers.length and @tool and ev.button == 0 and evdev.reset ev
       @context = @layers[@layer][0].getContext '2d'
       # TODO pressure & rotation
-      if @tool.start(@context, ev.offsetX || ev.layerX, ev.offsetY || ev.layerY, 0, 0)
+      if @tool.start(@context, (ev.offsetX or ev.layerX) / @scale, (ev.offsetY or ev.layerY) / @scale, 0, 0)
         @snap @layer
         @element.trigger 'stroke:begin', [@layers[@layer][0], @layer]
         @element[0].addEventListener 'mousemove',  @onMouseMove
@@ -279,11 +301,11 @@ class Area
   onMouseMove: (ev) ->
     if evdev.ok ev
       # TODO pressure & rotation
-      @tool.move(@context, ev.offsetX || ev.layerX, ev.offsetY || ev.layerY, 0, 0)
+      @tool.move(@context, (ev.offsetX or ev.layerX) / @scale, (ev.offsetY or ev.layerY) / @scale, 0, 0)
 
   onMouseUp: (ev) ->
     if evdev.ok ev
-      @tool.stop(@context, ev.offsetX || ev.layerX, ev.offsetY || ev.layerY)
+      @tool.stop(@context, (ev.offsetX or ev.layerX) / @scale, (ev.offsetY or ev.layerY) / @scale)
       @element[0].removeEventListener 'mousemove',  @onMouseMove
       @element[0].removeEventListener 'mouseleave', @onMouseUp
       @element[0].removeEventListener 'mouseup',    @onMouseUp
@@ -302,7 +324,7 @@ class Area
       t = ev.touches[0]
       x = t.clientX - @offsetX
       y = t.clientY - @offsetY
-      if @tool.start @context, x, y, t.force, t.rotationAngle * PI / 180
+      if @tool.start @context, x / @scale, y / @scale, t.force, t.rotationAngle * PI / 180
         @snap @layer
         @element.trigger 'stroke:begin', [@layers[@layer][0], @layer]
         @element[0].addEventListener 'touchmove', @onTouchMove
@@ -312,7 +334,7 @@ class Area
     t = ev.touches[0]
     x = t.clientX - @offsetX
     y = t.clientY - @offsetY
-    @tool.move @context, x, y, t.force, t.rotationAngle * PI / 180
+    @tool.move @context, x / @scale, y / @scale, t.force, t.rotationAngle * PI / 180
 
   onTouchEnd: (ev) ->
     if ev.touches.length == 0

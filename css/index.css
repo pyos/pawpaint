@@ -1,5 +1,6 @@
 body {
   position: absolute;
+  overflow: hidden;
   top:    0;
   bottom: 0;
   left:   0;
@@ -7,6 +8,7 @@ body {
   cursor: default;
   z-index: -65536;
   -ms-touch-action: none;
+  background: gray;
 }
 
 body:not(.no-canvas) .no-canvas, body.no-canvas .canvas-only {
@@ -62,8 +64,10 @@ select.fa:focus, select.fa:active {
 }
 
 .area {
-  display: inline-block;
-  cursor:  crosshair;
+  position: relative;
+  z-index:  -65567;
+  display:  inline-block;
+  cursor:   crosshair;
 }
 
 .background {
@@ -73,6 +77,11 @@ select.fa:focus, select.fa:active {
 .layer, .crosshair {
   position: absolute;
   pointer-events: none;
+}
+
+.layer.active {
+  outline: 1px dashed yellow;
+  outline-offset: -1px;
 }
 
 .side-area {
