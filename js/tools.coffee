@@ -76,10 +76,12 @@ class Pen extends Tool
     s = @options.S
     l = @options.L
     o = @options.opacity
+    d = @options.dynamic
     @options.H = 0
     @options.S = 0
     @options.L = 50
     @options.opacity = 0.5
+    @options.dynamic = []
     @start ctx, 0, 0, 1, 0
     @move  ctx, 0, 1, 1, 0
     @stop  ctx, 0, 1, 1, 0
@@ -87,6 +89,7 @@ class Pen extends Tool
     @options.S = s
     @options.L = l
     @options.opacity = o
+    @options.dynamic = d
 
   start: (ctx, x, y, pressure, rotation) ->
     ctx.save()
