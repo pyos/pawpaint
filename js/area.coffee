@@ -13,11 +13,12 @@ evdev =
     @lastY = ev.pageY
     true
 
-  ok: (ev, reset) ->
-    ok = abs(ev.pageX - @lastX) + abs(ev.pageY - @lastY) < 200
-    @lastX = ev.pageX
-    @lastY = ev.pageY
-    ok
+  ok: (ev) ->
+    if abs(ev.pageX - @lastX) + abs(ev.pageY - @lastY) < 200
+      @lastX = ev.pageX
+      @lastY = ev.pageY
+      return true
+    return false
 
 
 # The main object. Allows the user to draw stuff on an element with either
