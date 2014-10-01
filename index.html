@@ -11,6 +11,7 @@
     <script src="3rdparty/js/jquery.min.js"></script>
     <script src="3rdparty/js/bootstrap.min.js"></script>
     <script src="js/util.js"></script>
+    <script src="js/layer.js"></script>
     <script src="js/area.js"></script>
     <script src="js/tools.js"></script>
     <script src="js/dynamic.js"></script>
@@ -126,13 +127,13 @@
         <div class="header">Layer options</div>
         <table class="table">
           <tr>
-            <td>Visible</td>
-            <td><input type="checkbox" data-func="toggleLayer" data-css="display" data-invert="true" value="none" /></td>
+            <td>Hidden</td>
+            <td><input type="checkbox" data-set="setHidden" data-get="getHidden" /></td>
           </tr>
           <tr>
             <td>Blend mode</td>
             <td>
-              <select class="blend" data-css="mix-blend-mode" value="normal">
+              <select class="blend" data-set="setBlendMode" data-get="getBlendMode" value="normal">
                 <option value="normal">Normal</option>
                 <option disabled>──────────</option>
                 <option value="lighten">Lighten</option>
@@ -157,7 +158,7 @@
           </tr>
           <tr>
             <td>Opacity</td>
-            <td><input type="range" data-css="opacity" min="0.0" max="1.0" step="0.05" value="1.0" /></td>
+            <td><input type="range" data-set="setOpacity" data-get="getOpacity" min="0.0" max="1.0" step="0.05" value="1.0" /></td>
           </tr>
         </table>
       </div>

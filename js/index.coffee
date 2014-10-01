@@ -86,28 +86,22 @@ $ ->
     body.on 'mousemove touchmove',  h2
     body.on 'mouseup   touchend',   h3
 
-  area.element
-    .on 'contextmenu', (e) ->
-      e.preventDefault()
-      $('.templates .selector-main').selector_main(area, e.clientX, e.clientY).appendTo('body')
-    .on 'tool:kind tool:L', ->
-      button.each ->
-        lvl = if area.tool.options.L > 50 then 0 else 100
-        ctx = @getContext('2d')
-        ctx.clearRect 0, 0, @width, @height
+  area.element.on 'contextmenu', (e) ->
+    e.preventDefault()
+    $('.templates .selector-main').selector_main(area, e.clientX, e.clientY).appendTo('body')
 
-        tool = new area.tool.constructor(size: min(@width, @height) * 0.75, H: 0, S: 0, L: lvl)
-        tool.symbol ctx, @width / 2, @height / 2
-    .on 'tool:H tool:S tool:L', ->
-      button.css 'background', "hsl(#{area.tool.options.H},#{area.tool.options.S}%,#{area.tool.options.L}%)"
+  area.on 'tool:kind tool:L', ->
+    button.each ->
+      lvl = if area.tool.options.L > 50 then 0 else 100
+      ctx = @getContext('2d')
+      ctx.clearRect 0, 0, @width, @height
+
+      tool = new area.tool.constructor(size: min(@width, @height) * 0.75, H: 0, S: 0, L: lvl)
+      tool.symbol ctx, @width / 2, @height / 2
+
+  area.on 'tool:H tool:S tool:L', ->
+    button.css 'background', "hsl(#{area.tool.options.H},#{area.tool.options.S}%,#{area.tool.options.L}%)"
 
   area.setTool Canvas.Tool.Pen
   area.import window.localStorage.image if window.localStorage?.image
-  if not area.layers.length
-    img = new Image
-    img.onload = ->
-      area.createLayer()
-      w = max area.layers[0][0].width,  img.width
-      h = max area.layers[0][0].height, img.height
-      area.resizeLayer(0, w, h, 0, 0, img, true)
-    img.src = 'img/initial.png'
+  area.createLayer() if not area.layers.length

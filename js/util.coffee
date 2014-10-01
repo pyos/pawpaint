@@ -78,6 +78,34 @@
   ct
 
 
+# When using tablets, evdev may bug and send the cursor jumping when doing
+# fine movements. To prevent this, we're going to ignore extremely fast
+# mouse movement events.
+@evdev =
+  lastX: 0
+  lastY: 0
+
+  # Mark a start point given a mouse event.
+  #
+  # reset :: MouseEvent -> bool
+  #
+  reset: (ev) ->
+    @lastX = ev.pageX
+    @lastY = ev.pageY
+    true
+
+  # Check whether a mouse event is not bugged.
+  #
+  # ok :: MouseEvent -> bool
+  #
+  ok: (ev) ->
+    if abs(ev.pageX - @lastX) + abs(ev.pageY - @lastY) < 200
+      @lastX = ev.pageX
+      @lastY = ev.pageY
+      return true
+    return false
+
+
 # Listen for key events and emit events such as `key:ctrl+shift+127`.
 # Mostly useless since browsers hog key combos for themselves.
 #
@@ -89,3 +117,26 @@ $.fn.keymappable = -> @on 'keydown', (ev) ->
   n += if ev.altKey   then 'alt+'   else ''
   n += if ev.metaKey  then 'meta+'  else ''
   $(@).trigger "key:#{n}#{ev.keyCode}", [ev]
+
+
+class @EventSystem
+  # A simple event dispatcher, because jQuery is slow.
+  constructor: -> @_events = {}
+
+  # Add an event handler.
+  #
+  # on :: str (a -> b) -> c
+  #
+  on: (name, fn) ->
+    for n in name.split(' ')
+      @_events[n] or= []
+      @_events[n].push(fn)
+    return @
+
+  # Call all handlers associated with an event.
+  #
+  # trigger :: str [a] -> b
+  #
+  trigger: (name, args) ->
+    fn.apply @, args for fn in @_events[name] or []
+    return @

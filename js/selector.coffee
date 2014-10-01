@@ -306,30 +306,25 @@ $.fn.selector_layers = (area, template) ->
       $(template).selector_layer_config(area, index, offset.left, offset.top, true).appendTo('body')
     $(@).removeData('no-layer-menu')
 
-  area.element
-    .on 'layer:add', (_, canvas, index) =>
-      sz = 150 / max(canvas.width, canvas.height)
-      entry = $ '<li class="background">'
-      entry.addClass 'disabled' if canvas.style.display == 'none'
-      entry.append new Canvas floor(canvas.width * sz), floor(canvas.height * sz)
-      entry.insertBefore @children().eq(index)
+  area.on 'layer:add', (layer, index) =>
+    entry = $ '<li class="background"><canvas></canvas></li>'
+    entry.insertBefore @children().eq(index)
 
-    .on 'layer:resize', (_, canvas, index) =>
-      sz = 150 / max(canvas.width, canvas.height)
-      entry = @children().eq(index).find('canvas')
-      entry.replaceWith new Canvas canvas.width * sz, canvas.height * sz
+  area.on 'layer:resize', (layer, index) =>
+    sz = 150 / max(layer.w, layer.h)
+    entry = @children().eq(index).find('canvas')
+    entry.replaceWith new Canvas layer.w * sz, layer.h * sz
 
-    .on 'layer:redraw', (_, canvas, index) =>
-      cnv = @children().eq(index).find('canvas')
-      cnv.each ->
-        ctx = @getContext('2d')
-        ctx.clearRect         0, 0, @width, @height
-        ctx.drawImage canvas, 0, 0, @width, @height
-
-    .on 'layer:set',    (_, index)    => @children().removeClass('active').eq(index).addClass('active')
-    .on 'layer:del',    (_, index)    => @children().eq(index).remove()
-    .on 'layer:move',   (_, index, d) => @children().eq(index).detach().insertBefore @children().eq(index + d)
-    .on 'layer:toggle', (_, index)    => @children().eq(index).toggleClass('disabled')
+  area.on 'layer:redraw', (layer, index) =>
+    cnv = @children().eq(index).find('canvas')
+    cnv.each ->
+      ctx = @getContext('2d')
+      ctx.clearRect              0, 0, @width, @height
+      ctx.drawImage layer.img(), 0, 0, @width, @height
+  # TODO handle layer:reprop
+  area.on 'layer:set',    (index)    => @children().removeClass('active').eq(index).addClass('active')
+  area.on 'layer:del',    (index)    => @children().eq(index).remove()
+  area.on 'layer:move',   (index, d) => @children().eq(index).detach().insertBefore @children().eq(index + d)
 
 
 $.fn.selector_layer_config = (area, index, x, y, fixed) ->
@@ -337,22 +332,18 @@ $.fn.selector_layer_config = (area, index, x, y, fixed) ->
 
   t = @clone()
   t.on 'click', (ev) -> ev.stopPropagation()
-   .on 'change', '[data-css]', ->
-    expect = @value
-
+   .on 'change', '[data-set]', ->
     if @getAttribute('type') == 'checkbox'
-      invert = !!@getAttribute('data-invert')
-      func   =   @getAttribute('data-func')
-      expect = if @checked == invert then @getAttribute('data-null') or '' else @value
-      return area[func](index) if expect != layer.css @getAttribute('data-css') if func
-
-    layer.css @getAttribute('data-css'), @value
-
-  t.find('[data-css]').each ->
-    if @getAttribute('type') == 'checkbox'
-      @checked = (layer.css(@getAttribute('data-css')) == @value) == !@getAttribute('data-invert')
+      layer[$(@).attr('data-set')](@checked)
     else
-      @value = layer.css(@getAttribute('data-css')) or @value
+      layer[$(@).attr('data-set')](@value)
+
+  t.find('[data-get]').each ->
+    if @getAttribute('type') == 'checkbox'
+      @checked = layer[$(@).attr('data-get')]()
+    else
+      @value = layer[$(@).attr('data-get')]()
     # `false` breaks iteration. `@checked` may be `false`. You get the idea.
     return true
+
   t.selector_modal(x, y, fixed)
