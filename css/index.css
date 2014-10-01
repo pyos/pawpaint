@@ -84,6 +84,10 @@ select.fa:focus, select.fa:active {
   outline-offset: -1px;
 }
 
+.crosshair {
+  will-change: left, top;
+}
+
 .side-area {
   position: relative;
   overflow-x: hidden;
