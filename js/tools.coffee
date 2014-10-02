@@ -18,7 +18,8 @@ class Tool
   name: 'Tool'
   icon: null
 
-  constructor: (options) ->
+  constructor: (area, options) ->
+    @area = area
     @options = {}
     @setOptions
       dynamic: []
@@ -66,6 +67,36 @@ class Tool
       @move  ctx, x + 1, y, 1, 0
       @stop  ctx, x + 1, y
       @options.dynamic = _x
+
+
+class SelectRect extends Tool
+  name: 'Rectangular Selection'
+
+  symbol: (ctx, x, y) ->
+    ctx.save()
+    ctx.translate(x, y)
+    @crosshair ctx
+    ctx.restore()
+
+  crosshair: (ctx) ->
+    ctx.save()
+    ctx.lineWidth   = 1
+    ctx.globalAlpha = 0.5
+    ctx.strokeStyle = "hsl(0, 0%, 50%)"
+    ctx.beginPath()
+    ctx.strokeRect(-@options.size / 2, -@options.size / 2, @options.size, @options.size)
+    ctx.restore()
+
+  start: (ctx, x, y) ->
+    @startX = @lastX = x
+    @startY = @lastY = y
+
+  move: (ctx, x, y) ->
+    @lastX = x
+    @lastY = y
+    path = new Path2D
+    path.rect @startX, @startY, x - @startX, y - @startY
+    @area.setSelection path
 
 
 class Pen extends Tool
@@ -176,6 +207,7 @@ class Eraser extends Pen
 @Canvas.Tool.Eraser   = Eraser
 @Canvas.Tool.Stamp    = Stamp
 @Canvas.Tool.Resource = Resource
+@Canvas.Tool.Select   = SelectRect
 
 @Canvas.Tool.Stamp.make = (img) -> class P extends this
   img: img

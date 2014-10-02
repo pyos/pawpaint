@@ -110,7 +110,7 @@ $.fn.selector_vertical = (area, options) ->
       ctx.save()
       ctx.clearRect(0, 0, @width, @height)
       ctx.translate(@width / 2, @height / 2)
-      tool = new area.tool.constructor(area.tool.options)
+      tool = new area.tool.constructor(area, area.tool.options)
       tool.setOptions dynamic: [], opacity: 0.5, H: 0, S: 0, L: 50, size: @width * 0.75
       tool.setOptions value
       ondraw?.call this, value, ctx, init, tool
@@ -176,7 +176,7 @@ $.fn.selector_tools = (area) ->
         ctx.stroke()
         ctx.fill() if tool is value.kind
 
-        t = new tool({size: @cellS * 9 / 20, H: 0, S: 0, L: 80, opacity: 0.75})
+        t = new tool(area, {size: @cellS * 9 / 20, H: 0, S: 0, L: 80, opacity: 0.75})
         t.symbol ctx, x, y
 
 

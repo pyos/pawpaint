@@ -55,6 +55,9 @@ class @Canvas.Area extends EventSystem
     # display something on it.
     @crosshair = crosshair = $('<canvas class="crosshair">').appendTo('body')[0]
 
+    # This one displays the selection.
+    @selectui = $('<canvas class="selection">').appendTo(@element)[0]
+
     # CoffeeScript's `=>` results in an ugly `__bind` wrapper.
     @onMouseMove  = @onMouseMove  .bind @
     @onMouseDown  = @onMouseDown  .bind @
@@ -73,6 +76,9 @@ class @Canvas.Area extends EventSystem
         mw = max(mw, (layer.w + layer.x) * @scale - ep.left)
         mh = max(mh, (layer.h + layer.y) * @scale - ep.top)
       @element.css('width', mw).css('height', mh)
+      @selectui.width  = mw
+      @selectui.height = mh
+      @setSelection @selection
       @setToolOptions {}  # rescale the crosshair
 
     # Note: this doesn't actually redraw anything, only calls
@@ -95,6 +101,21 @@ class @Canvas.Area extends EventSystem
   setScale: (x) ->
     @scale = max(0, min(20, x))
     @changeLayer(@layer)
+
+  # Select an area. Selecting an area clips all operations to that area.
+  # It also enables copying and cutting.
+  #
+  # setSelection :: Path2D -> a
+  #
+  setSelection: (path) ->
+    @selection = path
+    context = @selectui.getContext '2d'
+    context.clearRect 0, 0, @selectui.width, @selectui.height
+    if path
+      context.lineWidth = 1
+      context.strokeStyle = 'rgba(128, 128, 128, 0.5)'
+      context.scale @scale, @scale
+      context.stroke path
 
   # Add an empty layer at the end of the stack. Emits `layer:add`.
   #
@@ -236,7 +257,7 @@ class @Canvas.Area extends EventSystem
   # setTool :: (Type extends Canvas.Tool) Object -> a
   #
   setTool: (kind, options) ->
-    @tool = new kind(options)
+    @tool = new kind(@, options)
     @setToolOptions @tool.options
     @trigger 'tool:kind', [kind, @tool.options]
 
@@ -266,6 +287,7 @@ class @Canvas.Area extends EventSystem
     ev.preventDefault()
     if 0 <= @layer < @layers.length and @tool and ev.button == 0 and evdev.reset ev
       @context = @layers[@layer].img().getContext '2d'
+      @context.clip @selection if @selection
       @context.translate -@layers[@layer].x, -@layers[@layer].y
       # TODO pressure & rotation
       if @tool.start(@context, (ev.offsetX or ev.layerX) / @scale, (ev.offsetY or ev.layerY) / @scale, 0, 0)
@@ -296,6 +318,7 @@ class @Canvas.Area extends EventSystem
     ev.preventDefault()
     if ev.touches.length == 1 and 0 <= @layer < @layers.length and @tool and ev.which == 0
       @context = @layers[@layer].img().getContext '2d'
+      @context.clip @selection if @selection
       @context.translate -@layers[@layer].x, -@layers[@layer].y
       @offsetX = @element.offset().left
       @offsetY = @element.offset().top

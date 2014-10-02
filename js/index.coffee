@@ -10,6 +10,7 @@ $ ->
     Canvas.Tool.Eraser
     Canvas.Tool.Resource.make('brush-skewed-ellipse')
     Canvas.Tool.Resource.make('brush-star')
+    Canvas.Tool.Select
 
   $(window).on 'unload', -> @localStorage?.image = area.export("svg") if area
   $(document).keymappable()
@@ -96,7 +97,7 @@ $ ->
       ctx = @getContext('2d')
       ctx.clearRect 0, 0, @width, @height
 
-      tool = new area.tool.constructor(size: min(@width, @height) * 0.75, H: 0, S: 0, L: lvl)
+      tool = new area.tool.constructor(area, size: min(@width, @height) * 0.75, H: 0, S: 0, L: lvl)
       tool.symbol ctx, @width / 2, @height / 2
 
   area.on 'tool:H tool:S tool:L', ->
