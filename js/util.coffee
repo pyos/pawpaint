@@ -15,10 +15,10 @@
 @floor = Math.floor
 @PI    = Math.PI
 
-@CTRL  = 1 << 11
-@SHIFT = 1 << 10
-@ALT   = 1 << 9
-@META  = 1 << 8
+@CTRL  = false
+@SHIFT = false
+@ALT   = false
+@META  = false
 
 
 # A shortcut for creating <canvas> elements.
@@ -111,12 +111,20 @@
 #
 # keymappable :: -> jQuery
 #
-$.fn.keymappable = -> @on 'keydown', (ev) ->
-  n  = if ev.ctrlKey  then 'ctrl+'  else ''
-  n += if ev.shiftKey then 'shift+' else ''
-  n += if ev.altKey   then 'alt+'   else ''
-  n += if ev.metaKey  then 'meta+'  else ''
-  $(@).trigger "key:#{n}#{ev.keyCode}", [ev]
+$.fn.keymappable = ->
+  @on 'keydown', (ev) ->
+    n  = if ev.ctrlKey  then 'ctrl+'  else ''
+    n += if ev.shiftKey then 'shift+' else ''
+    n += if ev.altKey   then 'alt+'   else ''
+    n += if ev.metaKey  then 'meta+'  else ''
+    $(@).trigger "key:#{n}#{ev.keyCode}", [ev]
+
+  @on 'keydown keyup', (ev) ->
+    window.CTRL  = ev.ctrlKey
+    window.SHIFT = ev.shiftKey
+    window.ALT   = ev.altKey
+    window.META  = ev.metaKey
+    true
 
 
 class @EventSystem

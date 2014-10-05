@@ -56,7 +56,7 @@ class @Canvas.Area extends EventSystem
     @crosshair = crosshair = $('<canvas class="crosshair">').appendTo('body')[0]
 
     # This one displays the selection.
-    @selectui = $('<canvas class="selection">').appendTo(@element)[0]
+    @selectui = $('<canvas class="hidden selection">').appendTo(@element)[0]
 
     # CoffeeScript's `=>` results in an ugly `__bind` wrapper.
     @onMouseMove  = @onMouseMove  .bind @
@@ -78,8 +78,8 @@ class @Canvas.Area extends EventSystem
       @element.css('width', mw).css('height', mh)
       @selectui.width  = mw
       @selectui.height = mh
-      @setSelection @selection
       @setToolOptions {}  # rescale the crosshair
+      @setSelection @selection
 
     # Note: this doesn't actually redraw anything, only calls
     # into appropriate event handlers.
@@ -109,13 +109,18 @@ class @Canvas.Area extends EventSystem
   #
   setSelection: (path) ->
     @selection = path
-    context = @selectui.getContext '2d'
-    context.clearRect 0, 0, @selectui.width, @selectui.height
     if path
-      context.lineWidth = 1
-      context.strokeStyle = 'rgba(128, 128, 128, 0.5)'
+      @selectui.className = "selection"
+      context = @selectui.getContext '2d'
+      context.save()
+      context.fillStyle = "hsl(0, 0%, 50%)"
+      context.fillRect 0, 0, @selectui.width, @selectui.height
       context.scale @scale, @scale
-      context.stroke path
+      context.globalCompositeOperation = "destination-out"
+      context.fill(path)
+      context.restore()
+    else
+      @selectui.className = "hidden selection"
 
   # Add an empty layer at the end of the stack. Emits `layer:add`.
   #
@@ -287,6 +292,7 @@ class @Canvas.Area extends EventSystem
     ev.preventDefault()
     if 0 <= @layer < @layers.length and @tool and ev.button == 0 and evdev.reset ev
       @context = @layers[@layer].img().getContext '2d'
+      @context.save()
       @context.clip @selection if @selection
       @context.translate -@layers[@layer].x, -@layers[@layer].y
       # TODO pressure & rotation
@@ -309,6 +315,7 @@ class @Canvas.Area extends EventSystem
       @element[0].removeEventListener 'mouseleave', @onMouseUp
       @element[0].removeEventListener 'mouseup',    @onMouseUp
       @trigger 'stroke:end', [@layers[@layer], @layer]
+      @context.restore()
 
   onTouchStart: (ev) ->
     # FIXME this one is even worse depending on the device.
@@ -318,6 +325,7 @@ class @Canvas.Area extends EventSystem
     ev.preventDefault()
     if ev.touches.length == 1 and 0 <= @layer < @layers.length and @tool and ev.which == 0
       @context = @layers[@layer].img().getContext '2d'
+      @context.save()
       @context.clip @selection if @selection
       @context.translate -@layers[@layer].x, -@layers[@layer].y
       @offsetX = @element.offset().left
@@ -330,6 +338,7 @@ class @Canvas.Area extends EventSystem
         @trigger 'stroke:begin', [@layers[@layer], @layer]
         @element[0].addEventListener 'touchmove', @onTouchMove
         @element[0].addEventListener 'touchend',  @onTouchEnd
+        true
 
   onTouchMove: (ev) ->
     t = ev.touches[0]
@@ -343,3 +352,4 @@ class @Canvas.Area extends EventSystem
       @element[0].removeEventListener 'touchmove', @onTouchMove
       @element[0].removeEventListener 'touchend',  @onTouchEnd
       @trigger 'stroke:end', [@layers[@layer], @layer]
+      @context.restore()

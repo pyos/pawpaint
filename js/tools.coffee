@@ -75,29 +75,32 @@ class SelectRect extends Tool
   symbol: (ctx, x, y) ->
     ctx.save()
     ctx.translate(x, y)
-    @crosshair ctx
-    ctx.restore()
-
-  crosshair: (ctx) ->
-    ctx.save()
-    ctx.lineWidth   = 1
-    ctx.globalAlpha = 0.5
-    ctx.strokeStyle = "hsl(0, 0%, 50%)"
-    ctx.beginPath()
+    ctx.lineWidth = 1
+    ctx.strokeStyle = "hsl(#{@options.H},#{@options.S}%,#{@options.L}%)"
     ctx.strokeRect(-@options.size / 2, -@options.size / 2, @options.size, @options.size)
     ctx.restore()
 
+  crosshair: (ctx) -> null
+
   start: (ctx, x, y) ->
+    @oldsel = @area.selection
     @startX = @lastX = x
     @startY = @lastY = y
+    true
 
   move: (ctx, x, y) ->
     @lastX = x
     @lastY = y
+    nx = x - @startX
+    ny = y - @startY
     path = new Path2D
-    path.rect @startX, @startY, x - @startX, y - @startY
+    path.rect @startX + min(0, nx), @startY + min(0, ny), abs(nx), abs(ny)
+    path.addPath @oldsel if SHIFT and @oldsel
     @area.setSelection path
 
+  stop: (ctx) ->
+    if abs(@lastX - @startX) + abs(@lastY - @startY) < 5 and not (SHIFT and @oldsel)
+      @area.setSelection null
 
 class Pen extends Tool
   name: 'Pen'
