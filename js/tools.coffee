@@ -69,16 +69,8 @@ class Tool
       @options.dynamic = _x
 
 
-class SelectRect extends Tool
-  name: 'Rectangular Selection'
-
-  symbol: (ctx, x, y) ->
-    ctx.save()
-    ctx.translate(x, y)
-    ctx.lineWidth = 1
-    ctx.strokeStyle = "hsl(#{@options.H},#{@options.S}%,#{@options.L}%)"
-    ctx.strokeRect(-@options.size / 2, -@options.size / 2, @options.size, @options.size)
-    ctx.restore()
+class Selection extends Tool
+  name: 'Selection'
 
   crosshair: (ctx) -> null
 
@@ -91,13 +83,18 @@ class SelectRect extends Tool
   move: (ctx, x, y) ->
     @lastX = x
     @lastY = y
-    nx = x - @startX
-    ny = y - @startY
+    dx = x - @startX
+    dy = y - @startY
+    if SHIFT
+      if abs(dy) > abs(dx)
+        dy = dy / abs(dy) * abs(dx)
+      else
+        dx = dx / abs(dx) * abs(dy)
     path = new Path2D
-    path.rect @startX + min(0, nx), @startY + min(0, ny), abs(nx), abs(ny)
-    if SHIFT and @oldsel.length
+    @select path, @startX + min(0, dx), @startY + min(0, dy), abs(dx), abs(dy)
+    if CTRL and @oldsel.length
       paths = []
-      if CTRL
+      if ALT
         paths.push(p) for p in @oldsel
         paths.push(path)
       else for p in @oldsel
@@ -105,7 +102,7 @@ class SelectRect extends Tool
         npath.addPath(path)
         npath.addPath(p)
         paths.push(npath)
-    else if CTRL
+    else if ALT
       npath = new Path2D
       npath.rect 0, 100000, 100000, -100000
       npath.addPath(path)
@@ -119,6 +116,39 @@ class SelectRect extends Tool
   stop: (ctx) ->
     if abs(@lastX - @startX) + abs(@lastY - @startY) < 5 and not (SHIFT and @oldsel)
       @area.setSelection []
+
+
+class SelectRect extends Selection
+  name: 'Rectangular Selection'
+
+  symbol: (ctx, x, y) ->
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.lineWidth = 1
+    ctx.setLineDash([5, 5])
+    ctx.strokeStyle = "hsl(#{@options.H},#{@options.S}%,#{@options.L}%)"
+    ctx.strokeRect(-@options.size / 2, -@options.size / 2, @options.size, @options.size)
+    ctx.restore()
+
+  select: (path, x, y, dx, dy) -> path.rect x, y, dx, dy
+
+
+class SelectEllipse extends Selection
+  name: 'Elliptical Selection'
+
+  symbol: (ctx, x, y) ->
+    ctx.save()
+    ctx.lineWidth = 1
+    ctx.setLineDash([5, 5])
+    ctx.strokeStyle = "hsl(#{@options.H},#{@options.S}%,#{@options.L}%)"
+    ctx.beginPath()
+    ctx.arc(x, y, @options.size / 2, 0, PI * 2)
+    ctx.stroke()
+    ctx.restore()
+
+  select: (path, x, y, dx, dy) ->
+    path.ellipse x + dx / 2, y + dy / 2, dx / 2, dy / 2, 0, 0, PI * 2
+
 
 class Pen extends Tool
   name: 'Pen'
@@ -223,12 +253,14 @@ class Eraser extends Pen
     ctx.globalCompositeOperation = "destination-out"
 
 
-@Canvas.Tool          = Tool
-@Canvas.Tool.Pen      = Pen
-@Canvas.Tool.Eraser   = Eraser
-@Canvas.Tool.Stamp    = Stamp
-@Canvas.Tool.Resource = Resource
-@Canvas.Tool.Select   = SelectRect
+@Canvas.Tool           = Tool
+@Canvas.Tool.Pen       = Pen
+@Canvas.Tool.Eraser    = Eraser
+@Canvas.Tool.Stamp     = Stamp
+@Canvas.Tool.Resource  = Resource
+@Canvas.Tool.Selection = Selection
+@Canvas.Tool.Selection.Rect    = SelectRect
+@Canvas.Tool.Selection.Ellipse = SelectEllipse
 
 @Canvas.Tool.Stamp.make = (img) -> class P extends this
   img: img
