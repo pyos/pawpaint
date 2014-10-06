@@ -136,12 +136,14 @@ class @Canvas.Area extends EventSystem
     @layers.splice(index, 0, layer)
     @trigger 'layer:add', [layer, index]
     if state
-      layer.set(state)
+      result = layer.set(state)
     else
       layer.resize 0, 0, @element.parent().innerWidth(), @element.parent().innerHeight()
       layer.replace null
+      result = true
     @changeLayer(index)
     @snap index, action: @UNDO_ADD_LAYER, state: null
+    return result
 
   # Switch to a different layer; all drawing events will go to it. Emits `layer:set`.
   #

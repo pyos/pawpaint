@@ -75,12 +75,16 @@ class @Canvas.Layer extends EventSystem
   set: (state) ->
     img = new Image
     img.src = state.i
-    @clear()
-    @resize(state.x, state.y, state.w or img.width, state.h or img.height)
-    @replace(img)
-    @setBlendMode state.blendMode
-    @setOpacity   state.opacity
-    @setHidden    state.hidden
+    if img.width and img.height
+      @clear()
+      @resize(state.x, state.y, state.w or img.width, state.h or img.height)
+      @replace(img)
+      @setBlendMode state.blendMode
+      @setOpacity   state.opacity
+      @setHidden    state.hidden
+      return true
+    @resize(state.x, state.y, 1, 1)
+    return false
 
   # Get the image that represents the contents of this layer.
   #
