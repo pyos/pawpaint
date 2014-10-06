@@ -57,6 +57,7 @@ class @Canvas.Area extends EventSystem
 
     # This one displays the selection.
     @selectui = $('<canvas class="hidden selection">').appendTo(@element)[0]
+    @selection = []
 
     # CoffeeScript's `=>` results in an ugly `__bind` wrapper.
     @onMouseMove  = @onMouseMove  .bind @
@@ -107,17 +108,17 @@ class @Canvas.Area extends EventSystem
   #
   # setSelection :: Path2D -> a
   #
-  setSelection: (path) ->
-    @selection = path
-    if path
+  setSelection: (paths) ->
+    @selection = paths
+    if paths.length
       @selectui.className = "selection"
       context = @selectui.getContext '2d'
       context.save()
       context.fillStyle = "hsl(0, 0%, 50%)"
       context.fillRect 0, 0, @selectui.width, @selectui.height
       context.scale @scale, @scale
-      context.globalCompositeOperation = "destination-out"
-      context.fill(path)
+      context.clip(path) for path in paths
+      context.clearRect 0, 0, @selectui.width, @selectui.height
       context.restore()
     else
       @selectui.className = "hidden selection"
@@ -293,7 +294,7 @@ class @Canvas.Area extends EventSystem
     if 0 <= @layer < @layers.length and @tool and ev.button == 0 and evdev.reset ev
       @context = @layers[@layer].img().getContext '2d'
       @context.save()
-      @context.clip @selection if @selection
+      @context.clip path for path in @selection
       @context.translate -@layers[@layer].x, -@layers[@layer].y
       # TODO pressure & rotation
       if @tool.start(@context, (ev.offsetX or ev.layerX) / @scale, (ev.offsetY or ev.layerY) / @scale, 0, 0)
@@ -326,7 +327,7 @@ class @Canvas.Area extends EventSystem
     if ev.touches.length == 1 and 0 <= @layer < @layers.length and @tool and ev.which == 0
       @context = @layers[@layer].img().getContext '2d'
       @context.save()
-      @context.clip @selection if @selection
+      @context.clip path for path in @selection
       @context.translate -@layers[@layer].x, -@layers[@layer].y
       @offsetX = @element.offset().left
       @offsetY = @element.offset().top

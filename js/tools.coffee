@@ -95,12 +95,30 @@ class SelectRect extends Tool
     ny = y - @startY
     path = new Path2D
     path.rect @startX + min(0, nx), @startY + min(0, ny), abs(nx), abs(ny)
-    path.addPath @oldsel if SHIFT and @oldsel
-    @area.setSelection path
+    if SHIFT and @oldsel.length
+      paths = []
+      if CTRL
+        paths.push(p) for p in @oldsel
+        paths.push(path)
+      else for p in @oldsel
+        npath = new Path2D
+        npath.addPath(path)
+        npath.addPath(p)
+        paths.push(npath)
+    else if CTRL
+      npath = new Path2D
+      npath.rect 0, 100000, 100000, -100000
+      npath.addPath(path)
+      paths = []
+      paths.push(p) for p in @oldsel
+      paths.push(npath)
+    else
+      paths = [path]
+    @area.setSelection paths
 
   stop: (ctx) ->
     if abs(@lastX - @startX) + abs(@lastY - @startY) < 5 and not (SHIFT and @oldsel)
-      @area.setSelection null
+      @area.setSelection []
 
 class Pen extends Tool
   name: 'Pen'
