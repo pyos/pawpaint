@@ -87,16 +87,15 @@ class Move extends Tool
 
   start: (ctx, x, y) ->
     @layer = @area.layers[@area.layer]
-    @startX = @lastX = x
-    @startY = @lastY = y
-    @startX -= @layer.x
-    @startY -= @layer.y
+    @lastX = x
+    @lastY = y
+    @area.setSelection []
     true
 
   move: (ctx, x, y) ->
+    @layer.move(x - @lastX + @layer.x, y - @lastY + @layer.y)
     @lastX = x
     @lastY = y
-    @layer.move(x - @startX, y - @startY)
 
 
 class Selection extends Tool

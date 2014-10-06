@@ -59,11 +59,11 @@ class @Canvas.Layer extends EventSystem
   #
   # restyle :: int float -> a
   #
-  restyle: (index, scale) ->
+  restyle: (index, scale, dx, dy) ->
     @element.css {
       'z-index': -index,
-      'left':   @x * scale,
-      'top':    @y * scale,
+      'left':   @x * scale - dx,
+      'top':    @y * scale - dy,
       'width':  @w * scale,
       'height': @h * scale,
     }

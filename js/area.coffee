@@ -67,20 +67,43 @@ class @Canvas.Area extends EventSystem
     @onTouchMove  = @onTouchMove  .bind @
     @onTouchEnd   = @onTouchEnd   .bind @
 
+    @_layer_offsetX = 0
+    @_layer_offsetY = 0
+
     # Note: we only need to update the size of the area on these events
     # because `layer:resize` implies `layer:set`.
     @on 'layer:del layer:set', =>
-      ep = @element.position()
-      mw = 0
-      mh = 0
+      mw = mh = 0
+      mx = my = +Infinity
       for layer in @layers
-        mw = max(mw, (layer.w + layer.x) * @scale - ep.left)
-        mh = max(mh, (layer.h + layer.y) * @scale - ep.top)
-      @element.css('width', mw).css('height', mh)
-      @selectui.width  = mw
-      @selectui.height = mh
+        mx = min(mx, layer.x * @scale); mw = max(mw, (layer.w + layer.x) * @scale)
+        my = min(my, layer.y * @scale); mh = max(mh, (layer.h + layer.y) * @scale)
+      mx = 0 if mx is Infinity  # `-Infinity` is not a valid value for `width`.
+      my = 0 if my is Infinity
+      # Note that overflow:auto/scroll only works if elements go beyond
+      # the *right or bottom edge*, so we have to shift stuff to avoid
+      # negative offsets.
+      layer.restyle(n, @scale, mx, my) for n, layer of @layers
+      # That way the area fits the image exactly, where "the image" is defined
+      # as a union of all layers.
+      @element.css('width', mw - mx).css('height', mh - my)
+      # The hard part #1 is the scroll area. We have to know how much these
+      # offsets changed to make the scrollbars stay in place. And even then
+      # it's not possible if the requested values overscroll.
+      e = @element.parent()
+      e.scrollLeft e.scrollLeft() + @_layer_offsetX - mx
+      e.scrollTop  e.scrollTop()  + @_layer_offsetY - my
+      # The hard part #2 is the selection. Selection is, in theory, relative
+      # to the imaginary (0,0). In practice, it is relative to the actual
+      # (0,0), which is actually the imaginary (mx,my).
+      # For now, this is "solved" by resetting selection when moving.
+      @selectui.width  = mw - mx
+      @selectui.height = mh - my
       @setToolOptions {}  # rescale the crosshair
       @setSelection @selection
+
+      @_layer_offsetX = mx
+      @_layer_offsetY = my
 
     # Note: this doesn't actually redraw anything, only calls
     # into appropriate event handlers.
@@ -118,7 +141,7 @@ class @Canvas.Area extends EventSystem
       context.fillRect 0, 0, @selectui.width, @selectui.height
       context.scale @scale, @scale
       context.clip(path) for path in paths
-      context.clearRect 0, 0, @selectui.width, @selectui.height
+      context.clearRect 0, 0, @selectui.width / @scale, @selectui.height / @scale
       context.restore()
     else
       @selectui.className = "hidden selection"
@@ -133,6 +156,7 @@ class @Canvas.Area extends EventSystem
          .on 'redraw', (layer) => @trigger 'layer:redraw', [layer, @layers.indexOf(layer)]
          .on 'resize', (layer) => @trigger 'layer:resize', [layer, @layers.indexOf(layer)]
          .on 'resize', (layer) => @changeLayer(@layer)  # to update the element
+         .on 'redraw', (layer) => @changeLayer(@layer)
     @layers.splice(index, 0, layer)
     @trigger 'layer:add', [layer, index]
     if state
@@ -150,8 +174,6 @@ class @Canvas.Area extends EventSystem
   # changeLayer :: int -> a
   #
   changeLayer: (i) ->
-    layer.restyle(n, @scale) for n, layer of @layers
-
     if 0 <= i < @layers.length
       @layer = i
       @layers[q].element.removeClass 'active' for q of @layers
@@ -290,14 +312,18 @@ class @Canvas.Area extends EventSystem
     ctx.scale @scale, @scale
     @tool.crosshair ctx  # FIXME this goes out of bounds sometimes
 
+  _getContext: ->
+    context = @layers[@layer].img().getContext '2d'
+    context.save()
+    context.translate @_layer_offsetX - @layers[@layer].x, @_layer_offsetY - @layers[@layer].y
+    context.clip path for path in @selection
+    return context
+
   onMouseDown: (ev) ->
     # FIXME this next line prevents unwanted selection, but breaks focusing.
     ev.preventDefault()
     if 0 <= @layer < @layers.length and @tool and ev.button == 0 and evdev.reset ev
-      @context = @layers[@layer].img().getContext '2d'
-      @context.save()
-      @context.clip path for path in @selection
-      @context.translate -@layers[@layer].x, -@layers[@layer].y
+      @context = @_getContext()
       # TODO pressure & rotation
       if @tool.start(@context, (ev.offsetX or ev.layerX) / @scale, (ev.offsetY or ev.layerY) / @scale, 0, 0)
         @snap @layer
@@ -327,15 +353,12 @@ class @Canvas.Area extends EventSystem
     #   if the user taps the canvas.
     ev.preventDefault()
     if ev.touches.length == 1 and 0 <= @layer < @layers.length and @tool and ev.which == 0
-      @context = @layers[@layer].img().getContext '2d'
-      @context.save()
-      @context.clip path for path in @selection
-      @context.translate -@layers[@layer].x, -@layers[@layer].y
-      @offsetX = @element.offset().left
-      @offsetY = @element.offset().top
+      @context = @_getContext()
+      @_elem_offsetX = @element.offset().left
+      @_elem_offsetY = @element.offset().top
       t = ev.touches[0]
-      x = t.clientX - @offsetX
-      y = t.clientY - @offsetY
+      x = t.clientX - @_elem_offsetX
+      y = t.clientY - @_elem_offsetY
       if @tool.start @context, x / @scale, y / @scale, t.force, t.rotationAngle * PI / 180
         @snap @layer
         @trigger 'stroke:begin', [@layers[@layer], @layer]
@@ -345,8 +368,8 @@ class @Canvas.Area extends EventSystem
 
   onTouchMove: (ev) ->
     t = ev.touches[0]
-    x = t.clientX - @offsetX
-    y = t.clientY - @offsetY
+    x = t.clientX - @_elem_offsetX
+    y = t.clientY - @_elem_offsetY
     @tool.move @context, x / @scale, y / @scale, t.force, t.rotationAngle * PI / 180
 
   onTouchEnd: (ev) ->
