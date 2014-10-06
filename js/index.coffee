@@ -3,15 +3,16 @@
 
 $ ->
   area = window.area = new Canvas.Area '.main-area',
+    Canvas.Tool.Selection.Rect
+    Canvas.Tool.Selection.Ellipse
+    Canvas.Tool.Eraser
+    Canvas.Tool.Move
     Canvas.Tool.Pen
     Canvas.Tool.Resource.make('brush-circle-blur-16')
     Canvas.Tool.Resource.make('brush-circle-blur-32')
     Canvas.Tool.Resource.make('brush-circle-blur-64')
-    Canvas.Tool.Eraser
     Canvas.Tool.Resource.make('brush-skewed-ellipse')
     Canvas.Tool.Resource.make('brush-star')
-    Canvas.Tool.Selection.Rect
-    Canvas.Tool.Selection.Ellipse
 
   $(window).on 'unload', -> @localStorage?.image = area.export("svg") if area
   $(document).keymappable()

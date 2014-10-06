@@ -29,6 +29,12 @@ class @Canvas.Layer extends EventSystem
     @element = $ []
     @trigger('redraw', [this])
 
+  # Change the position of this layer.
+  #
+  # move :: int int -> a
+  #
+  move: (@x, @y) -> @trigger('resize', [this])
+
   # Change the size of this layer.
   #
   # resize :: int int int int -> a
@@ -81,7 +87,7 @@ class @Canvas.Layer extends EventSystem
   # img :: -> Image
   #
   img: -> if @element.length then @element[0] else document.createElement 'canvas'
-  
+
   # Encode the contents of this layer as a data: URL.
   #
   # url :: -> str

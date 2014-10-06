@@ -16,7 +16,6 @@
 #
 class Tool
   name: 'Tool'
-  icon: null
 
   constructor: (area, options) ->
     @area = area
@@ -56,23 +55,52 @@ class Tool
   stop:  (ctx, x, y) ->
 
   symbol: (ctx, x, y) ->
-    if @icon
-      img  = Canvas.getResourceWithTint @icon, @options.H, @options.S, @options.L
-      size = @options.size
-      Canvas.drawImageSmooth ctx, img, x - size / 2, y - size / 2, size, size
-    else
-      _x = @options.dynamic
-      @options.dynamic = []
-      @start ctx, x,     y, 1, 0
-      @move  ctx, x + 1, y, 1, 0
-      @stop  ctx, x + 1, y
-      @options.dynamic = _x
+    _x = @options.dynamic
+    @options.dynamic = []
+    @start ctx, x,     y, 1, 0
+    @move  ctx, x + 1, y, 1, 0
+    @stop  ctx, x + 1, y
+    @options.dynamic = _x
+
+
+class Move extends Tool
+  name: 'Move'
+
+  symbol: (ctx, x, y) ->
+    sz = @options.size
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.fillStyle = "hsl(#{@options.H},#{@options.S}%,#{@options.L}%)"
+    ctx.globalAlpha = @options.opacity
+    ctx.beginPath()
+    for q in [0...4]
+      ctx.rotate(PI / 2)
+      ctx.moveTo(0, -0.03 * sz)
+      ctx.lineTo(-0.3 * sz, -0.03 * sz)
+      ctx.lineTo(-0.3 * sz, -0.10 * sz)
+      ctx.lineTo(-0.5 * sz, 0)
+      ctx.lineTo(-0.3 * sz, +0.10 * sz)
+      ctx.lineTo(-0.3 * sz, +0.03 * sz)
+      ctx.lineTo(0, +0.03 * sz)
+    ctx.fill()
+    ctx.restore()
+
+  start: (ctx, x, y) ->
+    @layer = @area.layers[@area.layer]
+    @startX = @lastX = x
+    @startY = @lastY = y
+    @startX -= @layer.x
+    @startY -= @layer.y
+    true
+
+  move: (ctx, x, y) ->
+    @lastX = x
+    @lastY = y
+    @layer.move(x - @startX, y - @startY)
 
 
 class Selection extends Tool
   name: 'Selection'
-
-  crosshair: (ctx) -> null
 
   start: (ctx, x, y) ->
     @oldsel = @area.selection
@@ -117,34 +145,26 @@ class Selection extends Tool
     if abs(@lastX - @startX) + abs(@lastY - @startY) < 5 and not (SHIFT and @oldsel)
       @area.setSelection []
 
+  symbol: (ctx, x, y) ->
+    ctx.save()
+    ctx.lineWidth = 1
+    ctx.globalAlpha = @options.opacity
+    ctx.setLineDash([5, 5])
+    ctx.strokeStyle = "hsl(#{@options.H},#{@options.S}%,#{@options.L}%)"
+    ctx.beginPath()
+    @select(ctx, x - @options.size / 2, y - @options.size / 2, @options.size, @options.size)
+    ctx.stroke()
+    ctx.restore()
+
 
 class SelectRect extends Selection
   name: 'Rectangular Selection'
-
-  symbol: (ctx, x, y) ->
-    ctx.save()
-    ctx.translate(x, y)
-    ctx.lineWidth = 1
-    ctx.setLineDash([5, 5])
-    ctx.strokeStyle = "hsl(#{@options.H},#{@options.S}%,#{@options.L}%)"
-    ctx.strokeRect(-@options.size / 2, -@options.size / 2, @options.size, @options.size)
-    ctx.restore()
 
   select: (path, x, y, dx, dy) -> path.rect x, y, dx, dy
 
 
 class SelectEllipse extends Selection
   name: 'Elliptical Selection'
-
-  symbol: (ctx, x, y) ->
-    ctx.save()
-    ctx.lineWidth = 1
-    ctx.setLineDash([5, 5])
-    ctx.strokeStyle = "hsl(#{@options.H},#{@options.S}%,#{@options.L}%)"
-    ctx.beginPath()
-    ctx.arc(x, y, @options.size / 2, 0, PI * 2)
-    ctx.stroke()
-    ctx.restore()
 
   select: (path, x, y, dx, dy) ->
     path.ellipse x + dx / 2, y + dy / 2, dx / 2, dy / 2, 0, 0, PI * 2
@@ -236,7 +256,11 @@ class Resource extends Stamp
 
 class Eraser extends Pen
   name: 'Eraser'
-  icon: 'icon-eraser'
+
+  symbol: (ctx, x, y) ->
+    img  = Canvas.getResourceWithTint 'icon-eraser', @options.H, @options.S, @options.L
+    size = @options.size
+    Canvas.drawImageSmooth ctx, img, x - size / 2, y - size / 2, size, size
 
   crosshair: (ctx) ->
     ctx.save()
@@ -254,6 +278,7 @@ class Eraser extends Pen
 
 
 @Canvas.Tool           = Tool
+@Canvas.Tool.Move      = Move
 @Canvas.Tool.Pen       = Pen
 @Canvas.Tool.Eraser    = Eraser
 @Canvas.Tool.Stamp     = Stamp
