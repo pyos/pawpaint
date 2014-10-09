@@ -86,6 +86,16 @@ $.fn.selector_color = (area) ->
       grad.addColorStop 0, "rgba(255, 255, 255, 1)"
       grad.addColorStop 1, "rgba(255, 255, 255, 0)"
       ctx.fill()
+
+      y = value.L / 100 * @triagA
+      x = value.S / 100 * @triagH * abs(1 - abs(y * 2 / @triagA - 1))
+      y -= @triagA / 2
+      grad = ctx.fillStyle = ctx.createRadialGradient(x, y, 0, x, y, 3)
+      grad.addColorStop 0, "rgba(0, 0, 0, 1)"
+      grad.addColorStop 1, "rgba(255, 255, 255, 1)"
+      ctx.beginPath()
+      ctx.arc(x, y, 3, 0, 2 * PI)
+      ctx.fill()
       ctx.restore()
 
 
