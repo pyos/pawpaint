@@ -95,9 +95,10 @@ $ ->
     body.on 'mousemove touchmove',  h2
     body.on 'mouseup   touchend',   h3
 
-  area.element.on 'contextmenu', (e) ->
-    e.preventDefault()
-    $('.templates .selector-main').selector_main(area, e.clientX, e.clientY).appendTo('body')
+  area.element.on 'contextmenu click', (e) ->
+    if e.which == 2 or e.which == 3
+      e.preventDefault()
+      $('.templates .selector-main').selector_main(area, e.clientX, e.clientY).appendTo('body')
 
   area.on 'tool:kind tool:L', ->
     button.each ->
