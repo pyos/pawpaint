@@ -207,7 +207,8 @@ class Pen extends Tool
   move: (ctx, x, y, pressure, rotation) ->
     dx = x - @lastX
     dy = y - @lastY
-    if steps = floor(pow(pow(dx, 2) + pow(dy, 2), 0.5) / @options.spacing) or @empty
+    sp = @options.spacing * ctx.lineWidth / 10 + 1
+    if steps = floor(pow(pow(dx, 2) + pow(dy, 2), 0.5) / sp) or @empty
       dyn.start ctx, @, dx, dy, pressure, rotation, steps for dyn in @options.dynamic
       dx /= steps
       dy /= steps
