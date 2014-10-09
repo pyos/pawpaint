@@ -8,12 +8,12 @@ $ ->
     Canvas.Tool.Eraser
     Canvas.Tool.Move
     Canvas.Tool.Pen
-    Canvas.Tool.Resource.make('brush-circle-blur-16')
-    Canvas.Tool.Resource.make('brush-circle-blur-32')
-    Canvas.Tool.Resource.make('brush-circle-blur-64')
-    Canvas.Tool.Resource.make('brush-skewed-ellipse')
-    Canvas.Tool.Resource.make('brush-star')
-    Canvas.Tool.Resource.make('brush-pencil')
+    class _ extends Canvas.Tool.Resource then rsrc: 'brush-circle-blur-16'
+    class _ extends Canvas.Tool.Resource then rsrc: 'brush-circle-blur-32'
+    class _ extends Canvas.Tool.Resource then rsrc: 'brush-circle-blur-64'
+    class _ extends Canvas.Tool.Resource then rsrc: 'brush-skewed-ellipse'; spacingAdjust: 0
+    class _ extends Canvas.Tool.Resource then rsrc: 'brush-star'
+    class _ extends Canvas.Tool.Resource then rsrc: 'brush-pencil'
 
   $(window).on 'unload', -> @localStorage?.image = area.export("svg") if area
   $(document).keymappable()

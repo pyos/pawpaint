@@ -15,6 +15,8 @@
 # Tool :: Object -> Canvas.Tool
 #
 @Canvas.Tool = class Tool
+  spacingAdjust: 0.1
+
   constructor: (area, options) ->
     @area = area
     @options = {}
@@ -192,7 +194,7 @@
   move: (ctx, x, y, pressure, rotation) ->
     dx = x - @lastX
     dy = y - @lastY
-    sp = floor(@options.spacing * ctx.lineWidth / 10 + 1)
+    sp = floor(@options.spacing + ctx.lineWidth * @spacingAdjust)
     if steps = floor(pow(pow(dx, 2) + pow(dy, 2), 0.5) / sp) or @empty
       dyn.start ctx, @, dx, dy, pressure, rotation, steps for dyn in @options.dynamic
       dx /= steps
@@ -246,6 +248,3 @@
     ctx.rotate(@options.rotation)
     ctx.drawImage(@pattern, -ds / 2, -ds / 2, ds, ds)
     ctx.restore()
-
-
-Resource.make = (x) -> class P extends Resource then rsrc: x
