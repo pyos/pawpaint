@@ -55,19 +55,26 @@
   stop:  (ctx, x, y) ->
 
   symbol: (ctx, x, y) ->
-    _x = @options.dynamic
-    @options.dynamic = []
-    @start ctx, x,     y, 1, 0
-    @move  ctx, x + 1, y, 1, 0
-    @stop  ctx, x + 1, y
-    @options.dynamic = _x
+    if @icon
+      ctx.save()
+      ctx.globalAlpha = @options.opacity
+      ctx.translate(x, y)
+      ctx.rotate(@options.rotation)
+      img  = Canvas.getResourceWithTint @icon, @options.H, @options.S, @options.L
+      size = @options.size
+      Canvas.drawImageSmooth ctx, img, -size / 2, -size / 2, size, size
+      ctx.restore()
+    else
+      _x = @options.dynamic
+      @options.dynamic = []
+      @start ctx, x,     y, 1, 0
+      @move  ctx, x + 1, y, 1, 0
+      @stop  ctx, x + 1, y
+      @options.dynamic = _x
 
 
 @Canvas.Tool.Colorpicker = class Colorpicker extends Tool
-  symbol: (ctx, x, y) ->
-    img  = Canvas.getResourceWithTint 'icon-picker', @options.H, @options.S, @options.L
-    size = @options.size
-    Canvas.drawImageSmooth ctx, img, x - size / 2, y - size / 2, size, size
+  icon: 'icon-picker'
 
   start: (ctx, x, y) ->
     cnv = @area.export 'flatten'
@@ -98,24 +105,7 @@
 
 
 @Canvas.Tool.Move = class Move extends Tool
-  symbol: (ctx, x, y) ->
-    sz = @options.size
-    ctx.save()
-    ctx.translate(x, y)
-    ctx.fillStyle = "hsl(#{@options.H},#{@options.S}%,#{@options.L}%)"
-    ctx.globalAlpha = @options.opacity
-    ctx.beginPath()
-    for q in [0...4]
-      ctx.rotate(PI / 2)
-      ctx.moveTo(0, -0.03 * sz)
-      ctx.lineTo(-0.3 * sz, -0.03 * sz)
-      ctx.lineTo(-0.3 * sz, -0.10 * sz)
-      ctx.lineTo(-0.5 * sz, 0)
-      ctx.lineTo(-0.3 * sz, +0.10 * sz)
-      ctx.lineTo(-0.3 * sz, +0.03 * sz)
-      ctx.lineTo(0, +0.03 * sz)
-    ctx.fill()
-    ctx.restore()
+  icon: 'icon-move'
 
   start: (ctx, x, y) ->
     @layer = @area.layers[@area.layer]
@@ -250,10 +240,7 @@
 
 
 @Canvas.Tool.Eraser = class Eraser extends Pen
-  symbol: (ctx, x, y) ->
-    img  = Canvas.getResourceWithTint 'icon-eraser', @options.H, @options.S, @options.L
-    size = @options.size
-    Canvas.drawImageSmooth ctx, img, x - size / 2, y - size / 2, size, size
+  icon: 'icon-eraser'
 
   crosshair: (ctx) ->
     ctx.save()
