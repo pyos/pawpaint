@@ -22,7 +22,7 @@
 #
 # Area :: (Either str jQuery Node) (Optional [Type extends Canvas.Tool]) -> Canvas.Area
 #
-class @Canvas.Area extends EventSystem
+@Canvas.Area = class Area extends EventSystem
   UNDO_DRAW:       0
   UNDO_ADD_LAYER:  1
   UNDO_DEL_LAYER:  2
@@ -255,7 +255,8 @@ class @Canvas.Area extends EventSystem
         return element.toDataURL("image/png")
       when "svg"
         xml = new XMLSerializer()
-        element = $("<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'>")
+        element = $("<svg xmlns='http://www.w3.org/2000/svg'
+                          xmlns:xlink='http://www.w3.org/1999/xlink'>")
         element.prepend(layer.svg()) for layer in @layers
         return "data:image/svg+xml;base64," + btoa(xml.serializeToString element[0])
     return null
@@ -323,9 +324,11 @@ class @Canvas.Area extends EventSystem
     # FIXME this next line prevents unwanted selection, but breaks focusing.
     ev.preventDefault()
     if 0 <= @layer < @layers.length and @tool and ev.button == 0 and evdev.reset ev
+      x = ev.offsetX or ev.layerX
+      y = ev.offsetY or ev.layerY
       @context = @_getContext()
       # TODO pressure & rotation
-      if @tool.start(@context, (ev.offsetX or ev.layerX) / @scale, (ev.offsetY or ev.layerY) / @scale, 0, 0)
+      if @tool.start(@context, x / @scale, y / @scale, 0, 0)
         @snap @layer
         @trigger 'stroke:begin', [@layers[@layer], @layer]
         @element[0].addEventListener 'mousemove',  @onMouseMove
@@ -334,12 +337,16 @@ class @Canvas.Area extends EventSystem
 
   onMouseMove: (ev) ->
     if evdev.ok ev
+      x = ev.offsetX or ev.layerX
+      y = ev.offsetY or ev.layerY
       # TODO pressure & rotation
-      @tool.move(@context, (ev.offsetX or ev.layerX) / @scale, (ev.offsetY or ev.layerY) / @scale, 0, 0)
+      @tool.move(@context, x / @scale, y / @scale, 0, 0)
 
   onMouseUp: (ev) ->
     if evdev.ok ev
-      @tool.stop(@context, (ev.offsetX or ev.layerX) / @scale, (ev.offsetY or ev.layerY) / @scale)
+      x = ev.offsetX or ev.layerX
+      y = ev.offsetY or ev.layerY
+      @tool.stop(@context, x / @scale, y / @scale)
       @element[0].removeEventListener 'mousemove',  @onMouseMove
       @element[0].removeEventListener 'mouseleave', @onMouseUp
       @element[0].removeEventListener 'mouseup',    @onMouseUp

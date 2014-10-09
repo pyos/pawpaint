@@ -1,7 +1,7 @@
 ---
 ---
 
-class @Canvas.Layer extends EventSystem
+@Canvas.Layer = class Layer extends EventSystem
   # A single raster layer. Emits the following events:
   #
   #   resize (layer: Layer)  -- when the dimensions change

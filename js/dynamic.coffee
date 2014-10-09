@@ -13,7 +13,7 @@
 #
 # Dynamic :: Object -> Canvas.Dynamic
 #
-class Dynamic
+@Canvas.Dynamic = class Dynamic
   VELOCITY:  0
   DIRECTION: 1
   PRESSURE:  2
@@ -62,7 +62,7 @@ class Dynamic
 #
 # OptionDynamic :: Object -> Canvas.Dynamic
 #
-class OptionDynamic extends Dynamic
+@Canvas.Dynamic.Option = class OptionDynamic extends Dynamic
   constructor: (options) ->
     @options = jQuery.extend(@options or {}, {
       source: null
@@ -133,7 +133,3 @@ Dynamic.movingAverage = ->
       array[count % limit] = current
     count++
     return value
-
-
-@Canvas.Dynamic = Dynamic
-@Canvas.Dynamic.Option = OptionDynamic

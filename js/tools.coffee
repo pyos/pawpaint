@@ -14,9 +14,7 @@
 #
 # Tool :: Object -> Canvas.Tool
 #
-class Tool
-  name: 'Tool'
-
+@Canvas.Tool = class Tool
   constructor: (area, options) ->
     @area = area
     @options = {}
@@ -63,9 +61,7 @@ class Tool
     @options.dynamic = _x
 
 
-class Move extends Tool
-  name: 'Move'
-
+@Canvas.Tool.Move = class Move extends Tool
   symbol: (ctx, x, y) ->
     sz = @options.size
     ctx.save()
@@ -98,9 +94,7 @@ class Move extends Tool
     @lastY = y
 
 
-class Selection extends Tool
-  name: 'Selection'
-
+@Canvas.Tool.Selection = class Selection extends Tool
   start: (ctx, x, y) ->
     @oldsel = @area.selection
     @startX = @lastX = x
@@ -156,22 +150,15 @@ class Selection extends Tool
     ctx.restore()
 
 
-class SelectRect extends Selection
-  name: 'Rectangular Selection'
-
+@Canvas.Tool.Selection.Rect = class _ extends Selection
   select: (path, x, y, dx, dy) -> path.rect x, y, dx, dy
 
 
-class SelectEllipse extends Selection
-  name: 'Elliptical Selection'
-
-  select: (path, x, y, dx, dy) ->
-    path.ellipse x + dx / 2, y + dy / 2, dx / 2, dy / 2, 0, 0, PI * 2
+@Canvas.Tool.Selection.Ellipse = class _ extends Selection
+  select: (path, x, y, dx, dy) -> path.ellipse x + dx / 2, y + dy / 2, dx / 2, dy / 2, 0, 0, PI * 2
 
 
-class Pen extends Tool
-  name: 'Pen'
-
+@Canvas.Tool.Pen = class Pen extends Tool
   crosshair: (ctx) ->
     h = @options.H
     s = @options.S
@@ -194,11 +181,9 @@ class Pen extends Tool
 
   start: (ctx, x, y, pressure, rotation) ->
     ctx.save()
-    ctx.lineCap     = "round"
-    ctx.lineJoin    = "round"
     ctx.lineWidth   = @options.size
     ctx.globalAlpha = @options.opacity
-    ctx.strokeStyle = "hsl(#{@options.H}, #{@options.S}%, #{@options.L}%)"
+    ctx.strokeStyle = ctx.fillStyle = "hsl(#{@options.H}, #{@options.S}%, #{@options.L}%)"
     dyn.reset ctx, @, x, y, pressure, rotation for dyn in @options.dynamic
     @lastX = x
     @lastY = y
@@ -207,7 +192,7 @@ class Pen extends Tool
   move: (ctx, x, y, pressure, rotation) ->
     dx = x - @lastX
     dy = y - @lastY
-    sp = @options.spacing * ctx.lineWidth / 10 + 1
+    sp = floor(@options.spacing * ctx.lineWidth / 10 + 1)
     if steps = floor(pow(pow(dx, 2) + pow(dy, 2), 0.5) / sp) or @empty
       dyn.start ctx, @, dx, dy, pressure, rotation, steps for dyn in @options.dynamic
       dx /= steps
@@ -220,21 +205,38 @@ class Pen extends Tool
 
   step: (ctx, x, y, nx, ny) ->
     ctx.beginPath()
-    ctx.moveTo(x, y)
-    ctx.lineTo(nx, ny)
-    ctx.stroke()
+    ctx.arc(nx, ny, ctx.lineWidth / 2, 0, 2 * PI)
+    ctx.fill()
 
   stop: (ctx, x, y) ->
     dyn.restore ctx, @ for dyn in @options.dynamic
     ctx.restore()
 
 
-class Stamp extends Pen
-  name: 'Stamp'
-  img:  null
+@Canvas.Tool.Eraser = class Eraser extends Pen
+  symbol: (ctx, x, y) ->
+    img  = Canvas.getResourceWithTint 'icon-eraser', @options.H, @options.S, @options.L
+    size = @options.size
+    Canvas.drawImageSmooth ctx, img, x - size / 2, y - size / 2, size, size
 
+  crosshair: (ctx) ->
+    ctx.save()
+    ctx.lineWidth   = 1
+    ctx.globalAlpha = 0.5
+    ctx.beginPath()
+    ctx.arc(0, 0, @options.size / 2, 0, 2 * PI, false)
+    ctx.stroke()
+    ctx.restore()
+
+  start: (ctx) ->
+    super
+    ctx.globalCompositeOperation = "destination-out"
+
+
+@Canvas.Tool.Resource = class Resource extends Pen
   start: ->
-    @pattern = Canvas.scale @img, @options.size, @options.size
+    img = Canvas.getResourceWithTint @rsrc, @options.H, @options.S, @options.L
+    @pattern = Canvas.scale img, @options.size, @options.size
     super
 
   step: (ctx, x, y, nx, ny) ->
@@ -246,48 +248,4 @@ class Stamp extends Pen
     ctx.restore()
 
 
-class Resource extends Stamp
-  rsrc: null
-
-  start: ->
-    @img = Canvas.getResourceWithTint @rsrc, @options.H, @options.S, @options.L
-    super
-
-
-class Eraser extends Pen
-  name: 'Eraser'
-
-  symbol: (ctx, x, y) ->
-    img  = Canvas.getResourceWithTint 'icon-eraser', @options.H, @options.S, @options.L
-    size = @options.size
-    Canvas.drawImageSmooth ctx, img, x - size / 2, y - size / 2, size, size
-
-  crosshair: (ctx) ->
-    ctx.save()
-    ctx.lineWidth   = 1
-    ctx.globalAlpha = 0.5
-    ctx.strokeStyle = "hsl(0, 0%, 50%)"
-    ctx.beginPath()
-    ctx.arc(0, 0, @options.size / 2, 0, 2 * PI, false)
-    ctx.stroke()
-    ctx.restore()
-
-  start: (ctx) ->
-    super
-    ctx.globalCompositeOperation = "destination-out"
-
-
-@Canvas.Tool           = Tool
-@Canvas.Tool.Move      = Move
-@Canvas.Tool.Pen       = Pen
-@Canvas.Tool.Eraser    = Eraser
-@Canvas.Tool.Stamp     = Stamp
-@Canvas.Tool.Resource  = Resource
-@Canvas.Tool.Selection = Selection
-@Canvas.Tool.Selection.Rect    = SelectRect
-@Canvas.Tool.Selection.Ellipse = SelectEllipse
-
-@Canvas.Tool.Stamp.make = (img) -> class P extends this
-  img: img
-@Canvas.Tool.Resource.make = (rsrc) -> class R extends this
-  rsrc: rsrc
+Resource.make = (x) -> class P extends Resource then rsrc: x
