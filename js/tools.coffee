@@ -90,9 +90,8 @@
     m = min(r, g, b)
     M = max(r, g, b)
     L = (m + M) / 2
-    S = if m == M then 0 else (M - m) / (if L < 0.5 then M + m else 2 - M - m)
-    H = switch M
-      when m then @options.H
+    S = if (M - m) < 0.001 then 0 else (M - m) / (if L < 0.5 then M + m else 2 - M - m)
+    H = if (M - m) < 0.001 then 0 else switch M
       when r then     (g - b) / (M - m)
       when g then 2 + (b - r) / (M - m)
       when b then 4 + (r - g) / (M - m)
