@@ -242,17 +242,23 @@
   #
   redo: -> @undo true
 
-  # Serialize contents of the area.
+  # Serialize contents of the area. Supported methods:
   #
-  # export :: str -> str
+  #   png -- returns an image/png data URL; loses metadata, such as layers.
+  #   svg -- returns an image/svg+xml data URL where all metadata is preserved.
+  #   flatten -- returns a canvas onto which all layers have been drawn in order.
+  #
+  # export :: str -> object
   #
   export: (type) ->
     switch type
-      when "png"
+      when "flatten"
         element = new Canvas(@element.innerWidth(), @element.innerHeight())[0]
         context = element.getContext('2d')
         context.drawImage layer.img(), layer.x, layer.y for layer in @layers
-        return element.toDataURL("image/png")
+        return element
+      when "png"
+        return @export("flatten").toDataURL("image/png")
       when "svg"
         xml = new XMLSerializer()
         element = $("<svg xmlns='http://www.w3.org/2000/svg'
