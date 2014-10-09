@@ -121,7 +121,7 @@ select.fa:focus, select.fa:active {
   vertical-align: middle;
 }
 
-.side-area > *, .selector-main > * {
+.side-area > * {
   display: block;
   float: left;
 }
@@ -187,8 +187,6 @@ select.fa:focus, select.fa:active {
   /* Don't scale to window, don't break lines if displayed
    * with not enough space to the right.
    */
-  float: left;
-  white-space: nowrap;
 
   color: white;
   background: #000;
@@ -205,6 +203,8 @@ select.fa:focus, select.fa:active {
 
 .selector-main {
   border-radius: 100px 0 0 100px;
+  white-space: nowrap;
+  font-size: 0;
 }
 
 .selector-main:not(.fixed) {
@@ -262,7 +262,6 @@ select.fa:focus, select.fa:active {
   clear: both;
   margin: 0 -15px;
   padding: 15px;
-  white-space: normal;
   box-shadow: 0 0 20px -10px #000 inset;
 }
 
