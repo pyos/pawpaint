@@ -63,6 +63,40 @@
     @options.dynamic = _x
 
 
+@Canvas.Tool.Colorpicker = class Colorpicker extends Tool
+  symbol: (ctx, x, y) ->
+    img  = Canvas.getResourceWithTint 'icon-picker', @options.H, @options.S, @options.L
+    size = @options.size
+    Canvas.drawImageSmooth ctx, img, x - size / 2, y - size / 2, size, size
+
+  start: (ctx, x, y) ->
+    cnv = @area.export 'flatten'
+    @rstd = cnv.width * 4
+    @data = cnv.getContext('2d').getImageData(0, 0, cnv.width, cnv.height).data
+    @move ctx, x, y
+    true
+
+  move: (ctx, x, y) ->
+    r = @data[x * 4 + @rstd * y] / 255
+    g = @data[x * 4 + @rstd * y + 1] / 255
+    b = @data[x * 4 + @rstd * y + 2] / 255
+    m = min(r, g, b)
+    M = max(r, g, b)
+    L = (m + M) / 2
+    S = if m == M then 0 else (M - m) / (if L < 0.5 then M + m else 2 - M - m)
+    H = switch M
+      when m then @options.H
+      when r then     (g - b) / (M - m)
+      when g then 2 + (b - r) / (M - m)
+      when b then 4 + (r - g) / (M - m)
+      else 0
+    @area.setToolOptions H: round(H * 60), S: round(S * 100), L: round(L * 100)
+
+  stop: ->
+    @data = null
+    @rstd = 0
+
+
 @Canvas.Tool.Move = class Move extends Tool
   symbol: (ctx, x, y) ->
     sz = @options.size

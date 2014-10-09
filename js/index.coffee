@@ -5,15 +5,16 @@ $ ->
   area = window.area = new Canvas.Area '.main-area',
     Canvas.Tool.Selection.Rect
     Canvas.Tool.Selection.Ellipse
-    Canvas.Tool.Eraser
     Canvas.Tool.Move
+    Canvas.Tool.Colorpicker
     Canvas.Tool.Pen
     class _ extends Canvas.Tool.Resource then rsrc: 'brush-circle-blur-16'
     class _ extends Canvas.Tool.Resource then rsrc: 'brush-circle-blur-32'
     class _ extends Canvas.Tool.Resource then rsrc: 'brush-circle-blur-64'
+    Canvas.Tool.Eraser
+    class _ extends Canvas.Tool.Resource then rsrc: 'brush-pencil'
     class _ extends Canvas.Tool.Resource then rsrc: 'brush-skewed-ellipse'; spacingAdjust: 0
     class _ extends Canvas.Tool.Resource then rsrc: 'brush-star'
-    class _ extends Canvas.Tool.Resource then rsrc: 'brush-pencil'
 
   $(window).on 'unload', -> @localStorage?.image = area.export("svg") if area
   $(document).keymappable()
