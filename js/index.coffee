@@ -19,8 +19,8 @@ $ ->
   Canvas.palettesFromURL 'img/palettes.dat', (d) ->
     area.palettes = d
 
-  $(window).on 'unload', ->
-    @localStorage?.image   = area.export("svg") if area
+  $(window).on 'unload', -> if area
+    @localStorage?.image   = if area.layers.length then area.export("svg") else ""
     @localStorage?.palette = area.palette
 
   $(document).keymappable()
@@ -42,7 +42,8 @@ $ ->
     .on 'click', '.action-redo',      -> area.redo()
 
   button = $ '.action-tool'
-  $('body').addClass('no-canvas')  if not Canvas.exists()
+  $('body').addClass('no-canvas') if not Canvas.exists()
+  $('.first-time').removeClass('hidden').on('click', -> $(@).remove()) if not window.localStorage?.image
   $('.action-tool')     .selector_button(area, $.fn.selector_main,     '.templates .selector-main')
   $('.action-export')   .selector_button(area, $.fn.selector_export,   '.templates .selector-export')
   $('.action-dynamics') .selector_button(area, $.fn.selector_dynamics, '.templates .selector-dynamics')

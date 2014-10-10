@@ -1,3 +1,9 @@
+@font-face {
+  /* Demo version + personal use means no copyright violation. Yay! */
+  font-family: NellaSue;
+  src: url("../3rdparty/fonts/NellaSue.ttf") format('truetype');
+}
+
 body {
   position: absolute;
   overflow: hidden;
@@ -41,6 +47,23 @@ select.fa option {
 
 select.fa:focus, select.fa:active {
   outline: none;
+}
+
+body .first-time {
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  font-family: NellaSue;
+  font-size: 28px;
+  padding-right: 110px;
+}
+
+body .first-time .text-center {
+  padding-top: 0.7em;
+  font-size: 2em;
+}
+
+body .first-time small {
+  font-size: 0.6em;
 }
 
 .main-area, .side-area, .cover {
@@ -146,11 +169,11 @@ select.fa:focus, select.fa:active {
   border-width: 1px 0;
 }
 
-.layer-menu > .active {
+.layer-menu li.active {
   opacity: 1;
 }
 
-.layer-menu > .disabled {
+.layer-menu li.disabled {
   opacity: 0.3;
 }
 
@@ -178,7 +201,7 @@ select.fa:focus, select.fa:active {
   color: inherit;
 }
 
-.cover > * {
+.cover.selector > * {
   position: absolute;
   /* Don't scale to window, don't break lines if displayed
    * with not enough space to the right.
@@ -189,7 +212,7 @@ select.fa:focus, select.fa:active {
   box-shadow: 0 0 20px -5px #000;
 }
 
-.cover > .fixed {
+.cover.selector > .fixed {
   /* Must sync up with .side-area{width} */
   right: 100px;
   left: auto !important;
