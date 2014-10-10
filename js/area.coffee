@@ -109,7 +109,8 @@
     # into appropriate event handlers.
     @on 'stroke:end', (layer) -> layer.trigger('redraw', [layer])
 
-    @element[0].addEventListener 'mousedown', @onMouseDown
+    @element[0].addEventListener 'mouseenter', @onMouseDown
+    @element[0].addEventListener 'mousedown',  @onMouseDown
     @element[0].addEventListener 'mousemove', (ev) ->
       crosshair.style.left = ev.pageX + 'px'
       crosshair.style.top  = ev.pageY + 'px'
@@ -329,7 +330,7 @@
   onMouseDown: (ev) ->
     # FIXME this next line prevents unwanted selection, but breaks focusing.
     ev.preventDefault()
-    if 0 <= @layer < @layers.length and @tool and ev.button == 0 and evdev.reset ev
+    if 0 <= @layer < @layers.length and @tool and ev.which == 1 and evdev.reset ev
       x = ev.offsetX or ev.layerX
       y = ev.offsetY or ev.layerY
       @context = @_getContext()
