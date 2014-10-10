@@ -20,14 +20,16 @@
   </head>
   <body>
     <div class="side-area canvas-only">
-      <canvas class="action-tool" width="45" height="45" title="Tools and colors..."></canvas>
-      <a class="action-dynamics fa fa-line-chart" title="Dynamics..."></a>
-      <a class="action-undo fa fa-undo" title="Undo"></a>
-      <a class="action-redo fa fa-repeat" title="Redo"></a>
-      <a class="action-export fa fa-save" title="Export as..."></a>
-      <ul class="layer-menu"></ul>
-      <a class="action-add-layer fa fa-asterisk" title="New layer"></a>
-      <a class="action-del-layer fa fa-trash" title="Remove layer"></a>
+      <div class="main-toolbar clearfix">
+        <canvas class="action-tool" width="45" height="45" title="Tools and colors..."></canvas>
+        <a class="action-dynamics fa fa-line-chart" title="Dynamics..."></a>
+        <a class="action-undo fa fa-undo" title="Undo"></a>
+        <a class="action-redo fa fa-repeat" title="Redo"></a>
+        <a class="action-export fa fa-save" title="Export as..."></a>
+        <ul class="layer-menu"></ul>
+        <a class="action-add-layer fa fa-asterisk" title="New layer"></a>
+        <a class="action-del-layer fa fa-trash" title="Remove layer"></a>
+      </div>
     </div>
     <div class="main-area canvas-only"></div>
 
@@ -42,8 +44,10 @@
     <div class="hidden templates">
       <div class="selector-main">
         <canvas width="200" height="200" class="selector selector-color"></canvas>
-        <canvas width="40" height="200" data-name="Width" class="selector selector-width"></canvas>
-        <canvas width="150" height="200" class="selector selector-tools"></canvas>
+        <canvas width="25"  height="200" class="selector selector-palette"></canvas>
+        <canvas width="40"  height="200" class="selector selector-width"></canvas>
+        <canvas width="50"  height="200" class="selector selector-tools small not-fixed-only"></canvas>
+        <canvas width="150" height="200" class="selector selector-tools fixed-only"></canvas>
       </div>
 
       <div class="selector-export selector-text">

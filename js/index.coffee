@@ -16,7 +16,13 @@ $ ->
     class _ extends Canvas.Tool.Resource then rsrc: 'brush-skewed-ellipse'; spacingAdjust: 0
     class _ extends Canvas.Tool.Resource then rsrc: 'brush-star'
 
-  $(window).on 'unload', -> @localStorage?.image = area.export("svg") if area
+  Canvas.palettesFromURL 'img/palettes.dat', (d) ->
+    area.palettes = d
+
+  $(window).on 'unload', ->
+    @localStorage?.image   = area.export("svg") if area
+    @localStorage?.palette = area.palette
+
   $(document).keymappable()
     .on 'key:ctrl+90',       (_, e) -> e.preventDefault(); area.undo()
     .on 'key:ctrl+shift+90', (_, e) -> e.preventDefault(); area.redo()
@@ -115,6 +121,7 @@ $ ->
   area.on 'tool:H tool:S tool:L', ->
     button.css 'background', "hsl(#{area.tool.options.H},#{area.tool.options.S}%,#{area.tool.options.L}%)"
 
-  area.setTool Canvas.Tool.Pen
-  area.import window.localStorage.image if window.localStorage?.image
+  area.setToolOptions(kind: Canvas.Tool.Pen, last: Canvas.Tool.Pen)
+  area.import    window.localStorage.image   if window.localStorage?.image
+  area.palette = window.localStorage.palette if window.localStorage?.palette
   area.createLayer() if not area.layers.length

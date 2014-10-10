@@ -108,7 +108,7 @@ select.fa:focus, select.fa:active {
   color:      white;
 }
 
-.side-area > a, .side-area > canvas {
+.main-toolbar > a, .main-toolbar > canvas {
   width:   45px;
   height:  45px;
   padding: 10px;
@@ -121,7 +121,7 @@ select.fa:focus, select.fa:active {
   vertical-align: middle;
 }
 
-.side-area > * {
+.main-toolbar > * {
   display: block;
   float: left;
 }
@@ -133,31 +133,17 @@ select.fa:focus, select.fa:active {
 
 .layer-menu {
   clear: both;
-  list-style: none;
-  padding: 0;
   margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.layer-menu li {
-  display: block;
-  text-align: center;
-}
-
-.layer-menu li > a {
-  padding: 10px 5px;
-}
-
-.layer-menu li {
+.layer-menu > li {
   opacity: 0.5;
-  border-top: 1px solid #bbb;
+  display: table;
   text-align: center;
-  border-bottom: 1px solid #bbb;
-}
-
-.layer-menu li > canvas {
-  max-height: 90px;
-  max-width:  90px;
-  display: block;
+  border: solid #bbb;
+  border-width: 1px 0;
 }
 
 .layer-menu > .active {
@@ -166,6 +152,16 @@ select.fa:focus, select.fa:active {
 
 .layer-menu > .disabled {
   opacity: 0.3;
+}
+
+.layer-menu > li > a {
+  padding: 10px 5px;
+}
+
+.layer-menu > li > canvas {
+  max-height: 60px;
+  max-width:  100%;
+  display: inline-block;
 }
 
 .cover {
@@ -201,6 +197,11 @@ select.fa:focus, select.fa:active {
   border-bottom-right-radius: 0;
 }
 
+.cover > .fixed .not-fixed-only,
+.cover > :not(.fixed) .fixed-only {
+  display: none;
+}
+
 .selector-main {
   border-radius: 100px 0 0 100px;
   white-space: nowrap;
@@ -208,7 +209,7 @@ select.fa:focus, select.fa:active {
 }
 
 .selector-main:not(.fixed) {
-  margin-left: -100px;
+  margin-left: -215px;
   margin-top: -100px;
 }
 
@@ -218,7 +219,6 @@ select.fa:focus, select.fa:active {
 }
 
 .selector-main > .selector-width {
-  margin-left: 10px;
   border-left:  1px solid #444;
   border-right: 1px solid #444;
   text-align: center;
@@ -229,8 +229,12 @@ select.fa:focus, select.fa:active {
   cursor: ns-resize;
 }
 
-.selector-color {
+.selector-color, .selector-palette {
   cursor: crosshair;
+}
+
+.selector-color {
+  margin-right: 10px;
 }
 
 .selector-text {

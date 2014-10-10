@@ -35,9 +35,14 @@
     @element.data 'area', @
 
     # A list of subclasses of `Canvas.Tool`.
-    # You may use whatever tool you want through `setTool`, but only
+    # You may use whatever tool you want through `setToolOptions`, but only
     # these will be displayed in the options window.
     @tools = tools
+
+    # A `name -> [color]` mapping that describes color presets.
+    # Simply overwrite it if desired. `palette` is the currently selected one.
+    @palettes = {}
+    @palette  = ""
 
     # A complete list of layers ordered by z-index; each one is a `jQuery` object
     # wrapping a single `Canvas`.
@@ -289,16 +294,6 @@
         return true
     return false
 
-  # Use a different tool. Tools must implement the `Canvas.Tool` interface
-  # (see `tools.coffee`). Emits `tool:kind` and option-change events.
-  #
-  # setTool :: (Type extends Canvas.Tool) Object -> a
-  #
-  setTool: (kind, options) ->
-    @tool = new kind(@, options)
-    @setToolOptions @tool.options
-    @trigger 'tool:kind', [kind, @tool.options]
-
   # Copy some options from an object over to the currently selected tool.
   # Emits various events that begin with `tool:` and end with the name of the option
   # that was changed.
@@ -306,7 +301,7 @@
   # setToolOptions :: Object -> a
   #
   setToolOptions: (options) ->
-    return if not @tool
+    @tool = new options.kind(@, if @tool then @tool.options else {}) if options.kind
     @tool.setOptions options
     @trigger('tool:' + k, [v, @tool.options]) for k, v of options
 

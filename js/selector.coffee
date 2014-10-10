@@ -1,17 +1,53 @@
 ---
 ---
 
-$.fn.selector_canvas = (area, value, update, redraw) ->
+@Canvas.palettesFromData = (data) ->
+  i = 0
+  r = {}
+  # Assuming `data` is an array view.
+  while i < data.length
+    # 1. 4 bytes = N
+    return null if data.length < i + 4
+    n = data[i] << 24 | data[i + 1] << 16 | data[i + 2] << 8 | data[i + 3]
+    i = i + 4
+    # 2. N bytes = name in UTF-8
+    return null if data.length < i + n
+    c = r[new TextDecoder('utf-8').decode(new DataView(data.buffer, i, n))] = []
+    i = i + n
+    # 3. 2 bytes = N
+    return null if data.length < i + 2
+    n = data[i] << 8 | data[i + 1]
+    i = i + 2
+    # 4. N blocks of 3 bytes = compressed HSL (10 bit H [0..360], 7 bit S [0..100], 7 bit L [0..100])
+    for _ in [0...n]
+      return null if data.length < i + 3
+      h =  data[i + 0] << 2 | data[i + 1] >> 6
+      s = (data[i + 1] << 1 | data[i + 2] >> 7) & 127
+      l =  data[i + 2] & 127
+      c.push(H: h, S: s, L: l)
+      i = i + 3
+  return r
+
+
+@Canvas.palettesFromURL = (url, callback) ->
+  xhr = new XMLHttpRequest
+  xhr.open 'GET', url, true
+  xhr.responseType = 'arraybuffer'
+  xhr.onload = -> callback Canvas.palettesFromData(new Uint8Array @response)
+  xhr.send()
+
+
+$.fn.selector_canvas = (area, value, update, redraw, nodrag) ->
   _updateT = (ev) -> ev.preventDefault(); _update.call @, ev.originalEvent.touches[0]
   _updateM = (ev) -> ev.preventDefault(); _update.call @, ev
   _update  = (t) ->
     update.call(@, value, t.clientX - $(@).offset().left, t.clientY - $(@).offset().top)
     $(@).trigger('change', [value])
-        .trigger('redraw')
+        .trigger('redraw', [false])
 
-  @on 'redraw', -> redraw.call(@, value, @getContext('2d'))
-  @on 'mousedown',  (ev) -> $(@).on  'mousemove', _updateM; _updateM.call @, ev
-  @on 'touchstart', (ev) -> $(@).on  'touchmove', _updateT; _updateT.call @, ev
+  @on 'redraw', (_, init) -> redraw.call(@, value, @getContext('2d'), init)
+  @on 'mousedown',  (ev) -> _updateM.call @, ev; $(@).on 'mousemove', _updateM unless nodrag
+  @on 'touchstart', (ev) -> _updateT.call @, ev; $(@).on 'touchmove', _updateT unless nodrag
   @on 'touchend',   (ev) -> $(@).off 'touchmove'
   @on 'mouseup',    (ev) -> $(@).off 'mousemove'
   @on 'click', (ev) ->
@@ -49,6 +85,11 @@ $.fn.selector_color = (area) ->
       ctx.translate(@outerR, @outerR)
 
       if init
+        value.H = area.tool.options.H
+        value.S = area.tool.options.S
+        value.L = area.tool.options.L
+
+        ctx.clearRect(-@outerR, -@outerR, @width, @height)
         ctx.save()
         steps = 10
         delta = 2 * PI / steps
@@ -162,32 +203,97 @@ $.fn.selector_opacity = (area) -> @selector_vertical area,
     tool.stop  ctx, 0, 1
 
 
-$.fn.selector_tools = (area) ->
-  @each ->
-    @cellS = @height / 4
-    @cellY = floor @height / @cellS
+$.fn.selector_discrete = (area, options) ->
+  cells = options.colsize or 4
+  allow = options.choices or []
+  value = {}; options.change(value, options.initial)
 
-  @selector_canvas area, {kind: area.tool.constructor},
+  @selector_canvas area, value,
     (value, x, y) ->
-      kind = area.tools[floor(x / @cellS) * @cellY + floor(y / @cellS)]
-      value.kind = kind if kind
+      result = allow[floor(x * cells / @height) * cells + floor(y * cells / @height)]
+      options.change value, result if result
 
     (value, ctx, init) ->
+      size = @height / cells
       ctx.clearRect(0, 0, @width, @height)
       ctx.strokeStyle = "#444"
       ctx.fillStyle   = "rgba(127, 127, 127, 0.3)"
 
-      for i, tool of area.tools
-        x = (floor(i / @cellY) + 0.5) * @cellS
-        y = (floor(i % @cellY) + 0.5) * @cellS
+      for i, v of allow
+        x = floor(i / cells) * size
+        y = floor(i % cells) * size
 
         ctx.beginPath()
-        ctx.rect(x - @cellS / 2, y - @cellS / 2, @cellS, @cellS)
-        ctx.stroke()
-        ctx.fill() if tool is value.kind
+        ctx.rect(x, y, size, size)
+        ctx.stroke() if options.stroke
+        ctx.fill()   if options.current(value, v)
+        options.ondraw(value, ctx, init, v, x, y, size)
+    true
 
-        t = new tool(area, {size: @cellS * 9 / 20, H: 0, S: 0, L: 80, opacity: 0.75})
-        t.symbol ctx, x, y
+
+$.fn.selector_palette = (area) ->
+  choices = []
+  choices.push(n) for n of area.palettes
+  return @hide() if not choices.length
+
+  colsize = floor(@[0].height / @[0].width)
+  colsize = max(colsize, v.length + 2) for n, v of area.palettes
+  current = max(0, choices.indexOf area.palette)
+  palette = []
+
+  setPalette = (p) =>
+    palette.splice 0, palette.length
+    palette.push(-1)
+    palette.push(cx) for cx in  area.palettes[p]
+    palette.push(+0) for _  in [area.palettes[p].length...colsize - 2]
+    palette.push(+1)
+    @tooltip('destroy').tooltip(title: p, placement: 'bottom').tooltip('show')
+  setPalette(choices[current])
+
+  @selector_discrete area,
+    colsize: colsize
+    initial: {H: area.tool.options.H, S: area.tool.options.S, L: area.tool.options.L}
+    choices: palette
+    current: (value, color) -> false  # no point in highlighting a color
+    change:  (value, color) -> switch color
+      when -1 then setPalette(area.palette = choices[--current]) if current > 0
+      when +1 then setPalette(area.palette = choices[++current]) if current < choices.length - 1
+      when +0 then null
+      else jQuery.extend value, color
+
+    ondraw: (value, ctx, init, color, x, y, size) -> switch color
+      when -1, 0, +1
+        ctx.lineWidth = 3
+        ctx.beginPath()
+        ctx.moveTo(x + size * 0.3, y + size * (0.5 - 0.1 * color))
+        ctx.lineTo(x + size * 0.5, y + size * (0.5 + 0.1 * color))
+        ctx.lineTo(x + size * 0.7, y + size * (0.5 - 0.1 * color))
+        ctx.stroke()
+      else
+        ctx.fillStyle = "hsl(#{color.H},#{color.S}%,#{color.L}%)"
+        ctx.fill()
+
+
+$.fn.selector_tools = (area) -> @each ->
+  reduced = [
+    Canvas.Tool.Selection.Rect,
+    area.tool.options.last,
+    Canvas.Tool.Eraser,
+    Canvas.Tool.Colorpicker
+  ]
+
+  $(@).selector_discrete area,
+    stroke:  true
+    initial: area.tool.constructor
+    choices: if $(@).hasClass('small') then reduced else area.tools
+    current: (value, tool) -> value.kind is tool
+    ondraw:  (value, ctx, init, tool, x, y, size) ->
+      t = new tool(area, {size: size * 9 / 20, H: 0, S: 0, L: 80, opacity: 0.75})
+      t.symbol ctx, x + size / 2, y + size / 2
+
+    change: (value, tool) ->
+      value.kind = tool
+      value.last = tool if tool isnt area.tool.constructor and reduced.indexOf(tool) == -1
 
 
 $.fn.selector_button = (area, ctor, template) ->
@@ -211,6 +317,7 @@ $.fn.selector_main = (area, x, y, fixed) ->
   tools = t.find('.selector-tools').selector_tools(area)
   space = t.find('.selector-spacing').selector_spacing(area)
   trans = t.find('.selector-opacity').selector_opacity(area)
+  clset = t.find('.selector-palette').selector_palette(area)
 
   t.find('.either').each ->
     self = $(@)
@@ -234,8 +341,10 @@ $.fn.selector_main = (area, x, y, fixed) ->
   space.on 'change', (_, value) -> area.setToolOptions(value)
   trans.on 'change', (_, value) -> area.setToolOptions(value)
   color.on 'change', (_, value) -> area.setToolOptions(value)
-  tools.on 'change', (_, value) -> area.setTool(value.kind, area.tool.options)
+  clset.on 'change', (_, value) -> area.setToolOptions(value)
+  tools.on 'change', (_, value) -> area.setToolOptions(value)
   tools.on 'change', -> width.trigger('redraw'); space.trigger('redraw'); trans.trigger('redraw')
+  clset.on 'change', -> color.trigger('redraw', [true])
   t.selector_modal(x, y, fixed)
 
 
