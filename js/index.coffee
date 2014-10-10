@@ -23,6 +23,8 @@ $ ->
     .on 'key:ctrl+48',       (_, e) -> e.preventDefault(); area.setScale(1)
     .on 'key:ctrl+189',      (_, e) -> e.preventDefault(); area.setScale(area.scale * 0.8)
     .on 'key:ctrl+187',      (_, e) -> e.preventDefault(); area.setScale(area.scale * 1.25)
+    .on 'key:ctrl+83',       (_, e) -> e.preventDefault(); $('.action-export').click()
+    .on 'key:27',            (_, e) -> $('.cover').click()
    #.on 'key:ctrl+67',       (_, e) -> e.preventDefault(); area.copy()
    #.on 'key:ctrl+shift+67'  (_, e) -> e.preventDefault(); area.copy(true)
    #.on 'key:ctrl+88',       (_, e) -> e.preventDefault(); area.copy(); area.clear()

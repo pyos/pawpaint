@@ -192,7 +192,7 @@ $.fn.selector_tools = (area) ->
 
 $.fn.selector_button = (area, ctor, template) ->
   @on 'click', (ev) ->
-    if ev.which == 1
+    if ev.which == 1 or ev.which is undefined
       ctor.call($(template), area, $(@).offset().left, $(@).offset().top, true).appendTo('body')
 
 
