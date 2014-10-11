@@ -4,17 +4,16 @@
 $ ->
   area = window.area = new Canvas.Area '.main-area',
     Canvas.Tool.Selection.Rect
-    Canvas.Tool.Selection.Ellipse
     Canvas.Tool.Move
     Canvas.Tool.Colorpicker
-    Canvas.Tool.Pen
-    class _ extends Canvas.Tool.Resource then rsrc: 'brush-circle-blur-16'
-    class _ extends Canvas.Tool.Resource then rsrc: 'brush-circle-blur-32'
-    class _ extends Canvas.Tool.Resource then rsrc: 'brush-circle-blur-64'
     Canvas.Tool.Eraser
+    Canvas.Tool.Pen
+    class _ extends Canvas.Tool.Resource then rsrc: 'brush-soft-16'
+    class _ extends Canvas.Tool.Resource then rsrc: 'brush-soft-32'
+    class _ extends Canvas.Tool.Resource then rsrc: 'brush-soft-64'
+    class _ extends Canvas.Tool.Resource then rsrc: 'brush-watercolor'
     class _ extends Canvas.Tool.Resource then rsrc: 'brush-pencil'
     class _ extends Canvas.Tool.Resource then rsrc: 'brush-skewed-ellipse'; spacingAdjust: 0
-    class _ extends Canvas.Tool.Resource then rsrc: 'brush-star'
 
   Canvas.palettesFromURL 'img/palettes.dat', (d) ->
     area.palettes = d
