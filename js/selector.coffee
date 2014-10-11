@@ -294,6 +294,7 @@ $.fn.selector_tools = (area) -> @each ->
     change: (value, tool) ->
       value.kind = tool
       value.last = tool if tool isnt area.tool.constructor and reduced.indexOf(tool) == -1
+      reduced[1] = value.last if value.last
 
 
 $.fn.selector_button = (area, ctor, template) ->
