@@ -110,7 +110,7 @@ $ ->
       $('.templates .selector-main').selector_main(area, e.clientX, e.clientY).appendTo('body')
 
   area.on 'tool:kind tool:L', ->
-    button.each ->
+    button.find('canvas').each ->
       lvl = if area.tool.options.L > 50 then 0 else 100
       ctx = @getContext('2d')
       ctx.clearRect 0, 0, @width, @height

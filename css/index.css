@@ -132,14 +132,17 @@ body .first-time small {
 .side-area > .toolbar-row > * {
   width:   45px;
   height:  45px;
-  padding: 10px;
+  padding: 6px;
   display: inline-block;
-  vertical-align: middle;
 
   font-size:  20px;
   text-align: center;
   color:      inherit;
   cursor:     pointer;
+}
+
+.side-area > .toolbar-row *, .side-area > .toolbar-row *:before {
+  vertical-align: middle;
 }
 
 .action-tool {
@@ -165,16 +168,12 @@ body .first-time small {
   border-width: 1px 0;
 }
 
-.layer-menu li.active {
+.layer-menu > .active {
   opacity: 1;
 }
 
-.layer-menu li.disabled {
+.layer-menu > .disabled {
   opacity: 0.3;
-}
-
-.layer-menu > li > a {
-  padding: 10px 5px;
 }
 
 .layer-menu > li > canvas {
