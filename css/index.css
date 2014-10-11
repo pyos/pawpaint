@@ -4,7 +4,7 @@
   src: url("../3rdparty/fonts/NellaSue.ttf") format('truetype');
 }
 
-body {
+body:not(.no-canvas) {
   position: absolute;
   overflow: hidden;
   top:    0;
@@ -31,22 +31,6 @@ input[type="range"] {
 
 select {
   color: black;
-}
-
-select.fa {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  background: none;
-  border: none;
-  color: white;
-}
-
-select.fa option {
-  color: black;
-}
-
-select.fa:focus, select.fa:active {
-  outline: none;
 }
 
 body .first-time {
@@ -172,10 +156,6 @@ body .first-time small {
   opacity: 1;
 }
 
-.layer-menu > .disabled {
-  opacity: 0.3;
-}
-
 .layer-menu > li > canvas {
   max-height: 60px;
   max-width:  90px;
@@ -190,10 +170,6 @@ body .first-time small {
   right:  0;
   bottom: 0;
   overflow: hidden;
-}
-
-.cover a {
-  color: inherit;
 }
 
 .cover.selector > * {
@@ -295,20 +271,6 @@ body .first-time small {
 
 .selector-text .warning:last-child {
   border-bottom-right-radius: 0;
-}
-
-.selector-export ul {
-  list-style: none;
-  padding:    0 0 5px 10px;
-  margin:     0;
-}
-
-.selector-export li {
-  padding-bottom: 5px;
-}
-
-.selector-export a {
-  text-decoration: underline;
 }
 
 .selector-dynamics .item {

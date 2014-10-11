@@ -61,7 +61,7 @@
     </div>
 
     <div class="hidden templates">
-      <div class="selector-main">
+      <div class="selector-main canvas-only">
         <canvas width="200" height="200" class="selector selector-color"></canvas>
         <canvas width="25"  height="200" class="selector selector-palette"></canvas>
         <canvas width="40"  height="200" class="selector selector-width"></canvas>
@@ -69,18 +69,15 @@
         <canvas width="150" height="200" class="selector selector-tools fixed-only"></canvas>
       </div>
 
-      <div class="selector-export selector-text">
-        <div class="header">Export as:</div>
-        <ul>
-          <li><a data-type='png'>PNG</a> <span class='text-muted'>(Flattened)</span></li>
-          <li><a data-type='svg'>SVG+PNG</a> <span class='text-muted'>(Layered)</span></li>
-        </ul>
-        <div class="warning">
-          <b>Does not work on iOS</b> for some reason.
+      <div class="selector-export selector-text canvas-only">
+        <div class="header">Export as</div>
+        <div class="btn-group btn-group-lg">
+          <a data-type="png" class="btn btn-success">PNG</a>
+          <a data-type="svg" class="btn btn-default">SVG</a>
         </div>
       </div>
 
-      <div class="selector-dynamics selector-text">
+      <div class="selector-dynamics selector-text canvas-only">
         <div class="item" data-kind="size" data-source="size" data-target="lineWidth">
           <div class="name">Size</div>
           <select class="comp">
@@ -139,7 +136,7 @@
         </div>
       </div>
 
-      <div class="selector-layer-config selector-text">
+      <div class="selector-layer-config selector-text canvas-only">
         <div class="header">Layer options</div>
         <table class="table">
           <tr>
@@ -147,11 +144,10 @@
             <td><input type="checkbox" data-set="setHidden" data-get="getHidden" /></td>
           </tr>
           <tr>
-            <td>Blend mode*</td>
+            <td>Blend mode</td>
             <td>
               <select class="blend" data-set="setBlendMode" data-get="getBlendMode" value="normal">
                 <option value="normal">Normal</option>
-                <option disabled>──────────</option>
                 <option value="lighten">Lighten</option>
                 <option value="darken">Darken</option>
                 <option value="multiply">Multiply</option>
@@ -161,10 +157,8 @@
                 <option value="color-burn">Color Burn</option>
                 <option value="hard-light">Hard Light</option>
                 <option value="soft-light">Soft Light</option>
-                <option disabled>──────────</option>
                 <option value="difference">Difference</option>
                 <option value="exclusion">Exclusion</option>
-                <option disabled>──────────</option>
                 <option value="hue">Hue</option>
                 <option value="saturation">Saturation</option>
                 <option value="color">Color</option>
@@ -178,9 +172,6 @@
                  min="0.0" max="1.0" step="0.05" value="1.0" /></td>
           </tr>
         </table>
-        <div class="warning">
-          <b>*</b> requires experimental Web Platform features in Chrome.
-        </div>
       </div>
     </div>
 
