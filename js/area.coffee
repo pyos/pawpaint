@@ -301,9 +301,10 @@
   # setToolOptions :: Object -> a
   #
   setToolOptions: (options) ->
-    @tool = new options.kind(@, if @tool then @tool.options else {}) if options.kind
+    k = options.kind
+    @tool = new k(@, if @tool then @tool.options else {}) if k
     @tool.setOptions options
-    @trigger('tool:' + k, [v, @tool.options]) for k, v of options
+    @trigger('tool:' + k, [v, @tool.options]) for k, v of if k then @tool.options else options
 
     sz = @tool.options.size * @scale
     $ @crosshair
