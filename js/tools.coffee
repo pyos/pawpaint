@@ -55,14 +55,12 @@
   stop:  (ctx, x, y) ->
 
   symbol: (ctx, x, y) ->
-    if @icon
+    if @glyph
       ctx.save()
-      ctx.globalAlpha = @options.opacity
-      ctx.translate(x, y)
       ctx.rotate(@options.rotation)
-      img  = Canvas.getResourceWithTint @icon, @options.H, @options.S, @options.L
-      size = @options.size
-      Canvas.drawImageSmooth ctx, img, -size / 2, -size / 2, size, size
+      ctx.font = "#{@options.size}px FontAwesome"
+      ctx.fillStyle = "hsla(#{@options.H},#{@options.S}%,#{@options.L}%,#{@options.opacity})"
+      ctx.fillText(@glyph, x - @options.size / 2, y + @options.size / 2.5)
       ctx.restore()
     else
       _x = @options.dynamic
@@ -74,7 +72,7 @@
 
 
 @Canvas.Tool.Colorpicker = class Colorpicker extends Tool
-  icon: 'icon-picker'
+  glyph: '\uf1fb'
 
   start: (ctx, x, y) ->
     cnv = @area.export 'flatten'
@@ -104,7 +102,7 @@
 
 
 @Canvas.Tool.Move = class Move extends Tool
-  icon: 'icon-move'
+  glyph: '\uf047'
 
   start: (ctx, x, y) ->
     @layer = @area.layers[@area.layer]
@@ -239,7 +237,7 @@
 
 
 @Canvas.Tool.Eraser = class Eraser extends Pen
-  icon: 'icon-eraser'
+  glyph: '\uf12d'
 
   crosshair: (ctx) ->
     ctx.save()
