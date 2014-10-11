@@ -120,9 +120,7 @@ body .first-time small {
 
 .side-area {
   position: relative;
-  overflow-x: hidden;
-  overflow-y: auto;
-  width:  100px;
+  overflow: hidden;
   height: 100%;
   float: right;
 
@@ -131,22 +129,17 @@ body .first-time small {
   color:      white;
 }
 
-.main-toolbar > a, .main-toolbar > canvas {
+.side-area > .toolbar-row > * {
   width:   45px;
   height:  45px;
   padding: 10px;
+  display: inline-block;
+  vertical-align: middle;
 
   font-size:  20px;
   text-align: center;
   color:      inherit;
   cursor:     pointer;
-
-  vertical-align: middle;
-}
-
-.main-toolbar > * {
-  display: block;
-  float: left;
 }
 
 .action-tool {
@@ -155,10 +148,13 @@ body .first-time small {
 }
 
 .layer-menu {
-  clear: both;
+  overflow-x: hidden;
+  overflow-y: auto;
+  list-style: none;
+  width: 100px;
+  height: calc(100% - 180px);
   margin: 0;
   padding: 0;
-  list-style: none;
 }
 
 .layer-menu > li {
@@ -183,7 +179,7 @@ body .first-time small {
 
 .layer-menu > li > canvas {
   max-height: 60px;
-  max-width:  100%;
+  max-width:  90px;
   display: inline-block;
 }
 
