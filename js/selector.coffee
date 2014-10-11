@@ -439,9 +439,9 @@ $.fn.selector_layers = (area, template) ->
     cnv = @children().eq(index).find('canvas')
     cnv.each ->
       ctx = @getContext('2d')
-      ctx.clearRect              0, 0, @width, @height
-      ctx.drawImage layer.img(), 0, 0, @width, @height
-  # TODO handle layer:reprop
+      ctx.globalCompositeOperation = "copy"
+      ctx.drawImage layer.img(true), 0, 0, @width, @height
+
   area.on 'layer:set',    (index)    => @children().removeClass('active').eq(index).addClass('active')
   area.on 'layer:del',    (index)    => @children().eq(index).remove()
   area.on 'layer:move',   (index, d) => @children().eq(index).detach().insertBefore @children().eq(index + d)

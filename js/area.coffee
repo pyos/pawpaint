@@ -261,6 +261,7 @@
       when "flatten"
         element = new Canvas(@element.innerWidth(), @element.innerHeight())[0]
         context = element.getContext('2d')
+        context.globalCompositeOperation = "destination-over"
         context.drawImage layer.img(), layer.x, layer.y for layer in @layers
         return element
       when "png"

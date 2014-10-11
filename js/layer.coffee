@@ -88,15 +88,19 @@
 
   # Get the image that represents the contents of this layer.
   #
-  # img :: -> Image
+  # img :: bool -> Image
   #
-  img: -> if @element.length then @element[0] else document.createElement 'canvas'
+  img: (force) ->
+    if @element.length and (force or not @getHidden())
+      @element[0]
+    else
+      document.createElement 'canvas'
 
   # Encode the contents of this layer as a data: URL.
   #
   # url :: -> str
   #
-  url: -> @img().toDataURL('image/png')
+  url: -> @img(true).toDataURL('image/png')
 
   # Encode the contents of this layer as an SVG shape.
   #
