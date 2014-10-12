@@ -1,9 +1,10 @@
 ---
 ---
 
-@Canvas.palettesFromData = (data) ->
+@Canvas.palettes = (data) ->
   i = 0
   r = {}
+  t = new TextDecoder('utf-8')
   # Assuming `data` is an array view.
   while i < data.length
     # 1. 4 bytes = N
@@ -12,7 +13,7 @@
     i = i + 4
     # 2. N bytes = name in UTF-8
     return null if data.length < i + n
-    c = r[new TextDecoder('utf-8').decode(new DataView(data.buffer, i, n))] = []
+    c = r[t.decode(new DataView(data.buffer, i, n))] = []
     i = i + n
     # 3. 2 bytes = N
     return null if data.length < i + 2
@@ -29,21 +30,13 @@
   return r
 
 
-@Canvas.palettesFromURL = (url, callback) ->
-  xhr = new XMLHttpRequest
-  xhr.open 'GET', url, true
-  xhr.responseType = 'arraybuffer'
-  xhr.onload = -> callback Canvas.palettesFromData(new Uint8Array @response)
-  xhr.send()
-
-
 $.fn.selector_canvas = (area, value, update, redraw, nodrag) ->
   _updateT = (ev) -> ev.preventDefault(); _update.call @, ev.originalEvent.touches[0]
   _updateM = (ev) -> ev.preventDefault(); _update.call @, ev
   _update  = (t) ->
     update.call(@, value, t.clientX - $(@).offset().left, t.clientY - $(@).offset().top)
     $(@).trigger('change', [value])
-        .trigger('redraw', [false])
+        .trigger('redraw')
 
   @on 'redraw', (_, init) -> redraw.call(@, value, @getContext('2d'), init)
   @on 'mousedown',  (ev) -> _updateM.call @, ev; $(@).on 'mousemove', _updateM unless nodrag
@@ -297,18 +290,11 @@ $.fn.selector_tools = (area) -> @each ->
       reduced[1] = value.last if value.last
 
 
-$.fn.selector_button = (area, ctor, template) ->
-  @on 'click', (ev) ->
-    if ev.which == 1 or ev.which is undefined
-      ctor.call($(template), area, $(@).offset().left, $(@).offset().top, true).appendTo('body')
-
-
 $.fn.selector_modal = (x, y, fixed) ->
   @css 'left', x
   @css 'top',  y
   @addClass 'fixed' if fixed
-  cover = $('<div class="cover selector">').append(@).hide().fadeIn(100)
-  cover.on 'click', -> cover.fadeOut(100, cover.remove.bind cover)
+  $('<div class="cover selector">').append(@).hide().fadeIn(100)
 
 
 $.fn.selector_main = (area, x, y, fixed) ->
@@ -425,6 +411,63 @@ $.fn.selector_layers = (area, template) ->
       offset = $(@).offset()
       $(template).selector_layer_config(area, index, offset.left, offset.top, true).appendTo('body')
     $(@).removeData('no-layer-menu')
+
+  @on 'mousedown touchstart', 'li', (ev) ->
+    # This will make stuff work with both touchscreens and mice.
+    _getY = (ev) -> (ev.originalEvent.touches?[0] or ev).pageY
+    _getC = (ev) -> ev.originalEvent.touches?.length or ev.which
+    return if _getC(ev) != 1
+
+    body = $('body')
+    elem = $(@).removeData('no-layer-menu')
+
+    deltaC = 15
+    startC = _getY(ev)
+    startP = elem.position().top
+
+    offset = null
+    zindex = ''
+    oldpos = ''
+    oldtop = ''
+
+    h1 = (ev) ->
+      # Another touch/click detected, abort. (If `_getC` returns the same value,
+      # though, that's the initial event. We need to ignore it.)
+      h3(ev) if _getC(ev) > 1
+
+    h2 = (ev) ->
+      if offset is null and abs(_getY(ev) - startC) > deltaC
+        zindex = elem.css('z-index')
+        oldpos = elem.css('position')
+        oldtop = elem.css('top')
+        offset = 0
+        elem.css 'z-index', '65539'
+        elem.css 'position', 'absolute'
+      if offset isnt null
+        offset = _getY(ev) - startC
+        elem.css 'top', offset + startP
+
+    h3 = (ev) ->
+      body.off 'mousedown touchstart', h1
+      body.off 'mousemove touchmove',  h2
+      body.off 'mouseup   touchend',   h3
+
+      if offset isnt null and _getC(ev) <= 1
+        elem.data('no-layer-menu', true)
+        elem.parent().children().each (i) ->
+          if i != elem.index() and $(@).hasClass('hidden') or offset + startP < $(@).position().top
+            area.moveLayer(elem.index(), i - elem.index() - (i >= elem.index()))
+            # Stop iterating.
+            return false
+          return true
+
+      elem.css('position', oldpos or '')
+      elem.css('z-index',  zindex or '')
+      elem.css('top',      oldtop or '')
+
+    body.on 'mousedown touchstart', h1
+    body.on 'mousemove touchmove',  h2
+    body.on 'mouseup   touchend',   h3
 
   area.on 'layer:add', (layer, index) =>
     entry = $ '<li class="background"><canvas></canvas></li>'

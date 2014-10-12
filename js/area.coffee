@@ -306,6 +306,7 @@
     @tool = new k(@, if @tool then @tool.options else {}) if k
     @tool.setOptions options
     @trigger('tool:' + k, [v, @tool.options]) for k, v of if k then @tool.options else options
+    @trigger('tool:options', [@tool.options])
 
     sz = @tool.options.size * @scale
     $ @crosshair
@@ -325,9 +326,9 @@
     return context
 
   onMouseDown: (ev) ->
-    # FIXME this next line prevents unwanted selection, but breaks focusing.
-    ev.preventDefault()
     if 0 <= @layer < @layers.length and @tool and ev.which == 1 and evdev.reset ev
+      # FIXME this next line prevents unwanted selection, but breaks focusing.
+      ev.preventDefault()
       x = ev.offsetX or ev.layerX
       y = ev.offsetY or ev.layerY
       @context = @_getContext()
@@ -358,12 +359,12 @@
       @context.restore()
 
   onTouchStart: (ev) ->
-    # FIXME this one is even worse depending on the device.
-    #   On Chromium OS, this will prevent "back/forward" gestures from
-    #   interfering with drawing, but will not focus the broswer window
-    #   if the user taps the canvas.
-    ev.preventDefault()
     if ev.touches.length == 1 and 0 <= @layer < @layers.length and @tool and ev.which == 0
+      # FIXME this one is even worse depending on the device.
+      #   On Chromium OS, this will prevent "back/forward" gestures from
+      #   interfering with drawing, but will not focus the broswer window
+      #   if the user taps the canvas.
+      ev.preventDefault()
       @context = @_getContext()
       @_elem_offsetX = @element.offset().left
       @_elem_offsetY = @element.offset().top
@@ -375,7 +376,6 @@
         @trigger 'stroke:begin', [@layers[@layer], @layer]
         @element[0].addEventListener 'touchmove', @onTouchMove
         @element[0].addEventListener 'touchend',  @onTouchEnd
-        true
 
   onTouchMove: (ev) ->
     t = ev.touches[0]

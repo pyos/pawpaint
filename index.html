@@ -19,30 +19,17 @@
     <script src="js/index.js"></script>
   </head>
   <body>
-    <div class="first-time hidden cover canvas-only">
-        <div class="text-right">
-          <p>tools and pen dynamics</p>
-          <p>undo <small>(ctrl-z)</small> and redo <small>(ctrl-shift-z)</small></p>
-          <p>export <small>(ctrl-s)</small></p>
-          <p>layers <small>(click for some options)</small></p>
-        </div>
-        <div class="text-center">
-          <p>click anywhere to start</p>
-          <p><small>right-click the canvas to quickly change the color</small></p>
-        </div>
-    </div>
-
-    <div class="side-area canvas-only">
+    <div class="side-area">
       <div class="toolbar-row">
-        <a class="action-tool" title="Tools and colors..."><canvas width="25" height="25"></canvas></a>
-        <a class="action-dynamics fa fa-random" title="Dynamics..."></a>
+        <a class="action-tool" data-selector="main"><canvas width="25" height="25"></canvas></a>
+        <a class="action-dynamics fa fa-random" title="Dynamics..." data-selector="dynamics"></a>
       </div>
       <div class="toolbar-row">
         <a class="action-undo fa fa-undo" title="Undo"></a>
         <a class="action-redo fa fa-repeat" title="Redo"></a>
       </div>
       <div class="toolbar-row">
-        <a class="action-export fa fa-save" title="Export as..."></a>
+        <a class="action-export fa fa-save" title="Export as..." data-selector="export"></a>
       </div>
       <ul class="layer-menu"></ul>
       <div class="toolbar-row">
@@ -50,18 +37,10 @@
         <a class="action-del-layer fa fa-trash" title="Remove layer"></a>
       </div>
     </div>
-    <div class="main-area canvas-only"></div>
-
-    <div class="no-canvas">
-      <div class="container">
-        <h1>Well, shit.</h1>
-        <h3>Your browser has no idea what a <code>&lt;canvas&gt;</code> is.</h3>
-        <p><small>Come back later, preferably with something made this year.</small></p>
-      </div>
-    </div>
+    <div class="main-area" data-selector-menu="main"></div>
 
     <div class="hidden templates">
-      <div class="selector-main canvas-only">
+      <div class="selector-main">
         <canvas width="200" height="200" class="selector selector-color"></canvas>
         <canvas width="25"  height="200" class="selector selector-palette"></canvas>
         <canvas width="40"  height="200" class="selector selector-width"></canvas>
@@ -69,7 +48,7 @@
         <canvas width="150" height="200" class="selector selector-tools fixed-only"></canvas>
       </div>
 
-      <div class="selector-export selector-text canvas-only">
+      <div class="selector-export selector-text">
         <div class="header">Export as</div>
         <div class="btn-group btn-group-lg">
           <a data-type="png" class="btn btn-success">PNG</a>
@@ -77,7 +56,7 @@
         </div>
       </div>
 
-      <div class="selector-dynamics selector-text canvas-only">
+      <div class="selector-dynamics selector-text">
         <div class="item" data-kind="size" data-source="size" data-target="lineWidth">
           <div class="name">Size</div>
           <select class="comp">
@@ -136,7 +115,7 @@
         </div>
       </div>
 
-      <div class="selector-layer-config selector-text canvas-only">
+      <div class="selector-layer-config selector-text">
         <div class="header">Layer options</div>
         <table class="table">
           <tr>
