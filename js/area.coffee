@@ -72,43 +72,25 @@
     @onTouchMove  = @onTouchMove  .bind @
     @onTouchEnd   = @onTouchEnd   .bind @
 
-    @_layer_offsetX = 0
-    @_layer_offsetY = 0
-
     # Note: we only need to update the size of the area on these events
     # because `layer:resize` implies `layer:set`.
     @on 'layer:del layer:set', =>
-      mw = mh = 0
-      mx = my = +Infinity
+      mw = 0
+      mh = 0
       for layer in @layers
-        mx = min(mx, layer.x * @scale); mw = max(mw, (layer.w + layer.x) * @scale)
-        my = min(my, layer.y * @scale); mh = max(mh, (layer.h + layer.y) * @scale)
-      mx = 0 if mx is Infinity  # `-Infinity` is not a valid value for `width`.
-      my = 0 if my is Infinity
+        mw = max(mw, (layer.w + layer.x) * @scale)
+        mh = max(mh, (layer.h + layer.y) * @scale)
       # Note that overflow:auto/scroll only works if elements go beyond
-      # the *right or bottom edge*, so we have to shift stuff to avoid
-      # negative offsets.
-      layer.restyle(n, @scale, mx, my) for n, layer of @layers
-      # That way the area fits the image exactly, where "the image" is defined
-      # as a union of all layers.
-      @element.css('width', mw - mx).css('height', mh - my)
-      # The hard part #1 is the scroll area. We have to know how much these
-      # offsets changed to make the scrollbars stay in place. And even then
-      # it's not possible if the requested values overscroll.
-      e = @element.parent()
-      e.scrollLeft e.scrollLeft() + @_layer_offsetX - mx
-      e.scrollTop  e.scrollTop()  + @_layer_offsetY - my
-      # The hard part #2 is the selection. Selection is, in theory, relative
-      # to the imaginary (0,0). In practice, it is relative to the actual
-      # (0,0), which is actually the imaginary (mx,my).
-      # For now, this is "solved" by resetting selection when moving.
-      @selectui.width  = mw - mx
-      @selectui.height = mh - my
+      # the *right or bottom edge*. Doesn't matter, the rest will be invisible
+      # on an exported image anyway.
+      layer.restyle(n, @scale) for n, layer of @layers
+      # That way the area fits the image exactly, where "the image" is the
+      # union of all layers, clipped from (0, 0) to the bottom-right corner.
+      @element.css('width', mw).css('height', mh)
+      @selectui.width  = mw
+      @selectui.height = mh
       @setToolOptions {}  # rescale the crosshair
       @setSelection @selection
-
-      @_layer_offsetX = mx
-      @_layer_offsetY = my
 
     # Note: this doesn't actually redraw anything, only calls
     # into appropriate event handlers.
@@ -321,7 +303,7 @@
   _getContext: ->
     context = @layers[@layer].img().getContext '2d'
     context.save()
-    context.translate @_layer_offsetX - @layers[@layer].x, @_layer_offsetY - @layers[@layer].y
+    context.translate -@layers[@layer].x, -@layers[@layer].y
     context.clip path for path in @selection
     return context
 

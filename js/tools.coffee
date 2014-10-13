@@ -108,7 +108,6 @@
     @layer = @area.layers[@area.layer]
     @lastX = x
     @lastY = y
-    @area.setSelection []
     true
 
   move: (ctx, x, y) ->

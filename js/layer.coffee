@@ -59,11 +59,11 @@
   #
   # restyle :: int float -> a
   #
-  restyle: (index, scale, dx, dy) ->
+  restyle: (index, scale) ->
     @element.css {
       'z-index': -index,
-      'left':   @x * scale - dx,
-      'top':    @y * scale - dy,
+      'left':   @x * scale,
+      'top':    @y * scale,
       'width':  @w * scale,
       'height': @h * scale,
     }
