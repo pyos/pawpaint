@@ -78,19 +78,9 @@
       mw = 0
       mh = 0
       for layer in @layers
-        mw = max(mw, (layer.w + layer.x) * @scale)
-        mh = max(mh, (layer.h + layer.y) * @scale)
-      # Note that overflow:auto/scroll only works if elements go beyond
-      # the *right or bottom edge*. Doesn't matter, the rest will be invisible
-      # on an exported image anyway.
-      layer.restyle(n, @scale) for n, layer of @layers
-      # That way the area fits the image exactly, where "the image" is the
-      # union of all layers, clipped from (0, 0) to the bottom-right corner.
-      @element.css('width', mw).css('height', mh)
-      @selectui.width  = mw
-      @selectui.height = mh
-      @setToolOptions {}  # rescale the crosshair
-      @setSelection @selection
+        mw = max(mw, layer.w + layer.x)
+        mh = max(mh, layer.h + layer.y)
+      @resize(mw, mh)
 
     # Note: this doesn't actually redraw anything, only calls
     # into appropriate event handlers.
@@ -105,6 +95,17 @@
     @element[0].addEventListener 'mouseleave', (ev) -> crosshair.style.visibility = 'hidden'
     @element[0].addEventListener 'touchstart', (ev) -> crosshair.style.visibility = 'hidden'
     @element[0].addEventListener 'touchstart', @onTouchStart
+    @resize(0, 0)
+
+  # Change the size of the area.
+  #
+  # resize :: int int -> a
+  #
+  resize: (@w, @h) ->
+    @element.css(width: @w * @scale, height: @h * @scale)
+    @selectui.width  = @w * @scale
+    @selectui.height = @h * @scale
+    @setSelection @selection
 
   # Scale the area.
   #
@@ -112,6 +113,8 @@
   #
   setScale: (x) ->
     @scale = max(0, min(20, x))
+    @resize(@w, @h)
+    @setToolOptions {}  # rescale the crosshair
     @changeLayer(@layer)
 
   # Select an area. Selecting an area clips all operations to that area.
@@ -163,6 +166,7 @@
   #
   changeLayer: (i) ->
     if 0 <= i < @layers.length
+      layer.restyle(n, @scale) for n, layer of @layers
       @layer = i
       @layers[q].element.removeClass 'active' for q of @layers
       @layers[i].element.addClass    'active'
@@ -241,7 +245,7 @@
   export: (type) ->
     switch type
       when "flatten"
-        element = new Canvas(@element.innerWidth(), @element.innerHeight())[0]
+        element = new Canvas(@w, @h)[0]
         context = element.getContext('2d')
         context.globalCompositeOperation = "destination-over"
         context.drawImage layer.img(), layer.x, layer.y for layer in @layers
@@ -250,8 +254,8 @@
         return @export("flatten").toDataURL("image/png")
       when "svg"
         xml = new XMLSerializer()
-        element = $("<svg xmlns='http://www.w3.org/2000/svg'
-                          xmlns:xlink='http://www.w3.org/1999/xlink'>")
+        element = $("<svg xmlns='http://www.w3.org/2000/svg' width='#{@w}'
+                          xmlns:xlink='http://www.w3.org/1999/xlink' height='#{@h}'>")
         element.prepend(layer.svg()) for layer in @layers
         return "data:image/svg+xml;base64," + btoa(xml.serializeToString element[0])
     return null

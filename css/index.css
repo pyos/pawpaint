@@ -48,6 +48,7 @@ select {
   z-index:  -65567;
   display:  inline-block;
   cursor:   crosshair;
+  overflow: hidden;
 }
 
 .background {

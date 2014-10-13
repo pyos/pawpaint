@@ -43,10 +43,6 @@ $.fn.selector_canvas = (area, value, update, redraw, nodrag) ->
   @on 'touchstart', (ev) -> _updateT.call @, ev; $(@).on 'touchmove', _updateT unless nodrag
   @on 'touchend',   (ev) -> $(@).off 'touchmove'
   @on 'mouseup',    (ev) -> $(@).off 'mousemove'
-  @on 'click', (ev) ->
-    # Prevent these clicks from going through and dismissing
-    # dialogs and stuff.
-    ev.stopPropagation()
   return @each -> redraw.call(@, value, @getContext('2d'), true)
 
 
@@ -294,11 +290,12 @@ $.fn.selector_modal = (x, y, fixed) ->
   @css 'left', x
   @css 'top',  y
   @addClass 'fixed' if fixed
+  @on 'click', (ev) -> ev.stopPropagation()
   $('<div class="cover selector">').append(@).hide().fadeIn(100)
 
 
 $.fn.selector_main = (area, x, y, fixed) ->
-  t = @clone().on 'click', (ev) -> ev.stopPropagation()
+  t = @clone()
   color = t.find('.selector-color').selector_color(area)
   width = t.find('.selector-width').selector_width(area)
   tools = t.find('.selector-tools').selector_tools(area)
@@ -351,7 +348,6 @@ $.fn.selector_dynamics = (area, x, y, fixed) ->
   types = Canvas.Dynamic.prototype
 
   t = @clone()
-    .on 'click', (ev) -> ev.stopPropagation()
     .on 'change', '.comp', ->
       self = $(@).parents('.item')
       data = self.data('dynamic')
@@ -485,8 +481,7 @@ $.fn.selector_layer_config = (area, index, x, y, fixed) ->
   layer = area.layers[index]
 
   t = @clone()
-  t.on 'click', (ev) -> ev.stopPropagation()
-   .on 'change', '[data-set]', ->
+  t.on 'change', '[data-set]', ->
     if @getAttribute('type') == 'checkbox'
       layer[$(@).attr('data-set')](@checked)
     else
