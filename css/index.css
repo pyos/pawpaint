@@ -51,7 +51,7 @@ select {
 }
 
 .background {
-  background: white;
+  background: url(../img/checkers.png);
 }
 
 .layer, .crosshair, .selection {
@@ -120,12 +120,18 @@ select {
 .layer-menu > li {
   opacity: 0.5;
   display: table;
+  font-size: 0;
   text-align: center;
   border: solid #bbb;
   border-width: 1px 0;
 }
 
-.layer-menu > .active {
+.layer-menu > .dragging {
+  position: absolute;
+  z-index: 65539;
+}
+
+.layer-menu > .dragging, .layer-menu > .active {
   opacity: 1;
 }
 

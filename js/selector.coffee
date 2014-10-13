@@ -424,11 +424,7 @@ $.fn.selector_layers = (area, template) ->
     deltaC = 15
     startC = _getY(ev)
     startP = elem.position().top
-
     offset = null
-    zindex = ''
-    oldpos = ''
-    oldtop = ''
 
     h1 = (ev) ->
       # Another touch/click detected, abort. (If `_getC` returns the same value,
@@ -437,12 +433,8 @@ $.fn.selector_layers = (area, template) ->
 
     h2 = (ev) ->
       if offset is null and abs(_getY(ev) - startC) > deltaC
-        zindex = elem.css('z-index')
-        oldpos = elem.css('position')
-        oldtop = elem.css('top')
         offset = 0
-        elem.css 'z-index', '65539'
-        elem.css 'position', 'absolute'
+        elem.addClass 'dragging'
       if offset isnt null
         offset = _getY(ev) - startC
         elem.css 'top', offset + startP
@@ -461,9 +453,8 @@ $.fn.selector_layers = (area, template) ->
             return false
           return true
 
-      elem.css('position', oldpos or '')
-      elem.css('z-index',  zindex or '')
-      elem.css('top',      oldtop or '')
+      elem.css('top', '')
+      elem.removeClass('dragging')
 
     body.on 'mousedown touchstart', h1
     body.on 'mousemove touchmove',  h2
