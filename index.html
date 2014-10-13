@@ -123,6 +123,11 @@
             <td><input type="checkbox" data-set="setHidden" data-get="getHidden" /></td>
           </tr>
           <tr>
+            <td>Opacity</td>
+            <td><input type="range" data-set="setOpacity" data-get="getOpacity"
+                 min="0.0" max="1.0" step="0.05" value="1.0" /></td>
+          </tr>
+          <tr>
             <td>Blend mode</td>
             <td>
               <select class="blend" data-set="setBlendMode" data-get="getBlendMode" value="normal">
@@ -146,9 +151,15 @@
             </td>
           </tr>
           <tr>
-            <td>Opacity</td>
-            <td><input type="range" data-set="setOpacity" data-get="getOpacity"
-                 min="0.0" max="1.0" step="0.05" value="1.0" /></td>
+            <td>Fill with</td>
+            <td>
+              <select class="fill-style" data-set="fill" value="transparent">
+                <option value="transparent">...</option>
+                <option value="white">White</option>
+                <option value="black">Black</option>
+                <option value="toolColor">Current color</option>
+              </select>
+            </td>
           </tr>
         </table>
       </div>

@@ -63,4 +63,4 @@ $ ->
   area.setToolOptions(kind: Canvas.Tool.Pen, last: Canvas.Tool.Pen)
   area.import    window.localStorage.image   if window.localStorage?.image
   area.palette = window.localStorage.palette if window.localStorage?.palette
-  area.createLayer() if not area.layers.length
+  area.layers[0].fill('white') if not area.layers.length and area.createLayer()

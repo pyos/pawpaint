@@ -29,6 +29,20 @@
     @element = $ []
     @trigger('redraw', [this])
 
+  # Fill this layer with a single color. "toolColor" is a special value
+  # that makes this thing inherit color from the current tool.
+  #
+  # fill :: str -> a
+  #
+  fill: (color) ->
+    opt = @area.tool.options
+    ctx = @img().getContext('2d')
+    ctx.fillStyle = switch color
+      when "toolColor" then "hsl(#{opt.H},#{opt.S}%,#{opt.L}%)"
+      else color
+    ctx.fillRect 0, 0, @w, @h
+    @trigger('redraw', [this])
+
   # Change the position of this layer.
   #
   # move :: int int -> a

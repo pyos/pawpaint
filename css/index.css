@@ -122,8 +122,10 @@ select {
   display: table;
   font-size: 0;
   text-align: center;
-  border: solid #bbb;
-  border-width: 1px 0;
+}
+
+.layer-menu > :not(:first-child) {
+  border-top: 1px solid #777;
 }
 
 .layer-menu > .dragging {
