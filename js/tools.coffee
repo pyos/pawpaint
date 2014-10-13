@@ -82,9 +82,9 @@
     true
 
   move: (ctx, x, y) ->
-    r = @data[x * 4 + @rstd * y] / 255
-    g = @data[x * 4 + @rstd * y + 1] / 255
-    b = @data[x * 4 + @rstd * y + 2] / 255
+    r = @data[floor(x) * 4 + @rstd * floor(y)] / 255
+    g = @data[floor(x) * 4 + @rstd * floor(y) + 1] / 255
+    b = @data[floor(x) * 4 + @rstd * floor(y) + 2] / 255
     m = min(r, g, b)
     M = max(r, g, b)
     L = (m + M) / 2
