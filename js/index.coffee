@@ -49,6 +49,10 @@ $ ->
         ev.preventDefault()
         $(".templates .selector-#{s}")["selector_" + s](area, o.left, o.top, o.fix).appendTo('body')
 
+   #.on 'copy',  (e) -> e.preventDefault(); area.copy(e.originalEvent.clipboardData)
+   #.on 'cut',   (e) -> e.preventDefault(); area.copy(e.originalEvent.clipboardData); area.clear()
+    .on 'paste', (e) -> e.preventDefault(); area.paste(e.originalEvent.clipboardData)
+
   $('.layer-menu').selector_layers(area, '.templates .selector-layer-config')
 
   tool = $ '.action-tool'

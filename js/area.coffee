@@ -281,6 +281,17 @@
         return true
     return false
 
+  # Load the contents of every file in a drag-and-drop operation or the clipboard.
+  #
+  # paste :: DataTransfer -> a
+  #
+  paste: (data) ->
+    for i, item of data.items
+      if item.kind == "file" and item.type.match(/image\/.*/)
+        file = new FileReader
+        file.onload = (r) -> area.import(r.target.result)
+        file.readAsDataURL data.items[i].getAsFile()
+
   # Copy some options from an object over to the currently selected tool.
   # Emits various events that begin with `tool:` and end with the name of the option
   # that was changed.
