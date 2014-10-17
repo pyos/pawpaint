@@ -23,6 +23,29 @@ select {
   color: black;
 }
 
+.tabs .tabbar {
+  list-style: none;
+  margin:  0;
+  padding: 0;
+}
+
+.tabs .tabbar, .tabs .tab {
+  display: inline-block;
+  vertical-align: top;
+}
+
+.tabs .tabbar li {
+  padding: 15px;
+}
+
+.tabs .tab {
+  padding: 15px;
+}
+
+.tabs .tab:not(.active) {
+  display: none;
+}
+
 .main-area, .side-area, .cover {
   user-select: none;
   -ms-user-select: none;
@@ -215,6 +238,7 @@ select {
 
 .selector-text {
   padding: 15px;
+  overflow: hidden;
   border-radius: 5px;
 }
 
@@ -232,6 +256,18 @@ select {
 
 .selector-text .table th, .selector-text .table td {
   border-color: #444;
+}
+
+.selector-text .tabs {
+  margin: -15px;
+}
+
+.selector-text .tabs .tabbar {
+  border-right: 1px solid #444;
+}
+
+.selector-text .tabs .tabbar .active {
+  background: #333;
 }
 
 .selector-text .warning {

@@ -4,27 +4,19 @@
 # A way to change some parameters based on some other parameters.
 #
 # Options::
-#   type -- which parameter to use (VELOCITY, PRESSURE, ...)
-#   kind -- the name of whatever this dynamic changes
-#   k    -- every input (in range 0-1) is multiplied by this value
-#   a    -- this is added to the result
-#   fn   -- a function that returns a function that takes some input
-#           (most likely in 0-1 range, but not guaraneed) and returns a normalized value
+#   max  -- each result (in 0..1) is scaled to fit into this range
+#   min  --
+#   type -- which parameter to use (velocity, direction, pressure, rotation, random)
+#   fn   -- a function that returns a function that normalizes the current value in some way
 #
 # Dynamic :: Object -> Canvas.Dynamic
 #
 @Canvas.Dynamic = class Dynamic
-  VELOCITY:  0
-  DIRECTION: 1
-  PRESSURE:  2
-  ROTATION:  3
-
   constructor: (options) ->
     @options = jQuery.extend(@options or {}, {
-      type: @VELOCITY
-      kind: 'none'
-      a:    0
-      k:    1
+      type: 0
+      min:  0
+      max:  1
       fn:   Canvas.Dynamic.movingAverage,
     })
     @options = jQuery.extend(@options, options)
@@ -39,16 +31,16 @@
   #   4. After a path leg is drawn: `stop(context)`.
   #
   reset: (ctx, tool) -> @_f = @options.fn()
-  start: (ctx, tool, dx, dy, pressure, rotation, steps) ->
+  start: (ctx, tool, dx, dy, pressure, rotation) ->
     v = switch @options.type
-      when @VELOCITY  then pow(pow(dx, 2) + pow(dy, 2), 0.5) / 20
-      when @DIRECTION then atan2(dy, dx) / 2 / PI
-      when @PRESSURE  then pressure
-      when @ROTATION  then rotation / 2 / PI
-      else 0
-    @options.a + @options.k * min 1, max 0, @_f(v)
+      when 1 then atan2(dy, dx) / 2 / PI
+      when 2 then pressure
+      when 3 then rotation / 2 / PI
+      when 4 then Math.random()
+      else pow(pow(dx, 2) + pow(dy, 2), 0.5) / 20
+    @options.min + (@options.max - @options.min) * min 1, max 0, @_f(v)
 
-  step:  (ctx, tool) ->
+  step:  (ctx, tool, total) ->
   stop:  (ctx, tool) ->
 
 
@@ -71,15 +63,15 @@
     })
     super
 
-  start: (ctx, tool, dx, dy, pressure, rotation, steps) ->
-    @_value = super * if @options.source then tool.options[@options.source] else 1
-    @_delta = (@_value - (ctx[@_target] or tool.options[@_tgcopy])) / steps
+  start: (ctx, tool, dx, dy, pressure, rotation) ->
+    @_value = super * @_scache
     @stop ctx, tool if @_first
+    @_delta = @_value - (ctx[@_target] or tool.options[@_tgcopy])
     @_first = false
 
-  step: (ctx, tool) ->
-    tool.options[@_tgcopy] += @_delta if @_tgcopy
-    ctx[@_target] += @_delta if @_target
+  step: (ctx, tool, total) ->
+    tool.options[@_tgcopy] += @_delta / total if @_tgcopy
+    ctx[@_target] += @_delta / total if @_target
 
   stop: (ctx, tool) ->
     tool.options[@_tgcopy] = @_value if @_tgcopy
@@ -87,6 +79,7 @@
 
   reset: (ctx, tool) ->
     super
+    @_scache = if @options.source then tool.options[@options.source] else 1
     @_cache  = tool.options[@options.tgcopy]
     @_target = @options.target
     @_tgcopy = @options.tgcopy
@@ -95,20 +88,6 @@
 
   restore: (ctx, tool) ->
     tool.options[@options.tgcopy] = @_cache if @options.tgcopy
-
-
-# A normalizing function that returns uniformly distributed random values in range [0..1)
-#
-# random :: -> float -> float
-#
-Dynamic.random = -> -> Math.random()
-
-
-# A normalizing function that does nothing.
-#
-# linear :: float -> float
-#
-Dynamic.linear = -> (value) -> value
 
 
 # A normalizing function that returns a value that is a moving average of the previous values.

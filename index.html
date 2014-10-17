@@ -16,121 +16,148 @@
     <script src="js/tools.js"></script>
     <script src="js/dynamic.js"></script>
     <script src="js/selector.js"></script>
-    <script src="js/index.js"></script>
-  </head>
+    <script src="js/index.js"></script></head>
+
   <body>
     <div class="side-area">
       <div class="toolbar-row">
-        <a class="action-tool" data-selector="main"><canvas width="25" height="25"></canvas></a>
-        <a class="action-dynamics fa fa-random" title="Dynamics..." data-selector="dynamics"></a>
-      </div>
+        <a data-selector="main" class="action-tool"><canvas width="25" height="25"></canvas></a>
+        <a title="Dynamics..." data-selector="dynamics" class="action-dynamics fa fa-random"></a></div>
       <div class="toolbar-row">
-        <a class="action-undo fa fa-undo" title="Undo"></a>
-        <a class="action-redo fa fa-repeat" title="Redo"></a>
-      </div>
+        <a   title="Undo" class="action-undo fa fa-undo"></a>
+        <a title="Redo" class="action-redo fa fa-repeat"></a></div>
       <div class="toolbar-row">
-        <a class="action-export fa fa-save" title="Export as..." data-selector="export"></a>
-      </div>
+        <a title="Export as..." data-selector="export" class="action-export fa fa-save"></a></div>
       <ul class="layer-menu"></ul>
       <div class="toolbar-row">
-        <a class="action-add-layer fa fa-asterisk" title="New layer"></a>
-        <a class="action-del-layer fa fa-trash" title="Remove layer"></a>
-      </div>
-    </div>
-    <div class="main-area" data-selector-menu="main"></div>
+        <a title="New layer" class="action-add-layer fa fa-asterisk"></a>
+        <a    title="Remove layer" class="action-del-layer fa fa-trash"></a></div></div>
+    <div data-selector-menu="main" class="main-area"></div>
 
     <div class="hidden templates">
       <div class="selector-main">
-        <canvas width="200" height="200" class="selector selector-color"></canvas>
-        <canvas width="25"  height="200" class="selector selector-palette"></canvas>
-        <canvas width="40"  height="200" class="selector selector-width"></canvas>
+        <canvas                      width="200" height="200" class="selector selector-color"></canvas>
+        <canvas                    width="25"  height="200" class="selector selector-palette"></canvas>
+        <canvas                      width="40"  height="200" class="selector selector-width"></canvas>
         <canvas width="50"  height="200" class="selector selector-tools small not-fixed-only"></canvas>
-        <canvas width="150" height="200" class="selector selector-tools fixed-only"></canvas>
-      </div>
+        <canvas           width="150" height="200" class="selector selector-tools fixed-only"></canvas></div>
 
       <div class="selector-export selector-text">
         <div class="header">Export as</div>
         <div class="btn-group btn-group-lg">
           <a data-type="png" class="btn btn-success">PNG</a>
-          <a data-type="svg" class="btn btn-default">SVG</a>
-        </div>
-      </div>
+          <a data-type="svg" class="btn btn-default">SVG</a></div></div>
 
       <div class="selector-dynamics selector-text">
-        <div class="item" data-kind="size" data-source="size" data-target="lineWidth">
-          <div class="name">Size</div>
-          <select class="comp">
-            <option value="">Disabled</option>
-            <option value="linear">Current value</option>
-            <option value="movingAverage">Moving average</option>
-            <option value="random">Random</option>
-          </select>
-          <select class="type">
-            <option value="VELOCITY">Velocity</option>
-            <option value="DIRECTION">Direction</option>
-            <option value="PRESSURE">Pressure</option>
-            <option value="ROTATION">Rotation</option>
-          </select>
-          <input type="range" class="min" min="0.01" max="2.01" step="0.05" value="0.01" />
-          <input type="range" class="max" min="0.01" max="2.01" step="0.05" value="1.01" />
-        </div>
+        <div class="tabs">
+          <ul class="tabbar">
+            <li data-target="[data-kind=size]" class="active">Size</li>
+            <li        data-target="[data-kind=opacity]">Opacity</li>
+            <li        data-target="[data-kind=rotation]">Rotation</li>
+            <li        data-target="[data-kind=spacing]">Spacing</li></ul>
+          <div data-kind="size" class="tab active">
+            <input type="hidden" data-raw data-option="source" value="size">
+            <input type="hidden" data-raw data-option="target" value="lineWidth">
+            <table class="table">
+              <tr>
+                <th>a function of</th>
+                <td><select data-option="type">
+                    <option value="">Nothing</option>
+                    <option value="0">Velocity</option>
+                    <option value="1">Direction</option>
+                    <option value="2">Pressure</option>
+                    <option value="3">Rotation</option>
+                    <option value="4">Random</option></select></td></tr>
+              <tr>
+                <th>smoothness</th>
+                <td><input type="range" data-option="avgOf" min="1" max="100" step="1" value="75"></td></tr>
+              <tr>
+                <th>minimum</th>
+                <td><input type="range" data-option="min" min="0.01" max="2.01" step="0.05" value="0.01"></td></tr>
+              <tr>
+                <th>maximum</th>
+                <td><input type="range" data-option="max" min="0.01" max="2.01" step="0.05" value="1.01"></td></tr></table></div>
 
-        <div class="item" data-kind="opacity" data-source="opacity" data-target="globalAlpha">
-          <div class="name">Opacity</div>
-          <select class="comp">
-            <option value="">Disabled</option>
-            <option value="linear">Current value</option>
-            <option value="movingAverage">Moving average</option>
-            <option value="random">Random</option>
-          </select>
-          <select class="type">
-            <option value="VELOCITY">Velocity</option>
-            <option value="DIRECTION">Direction</option>
-            <option value="PRESSURE">Pressure</option>
-            <option value="ROTATION">Rotation</option>
-          </select>
-          <input type="range" class="min" min="0" max="1" step="0.05" value="1" />
-          <input type="range" class="max" min="0" max="1" step="0.05" value="0" />
-        </div>
+          <div data-kind="opacity" class="tab">
+            <input type="hidden" data-raw data-option="source" value="opacity">
+            <input type="hidden" data-raw data-option="target" value="globalAlpha">
+            <table class="table">
+              <tr>
+                <th>a function of</th>
+                <td><select data-option="type">
+                    <option value="">Nothing</option>
+                    <option value="0">Velocity</option>
+                    <option value="1">Direction</option>
+                    <option value="2">Pressure</option>
+                    <option value="3">Rotation</option>
+                    <option value="4">Random</option></select></td></tr>
+              <tr>
+                <th>smoothness</th>
+                <td><input type="range" data-option="avgOf" min="1" max="100" step="1" value="75"></td></tr>
+              <tr>
+                <th>minimum</th>
+                <td><input type="range" data-option="min" min="0.01" max="2.01" step="0.05" value="0.01"></td></tr>
+              <tr>
+                <th>maximum</th>
+                <td><input type="range" data-option="max" min="0.01" max="2.01" step="0.05" value="1.01"></td></tr></table></div>
 
-        <div class="item" data-kind="rotation" data-tgcopy="rotation">
-          <div class="name">Rotation</div>
-          <select class="comp">
-            <option value="">Disabled</option>
-            <option value="linear">Current value</option>
-            <option value="movingAverage">Moving average</option>
-            <option value="random">Random</option>
-          </select>
-          <select class="type">
-            <option value="VELOCITY">Velocity</option>
-            <option value="DIRECTION" selected>Direction</option>
-            <option value="PRESSURE">Pressure</option>
-            <option value="ROTATION">Rotation</option>
-          </select>
-          <input type="range" class="min" min="0" max="6.28" step="0.063" value="0" />
-          <input type="range" class="max" min="0" max="6.28" step="0.063" value="6.28" />
-        </div>
-        <div class="warning">
-          <b>Pressure and rotation</b> are only supported on some touchscreens.
-        </div>
-      </div>
+          <div data-kind="rotation" class="tab">
+            <input type="hidden" data-raw data-option="tgcopy" value="rotation">
+            <table class="table">
+              <tr>
+                <th>a function of</th>
+                <td><select data-option="type">
+                    <option value="">Nothing</option>
+                    <option value="0">Velocity</option>
+                    <option value="1">Direction</option>
+                    <option value="2">Pressure</option>
+                    <option value="3">Rotation</option>
+                    <option value="4">Random</option></select></td></tr>
+              <tr>
+                <th>smoothness</th>
+                <td><input type="range" data-option="avgOf" min="1" max="100" step="1" value="75"></td></tr>
+              <tr>
+                <th>minimum</th>
+                <td><input type="range" data-option="min" min="0" max="6.38" step="0.0638" value="0"></td></tr>
+              <tr>
+                <th>maximum</th>
+                <td><input type="range" data-option="max" min="0" max="6.38" step="0.0638" value="6.38"></td></tr></table></div>
+
+          <div data-kind="spacing" class="tab">
+            <input type="hidden" data-raw data-option="source" value="spacing">
+            <input type="hidden" data-raw data-option="tgcopy" value="spacing">
+            <table class="table">
+              <tr>
+                <th>a function of</th>
+                <td><select data-option="type">
+                    <option value="">Nothing</option>
+                    <option value="0">Velocity</option>
+                    <option value="1">Direction</option>
+                    <option value="2">Pressure</option>
+                    <option value="3">Rotation</option>
+                    <option value="4">Random</option></select></td></tr>
+              <tr>
+                <th>smoothness</th>
+                <td><input type="range" data-option="avgOf" min="1" max="100" step="1" value="75"></td></tr>
+              <tr>
+                <th>minimum</th>
+                <td><input type="range" data-option="min" min="0.01" max="2.01" step="0.05" value="0.01"></td></tr>
+              <tr>
+                <th>maximum</th>
+                <td><input type="range" data-option="max" min="0.01" max="2.01" step="0.05" value="1.01"></td></tr></table></div></div></div>
 
       <div class="selector-layer-config selector-text">
         <div class="header">Layer options</div>
         <table class="table">
           <tr>
             <td>Hidden</td>
-            <td><input type="checkbox" data-set="setHidden" data-get="getHidden" /></td>
-          </tr>
+            <td><input type="checkbox" data-set="setHidden" data-get="getHidden"></td></tr>
           <tr>
             <td>Opacity</td>
-            <td><input type="range" data-set="setOpacity" data-get="getOpacity"
-                 min="0.0" max="1.0" step="0.05" value="1.0" /></td>
-          </tr>
+            <td><input type="range" data-set="setOpacity" data-get="getOpacity" min="0.0" max="1.0" step="0.05" value="1.0"></td></tr>
           <tr>
             <td>Blend mode</td>
-            <td>
-              <select class="blend" data-set="setBlendMode" data-get="getBlendMode" value="normal">
+            <td><select data-set="setBlendMode" data-get="getBlendMode" value="normal">
                 <option value="normal">Normal</option>
                 <option value="lighten">Lighten</option>
                 <option value="darken">Darken</option>
@@ -146,32 +173,20 @@
                 <option value="hue">Hue</option>
                 <option value="saturation">Saturation</option>
                 <option value="color">Color</option>
-                <option value="luminosity">Luminosity</option>
-              </select>
-            </td>
-          </tr>
+                <option value="luminosity">Luminosity</option></select></td></tr>
           <tr>
             <td>Fill with</td>
-            <td>
-              <select class="fill-style" data-set="fill" value="transparent">
+            <td><select data-set="fill" value="transparent">
                 <option value="transparent">...</option>
                 <option value="white">White</option>
                 <option value="black">Black</option>
-                <option value="toolColor">Current color</option>
-              </select>
-            </td>
-          </tr>
-        </table>
-      </div>
-    </div>
+                <option value="toolColor">Current color</option></select></td></tr></table></div></div>
 
     <div class="hidden resources">
-      <img src="img/brush.soft.16.png" class="brush-soft-16" />
-      <img src="img/brush.soft.32.png" class="brush-soft-32" />
-      <img src="img/brush.soft.64.png" class="brush-soft-64" />
-      <img src="img/brush.watercolor.png" class="brush-watercolor" />
-      <img src="img/brush.pencil.png" class="brush-pencil" />
-      <img src="img/brush.skewed-ellipse.png" class="brush-skewed-ellipse" />
-    </div>
-  </body>
-</html>
+      <img        src="img/brush.soft.16.png" class="brush-soft-16">
+      <img        src="img/brush.soft.32.png" class="brush-soft-32">
+      <img        src="img/brush.soft.64.png" class="brush-soft-64">
+      <img     src="img/brush.watercolor.png" class="brush-watercolor">
+      <img         src="img/brush.pencil.png" class="brush-pencil">
+      <img src="img/brush.skewed-ellipse.png" class="brush-skewed-ellipse"></div></body></html>
+

@@ -207,23 +207,25 @@
     ctx.globalAlpha = @options.opacity
     ctx.strokeStyle = ctx.fillStyle = "hsl(#{@options.H}, #{@options.S}%, #{@options.L}%)"
     dyn.reset ctx, @, x, y, pressure, rotation for dyn in @options.dynamic
-    @lastX = x
-    @lastY = y
+    @lastX = @prevX = x
+    @lastY = @prevY = y
     @empty = true
 
   move: (ctx, x, y, pressure, rotation) ->
     dx = x - @lastX
     dy = y - @lastY
     sp = floor(@options.spacing + ctx.lineWidth * @spacingAdjust)
+    dyn.start ctx, @, x - @prevX, y - @prevY, pressure, rotation for dyn in @options.dynamic
     if steps = floor(pow(pow(dx, 2) + pow(dy, 2), 0.5) / sp) or @empty
-      dyn.start ctx, @, dx, dy, pressure, rotation, steps for dyn in @options.dynamic
       dx /= steps
       dy /= steps
       for i in [0...steps]
-        dyn.step ctx, @ for dyn in @options.dynamic
+        dyn.step ctx, @, steps for dyn in @options.dynamic
         @step(ctx, @lastX, @lastY, @lastX += dx, @lastY += dy)
-      dyn.stop ctx, @ for dyn in @options.dynamic
       @empty = false
+    dyn.stop ctx, @ for dyn in @options.dynamic
+    @prevX = x
+    @prevY = y
 
   step: (ctx, x, y, nx, ny) ->
     ctx.beginPath()

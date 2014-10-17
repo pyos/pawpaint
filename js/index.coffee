@@ -33,11 +33,19 @@ $ ->
     .on 'key:ctrl+187',      (_, e) -> e.preventDefault(); area.setScale(area.scale * 1.25)
     .on 'key:ctrl+83',       (_, e) -> e.preventDefault(); $('.action-export').click()
     .on 'key:27',            (_, e) -> $('.cover').click()
-    .on 'click', '.cover', (e) -> e.stopPropagation(); $(@).fadeOut(100, $(@).remove.bind $(@))
     .on 'click', '.action-add-layer', -> area.createLayer()
     .on 'click', '.action-del-layer', -> area.deleteLayer(area.layer)
     .on 'click', '.action-undo',      -> area.undo()
     .on 'click', '.action-redo',      -> area.redo()
+    .on 'click', '.cover', (e) ->
+      if e.target is e.currentTarget
+        e.stopPropagation()
+        $(@).fadeOut(100, $(@).remove.bind $(@))
+    .on 'click', '.tabbar li', ->
+      attr = @getAttribute 'data-target'
+      self = $ @
+      self.siblings().removeClass('active').end().addClass('active')
+      self.parent().parent().find('.tab').removeClass('active').filter(attr).addClass('active')
     .on 'click contextmenu', '[data-selector], [data-selector-menu]', (ev) ->
       if ev.which > 1
         s = $(@).attr 'data-selector-menu'

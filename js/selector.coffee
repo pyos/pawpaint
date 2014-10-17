@@ -290,7 +290,6 @@ $.fn.selector_modal = (x, y, fixed) ->
   @css 'left', x
   @css 'top',  y
   @addClass 'fixed' if fixed
-  @on 'click', (ev) -> ev.stopPropagation()
   $('<div class="cover selector">').append(@).hide().fadeIn(100)
 
 
@@ -344,51 +343,30 @@ $.fn.selector_export = (area, x, y, fixed) ->
 
 
 $.fn.selector_dynamics = (area, x, y, fixed) ->
-  funcs = Canvas.Dynamic
-  types = Canvas.Dynamic.prototype
-
   t = @clone()
-    .on 'change', '.comp', ->
-      self = $(@).parents('.item')
+    .on 'change', '[data-option="type"]', ->
+      self = $(@).parents('[data-kind]')
       data = self.data('dynamic')
-      data.options.fn = funcs[@value] if data and @value
 
       if data and not @value
         i = area.tool.options.dynamic.indexOf(data)
         _ = area.tool.options.dynamic.splice(i, 1)
         return self.data('dynamic', null)
-      else if not data
-        data = new Canvas.Dynamic.Option
-          source: self.attr('data-source')
-          target: self.attr('data-target')
-          tgcopy: self.attr('data-tgcopy')
-          kind  : self.attr('data-kind')
+      if not data and @value
+        data = new Canvas.Dynamic.Option kind: self.attr('data-kind')
         self.data('dynamic', data)
-        self.find('.comp, .type, .min, .max').trigger('change')
+        self.find('[data-option]').trigger('change')
         area.tool.options.dynamic.push(data)
 
-    .on 'change', '.type', ->
-      data = $(@).parents('.item').data('dynamic')
-      data.options.type = types[@value] if data
-
-    .on 'change', '.min', ->
-      data = $(@).parents('.item').data('dynamic')
-      if data
-        data.options.k += data.options.a
-        data.options.a  = parseFloat @value
-        data.options.k -= data.options.a
-
-    .on 'change', '.max', ->
-      data = $(@).parents('.item').data('dynamic')
-      data.options.k = parseFloat @value - data.options.a if data
+    .on 'change', '[data-option]', ->
+      value = if @getAttribute('data-raw') is null then parseFloat @value else @value
+      data = $(@).parents('[data-kind]').data('dynamic')
+      data.options[@getAttribute 'data-option'] = value if data
 
   for dyn in area.tool.options.dynamic
-    elem = t.find "[data-kind='#{dyn.options.kind}']"
-    for x, f of funcs then elem.find('.comp').val x if f is dyn.options.fn
-    for x, f of types then elem.find('.type').val x if f is dyn.options.type
-    elem.find('.min').val(dyn.options.a)
-    elem.find('.max').val(dyn.options.k + dyn.options.a)
+    elem = t.find("[data-kind='#{dyn.options.kind}']")
     elem.data('dynamic', dyn)
+    elem.find('[data-option]').each -> @value = dyn.options[@getAttribute 'data-option']
 
   t.selector_modal(x, y, fixed)
 
