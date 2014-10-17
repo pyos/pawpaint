@@ -7,6 +7,7 @@ inotifywait -e close_write -e delete -e move --format "%e %w%f" -mqr . | while r
 	case "${FNAME##*.}" in
 		coffee)  TARGET="${FNAME%.*}.js";;
 		hamlike) TARGET="${FNAME%.*}.html";;
+		sass)    TARGET="${FNAME%.*}.css";;
 		*) continue;;
 	esac
 
