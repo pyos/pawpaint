@@ -1,83 +1,71 @@
 ---
 ---
 
-body:not(.no-canvas)
+@mixin fill($z-index)
   position: absolute
   overflow: hidden
-  top:    0
-  bottom: 0
-  left:   0
-  right:  0
-  cursor: default
-  z-index: -65536
-  background: gray
-  -ms-touch-action: none
+  top:     0
+  bottom:  0
+  left:    0
+  right:   0
+  z-index: $z-index
 
-a:not(.fa):not(.glyphicon)
-  cursor: pointer
-
-input[type="range"]
-  width: auto
-
-select
-  color: black
-
-.tabs
-  & > .tabbar
-    list-style: none
-    margin:  0
-    padding: 0
-    display: inline-block
-    vertical-align: top
-
-    li
-      padding: 15px
-
-  & > .tab
-    display: none
-    padding: 15px
-    vertical-align: top
-
-    &.active
-      display: inline-block
-
-.background
+@mixin checkers()
   background: url(../img/checkers.png)
 
-.main-area, .side-area, .cover
+body
+  @include fill(0)
+  cursor: default
+  background: gray
   user-select: none
   -ms-user-select: none
   -moz-user-select: -moz-none
   -khtml-user-select: none
   -webkit-user-select: none
+  -ms-touch-action: none
+
+ul
+  list-style: none
+  margin:  0
+  padding: 0
+
+select
+  // Selects are partially styled. WTF.
+  color: black
+
+.tabs
+  & > .tab
+    display: none
+
+  & > .tabbar, & > .tab.active
+    display: inline-block
+    vertical-align: top
+
+  & > .tabbar > li, & > .tab
+    padding: 15px
 
 .main-area
-  position: relative
-  overflow: auto
-  z-index:  -65568
-  height:   100%
-  margin:   0
-  padding:  0
-  /* Prevent scrollbars from appearing when the canvas
-   * fits the area exactly. */
-  font-size: 0
-
-.area
-  position: relative
-  z-index:  -65567
-  display:  inline-block
   cursor:   crosshair
-  overflow: hidden
+  position: relative  // needed for correct z-indexing
+  overflow: auto
+  height:   100%
 
-.layer, .crosshair, .selection
-  position: absolute
-  pointer-events: none
+  & > .layers
+    @include checkers()
+    // FIXME layers still blend with the background.
+    isolation: isolate
 
-.layer.active
-  outline: 1px dashed yellow
-  outline-offset: -1px
+    & > *
+      position: absolute
+      pointer-events: none
+
+    & > .active
+      outline: 1px dashed yellow
+      outline-offset: -1px
 
 .crosshair
+  position: absolute
+  pointer-events: none
   will-change: left, top
 
 .selection
@@ -117,13 +105,11 @@ select
 .layer-menu
   overflow-x: hidden
   overflow-y: auto
-  list-style: none
-  margin:  0
-  padding: 0
   width: 100px
   height: calc(100% - 180px)
 
   & > li
+    @include checkers()
     opacity: 0.5
     display: table
     font-size: 0
@@ -145,13 +131,7 @@ select
       display: inline-block
 
 .cover
-  position: absolute
-  z-index: 65538
-  top:    0
-  left:   0
-  right:  0
-  bottom: 0
-  overflow: hidden
+  @include fill(65538)
 
   &.selector > *
     position: absolute

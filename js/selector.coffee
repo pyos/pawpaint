@@ -435,7 +435,7 @@ $.fn.selector_layers = (area, template) ->
     body.on 'mouseup   touchend',   h3
 
   area.on 'layer:add', (layer, index) =>
-    entry = $ '<li class="background"><canvas></canvas></li>'
+    entry = $ '<li><canvas></canvas></li>'
     entry.insertBefore @children().eq(index)
 
   area.on 'layer:resize', (layer, index) =>

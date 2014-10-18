@@ -32,7 +32,7 @@
       %div.toolbar-row
         %a.action-add-layer.fa.fa-asterisk title="New layer"
         %a.action-del-layer.fa.fa-trash    title="Remove layer"
-    %div.main-area data-selector-menu="main"
+    %div.main-area data-selector-menu="main" -> %div.layers
 
     %div.hidden.templates
       %div.selector-main

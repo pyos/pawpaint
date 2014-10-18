@@ -31,7 +31,7 @@
   constructor: (selector, tools...) ->
     super
 
-    @element = $('<div class="area background">').appendTo $(selector).eq(0)
+    @element = $(selector).eq(0)
     @element.data 'area', @
 
     # A list of subclasses of `Canvas.Tool`.
@@ -91,9 +91,9 @@
     @element[0].addEventListener 'mousemove', (ev) ->
       crosshair.style.left = ev.pageX + 'px'
       crosshair.style.top  = ev.pageY + 'px'
-      crosshair.style.visibility = 'visible'
-    @element[0].addEventListener 'mouseleave', (ev) -> crosshair.style.visibility = 'hidden'
-    @element[0].addEventListener 'touchstart', (ev) -> crosshair.style.visibility = 'hidden'
+      crosshair.style.display = ''
+    @element[0].addEventListener 'mouseleave', (ev) -> crosshair.style.display = 'none'
+    @element[0].addEventListener 'touchstart', (ev) -> crosshair.style.display = 'none'
     @element[0].addEventListener 'touchstart', @onTouchStart
     @resize(0, 0)
 
@@ -153,7 +153,7 @@
     if state
       result = layer.set(state)
     else
-      layer.resize 0, 0, @element.parent().innerWidth(), @element.parent().innerHeight()
+      layer.resize 0, 0, @element.parent().width(), @element.parent().height()
       layer.replace null
       result = true
     @changeLayer(index)
