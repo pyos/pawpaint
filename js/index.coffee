@@ -67,9 +67,9 @@ $ ->
   tool = $ '.action-tool'
 
   area.on 'layer:add', ->
-    # Make the new layer fit the container.
-    main = $('.main-area')
-    area.resize max(area.w, main.innerWidth()), max(area.h, main.innerHeight())
+    if area.w == 0 or area.h == 0
+      main = $('.main-area')
+      area.resize main.innerWidth(), main.innerHeight()
 
   area.on 'tool:options', (v) ->
     tool.css 'background', "hsl(#{v.H},#{v.S}%,#{v.L}%)"
