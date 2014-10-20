@@ -38,10 +38,7 @@ $ ->
     .on 'click', '.action-del-layer', -> area.deleteLayer(area.layer)
     .on 'click', '.action-undo',      -> area.undo()
     .on 'click', '.action-redo',      -> area.redo()
-    .on 'click', '.cover', (e) ->
-      if e.target is e.currentTarget
-        e.stopPropagation()
-        $(@).fadeOut(100, $(@).remove.bind $(@))
+    .on 'click', '.cover', (e) -> $(@).fadeOut(100, $(@).remove.bind $(@)) if e.target is e.currentTarget
     .on 'click', '.tabbar li', ->
       attr = @getAttribute 'data-target'
       self = $ @
@@ -58,18 +55,19 @@ $ ->
         ev.preventDefault()
         $(".templates .selector-#{s}")["selector_" + s](area, o.left, o.top, o.fix).appendTo('body')
 
-   #.on 'copy',  (e) -> e.preventDefault(); area.copy(e.originalEvent.clipboardData)
-   #.on 'cut',   (e) -> e.preventDefault(); area.copy(e.originalEvent.clipboardData); area.clear()
-    .on 'paste', (e) -> e.preventDefault(); area.paste(e.originalEvent.clipboardData)
+   #.on 'copy',     (e) -> e.preventDefault(); area.copy(e.originalEvent.clipboardData)
+   #.on 'cut',      (e) -> e.preventDefault(); area.copy(e.originalEvent.clipboardData); area.clear()
+    .on 'paste',    (e) -> e.preventDefault(); area.paste(e.originalEvent.clipboardData)
+    .on 'drop',     (e) -> e.preventDefault(); area.paste(e.originalEvent.dataTransfer)
+    .on 'dragover', (e) -> e.preventDefault()
 
-  $('.layer-menu').selector_layers(area, '.templates .selector-layer-config')
-
+  main = $ '.main-area'
   tool = $ '.action-tool'
+  menu = $ '.layer-menu'
+  menu.selector_layers area, '.templates .selector-layer-config'
 
   area.on 'layer:add', ->
-    if area.w == 0 or area.h == 0
-      main = $('.main-area')
-      area.resize main.innerWidth(), main.innerHeight()
+    area.resize main.innerWidth(), main.innerHeight() if area.w == 0 or area.h == 0
 
   area.on 'tool:options', (v) ->
     tool.css 'background', "hsl(#{v.H},#{v.S}%,#{v.L}%)"
