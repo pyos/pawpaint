@@ -306,10 +306,10 @@
     @trigger('tool:options', [@tool.options])
 
     sz = @tool.options.size * @scale
-    $ @crosshair
+    cr = $ @crosshair
       .attr {'width': sz, 'height': sz}
       .css  {'margin-left': -sz / 2, 'margin-top': -sz / 2}
-      .css   'display', if @tool.options.size > 5 then '' else 'none'
+    if @tool.options.size > 5 then cr.removeClass 'hidden' else cr.addClass 'hidden'
     ctx = @crosshair.getContext('2d')
     ctx.translate sz / 2, sz / 2
     ctx.scale @scale, @scale
