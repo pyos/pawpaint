@@ -25,6 +25,12 @@ $ ->
     @localStorage?.image   = area.export("svg")
     @localStorage?.palette = area.palette
 
+  $(window).on 'resize', ->
+    if window.outerWidth == screen.width and window.outerHeight == screen.height
+      $('body').addClass('slim')
+    else
+      $('body').removeClass('slim')
+
   $('body').keymappable()
     .on 'key:ctrl+90',       (_, e) -> e.preventDefault(); area.undo()
     .on 'key:ctrl+shift+90', (_, e) -> e.preventDefault(); area.redo()
