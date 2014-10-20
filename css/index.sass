@@ -256,7 +256,12 @@ body.slim
       height: calc(100% - 225px)
 
       & > li > canvas
+        outline: 1px dashed gray
+        outline-offset: -1px
         max-width: 45px
+
+      & > .active > canvas
+        outline-color: yellow
 
   .cover > .fixed
     right: 45px
