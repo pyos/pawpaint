@@ -23,10 +23,8 @@
       %div.toolbar-row
         %a.action-tool data-selector="main" -> %canvas width="25" height="25"
         %a.action-dynamics.fa.fa-random title="Dynamics..." data-selector="dynamics"
-      %div.toolbar-row
         %a.action-undo.fa.fa-undo   title="Undo"
         %a.action-redo.fa.fa-repeat title="Redo"
-      %div.toolbar-row
         %a.action-export.fa.fa-save title="Export as..." data-selector="export"
       %ul.layer-menu
       %div.toolbar-row

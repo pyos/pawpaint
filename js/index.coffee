@@ -32,6 +32,7 @@ $ ->
     .on 'key:ctrl+189',      (_, e) -> e.preventDefault(); area.setScale(area.scale * 0.8)
     .on 'key:ctrl+187',      (_, e) -> e.preventDefault(); area.setScale(area.scale * 1.25)
     .on 'key:ctrl+83',       (_, e) -> e.preventDefault(); $('.action-export').click()
+    .on 'key:ctrl+shift+70', (_, e) -> e.preventDefault(); $('body').toggleClass('slim')
     .on 'key:27',            (_, e) -> $('.cover').click()
     .on 'click', '.action-add-layer', -> area.createLayer()
     .on 'click', '.action-del-layer', -> area.deleteLayer(area.layer)

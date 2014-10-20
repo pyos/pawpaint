@@ -94,6 +94,7 @@ select
 .side-area
   position: relative
   overflow: hidden
+  width:  100px
   height: 100%
   float: right
 
@@ -101,51 +102,52 @@ select
   background: #222
   color:      white
 
-  & > .toolbar-row > *
-    width:   45px
-    height:  45px
-    padding: 6px
-    display: inline-block
-
-    font-size:  20px
-    text-align: center
-    color:      inherit
-    cursor:     pointer
-
-    *, &, &:before
-      vertical-align: middle
-
-.action-tool
-  border-bottom-right-radius: 10px
-  box-shadow: 0 0 10px -5px #000 inset
-
-.layer-menu
-  overflow-x: hidden
-  overflow-y: auto
-  width: 100px
-  height: calc(100% - 180px)
-
-  & > li
-    @include checkers()
-    opacity: 0.5
-    display: table
-    font-size: 0
-    text-align: center
-
-    &:not(:first-child)
-      border-top: 1px solid #777
-
-    &.dragging
-      position: absolute
-      z-index: 65539
-
-    &.dragging, &.active
-      opacity: 1
-
-    & > canvas
-      max-height: 60px
-      max-width:  90px
+  & > .toolbar-row
+    & > *
+      width:   45px
+      height:  45px
+      padding: 6px
       display: inline-block
+
+      font-size:  20px
+      text-align: center
+      color:      inherit
+      cursor:     pointer
+
+      *, &, &:before
+        vertical-align: middle
+
+    & > .action-tool
+      border-bottom-right-radius: 10px
+      box-shadow: 0 0 10px -5px #000 inset
+
+  & > .layer-menu
+    overflow-x: hidden
+    overflow-y: auto
+    width:  100%
+    height: calc(100% - 180px)
+
+    & > li
+      @include checkers()
+      opacity: 0.5
+      display: table
+      font-size: 0
+      text-align: center
+
+      &:not(:first-child)
+        border-top: 1px solid #777
+
+      &.dragging
+        position: absolute
+        z-index: 65539
+
+      &.dragging, &.active
+        opacity: 1
+
+      & > canvas
+        max-height: 60px
+        max-width:  90px
+        display: inline-block
 
 .cover
   @include fill(65538)
@@ -234,3 +236,27 @@ select
       border-bottom-left-radius: 5px
       box-shadow: 0 20px 20px -20px #000 inset
       margin-bottom: -15px
+
+body.slim
+  background: black
+
+  .side-area
+    width: 45px
+    background: black
+    box-shadow: none
+
+    & > .toolbar-row
+      & > .action-tool
+        border-radius: 0
+
+      & > .action-undo, & > .action-redo
+        display: none
+
+    & > .layer-menu
+      height: calc(100% - 225px)
+
+      & > li > canvas
+        max-width: 45px
+
+  .cover > .fixed
+    right: 45px
