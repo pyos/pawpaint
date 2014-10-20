@@ -153,7 +153,7 @@
     if state
       result = layer.set(state)
     else
-      layer.resize 0, 0, @element.parent().width(), @element.parent().height()
+      layer.resize 0, 0, @w, @h
       layer.replace null
       result = true
     @changeLayer(index)

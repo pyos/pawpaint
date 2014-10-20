@@ -64,6 +64,12 @@ $ ->
   $('.layer-menu').selector_layers(area, '.templates .selector-layer-config')
 
   tool = $ '.action-tool'
+
+  area.on 'layer:add', ->
+    # Make the new layer fit the container.
+    main = $('.main-area')
+    area.resize max(area.w, main.innerWidth()), max(area.h, main.innerHeight())
+
   area.on 'tool:options', (v) ->
     tool.css 'background', "hsl(#{v.H},#{v.S}%,#{v.L}%)"
     tool.find('canvas').each ->
