@@ -289,7 +289,7 @@
     for i, item of data.items
       if item.kind == "file" and item.type.match(/image\/.*/)
         file = new FileReader
-        file.onload = (r) -> area.import(r.target.result)
+        file.onload = (r) => @import(r.target.result)
         file.readAsDataURL data.items[i].getAsFile()
 
   # Copy some options from an object over to the currently selected tool.
