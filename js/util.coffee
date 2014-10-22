@@ -118,6 +118,11 @@ $.fn.keymappable = ->
     true
 
 
+Function::property = (name, get, set) ->
+  # CoffeeScript does not support `get` and `set` properties.
+  Object.defineProperty @::, name, get: get, set: set
+
+
 class @EventSystem
   # A simple event dispatcher, because jQuery is slow.
   constructor: -> @_events = {}

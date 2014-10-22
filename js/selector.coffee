@@ -440,8 +440,8 @@ $.fn.selector_layers = (area, template) ->
 
   area.on 'layer:resize', (layer, index) =>
     sz = 150 / max(layer.w, layer.h)
-    entry = @children().eq(index).find('canvas')
-    entry.replaceWith new Canvas layer.w * sz, layer.h * sz
+    canvas = @children().eq(index).find('canvas')
+    canvas.attr(width: layer.w * sz, height: layer.h * sz)
 
   area.on 'layer:redraw', (layer, index) =>
     cnv = @children().eq(index).find('canvas')
@@ -456,21 +456,12 @@ $.fn.selector_layers = (area, template) ->
 
 
 $.fn.selector_layer_config = (area, index, x, y, fixed) ->
-  layer = area.layers[index]
-
   t = @clone()
-  t.on 'change', '[data-set]', ->
-    if @getAttribute('type') == 'checkbox'
-      layer[$(@).attr('data-set')](@checked)
-    else
-      layer[$(@).attr('data-set')](@value)
-
-  t.find('[data-get]').each ->
-    if @getAttribute('type') == 'checkbox'
-      @checked = layer[$(@).attr('data-get')]()
-    else
-      @value = layer[$(@).attr('data-get')]()
-    # `false` breaks iteration. `@checked` may be `false`. You get the idea.
+  t.on 'change', '[data-prop]', ->
+    area.snap index
+    area.layers[index][@getAttribute 'data-prop'] =
+      if @type == "checkbox" then @checked else @value
+  t.find('[data-prop]').each ->
+    @checked = @value = area.layers[index][@getAttribute 'data-prop']
     return true
-
   t.selector_modal(x, y, fixed)

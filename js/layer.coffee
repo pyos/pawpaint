@@ -13,12 +13,30 @@
     @area    = area
     @element = $ []
 
-  setHidden:    (v) -> @element.css('display', if v then 'none' else ''); @trigger('reprop', [@])
-  getHidden:    ( ) -> @element.css('display') == 'none'
-  setBlendMode: (v) -> @element.css('mix-blend-mode', v); @trigger('reprop', [@])
-  getBlendMode: ( ) -> @element.css('mix-blend-mode')
-  setOpacity:   (v) -> @element.css('opacity', v); @trigger('reprop', [@])
-  getOpacity:   ( ) -> @element.css('opacity')
+  @property 'hidden',
+    ( ) -> @element.css('display') == 'none'
+    (v) -> @element.css('display', if v then 'none' else '')
+
+  @property 'opacity',
+    ( ) -> @element.css('opacity')
+    (v) -> @element.css('opacity', v)
+
+  # This requires experimental CSS support.
+  # See the documentation on `mix-blend-mode` for details.
+  @property 'blendMode',
+    ( ) -> @element.css('mix-blend-mode')
+    (v) -> @element.css('mix-blend-mode', v)
+
+  @property 'fill',
+    ( ) -> 'transparent'
+    (v) ->
+      opt = @area.tool.options
+      ctx = @img().getContext('2d')
+      ctx.fillStyle = switch v
+        when "toolColor" then "hsl(#{opt.H},#{opt.S}%,#{opt.L}%)"
+        else v
+      ctx.fillRect 0, 0, @w, @h
+      @trigger('redraw', [this])
 
   # Remove the contents of this layer. (And the element that represents it.)
   #
@@ -27,20 +45,6 @@
   clear: ->
     @element.remove()
     @element = $ []
-    @trigger('redraw', [this])
-
-  # Fill this layer with a single color. "toolColor" is a special value
-  # that makes this thing inherit color from the current tool.
-  #
-  # fill :: str -> a
-  #
-  fill: (color) ->
-    opt = @area.tool.options
-    ctx = @img().getContext('2d')
-    ctx.fillStyle = switch color
-      when "toolColor" then "hsl(#{opt.H},#{opt.S}%,#{opt.L}%)"
-      else color
-    ctx.fillRect 0, 0, @w, @h
     @trigger('redraw', [this])
 
   # Change the position of this layer.
@@ -93,9 +97,9 @@
       @clear()
       @resize(state.x, state.y, state.w or img.width, state.h or img.height)
       @replace(img)
-      @setBlendMode state.blendMode
-      @setOpacity   state.opacity
-      @setHidden    state.hidden
+      @blendMode = state.blendMode
+      @opacity   = state.opacity
+      @hidden    = state.hidden
       return true
     @resize(state.x, state.y, 1, 1)
     return false
@@ -105,7 +109,7 @@
   # img :: bool -> Image
   #
   img: (force) ->
-    if @element.length and (force or not @getHidden())
+    if @element.length and (force or not @hidden)
       @element[0]
     else
       document.createElement 'canvas'
@@ -123,7 +127,7 @@
   svg: ->
     $('<image>').attr('xmlns', 'http://www.w3.org/2000/svg')
       .attr {'xlink:href': @url(), 'x': "#{@x}px", 'y': "#{@y}px", 'width': "#{@w}px", 'height': "#{@h}px"}
-      .attr {'data-opacity': @getOpacity(), 'data-blend-mode': @getBlendMode(), 'data-hidden': @getHidden()}
+      .attr {'data-opacity': @opacity, 'data-blend-mode': @blendMode, 'data-hidden': @hidden}
 
   # Return the immutable state of this layer.
   #
@@ -131,7 +135,7 @@
   #
   state: -> {
     x: @x, y: @y, w: @w, h: @h, i: @url(),
-    blendMode: @getBlendMode(), opacity: @getOpacity(), hidden: @getHidden()
+    blendMode: @blendMode, opacity: @opacity, hidden: @hidden
   }
 
   # Create a new state given a data: URL.

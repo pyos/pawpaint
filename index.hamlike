@@ -149,13 +149,13 @@
         %table.table
           %tr
             %td -> Hidden
-            %td -> %input type="checkbox" data-set="setHidden" data-get="getHidden"
+            %td -> %input type="checkbox" data-prop="hidden"
           %tr
             %td -> Opacity
-            %td -> %input type="range" data-set="setOpacity" data-get="getOpacity" min="0.0" max="1.0" step="0.05" value="1.0"
+            %td -> %input type="range" data-prop="opacity" min="0.0" max="1.0" step="0.05" value="1.0"
           %tr
             %td -> Blend mode
-            %td -> %select data-set="setBlendMode" data-get="getBlendMode" value="normal"
+            %td -> %select data-prop="blendMode" value="normal"
                 %option value="normal"      -> Normal
                 %option value="lighten"     -> Lighten
                 %option value="darken"      -> Darken
@@ -174,7 +174,7 @@
                 %option value="luminosity"  -> Luminosity
           %tr
             %td -> Fill with
-            %td -> %select data-set="fill" value="transparent"
+            %td -> %select data-prop="fill" value="transparent"
                 %option value="transparent" -> ...
                 %option value="white"       -> White
                 %option value="black"       -> Black
