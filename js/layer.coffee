@@ -123,16 +123,24 @@
   # img :: bool -> Image
   #
   img: (force) ->
-    if @element.length and (force or not @hidden)
-      @element[0]
-    else
-      document.createElement 'canvas'
+    if @element.length then @element[0] else document.createElement 'canvas'
+
+  # Draw the contents of this layer onto a 2D canvas context.
+  #
+  # drawOnto :: Context2D -> a
+  #
+  drawOnto: (ctx) ->
+    if not @hidden
+      ctx.globalAlpha = parseFloat @opacity
+      ctx.globalCompositeOperation =
+        if @blendMode is "normal" then "source-over" else @blendMode
+      ctx.drawImage @img(), @x, @y
 
   # Encode the contents of this layer as a data: URL.
   #
   # url :: -> str
   #
-  url: -> @img(true).toDataURL('image/png')
+  url: -> @img().toDataURL('image/png')
 
   # Encode the contents of this layer as an SVG shape.
   #

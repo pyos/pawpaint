@@ -246,8 +246,7 @@
       when "flatten"
         element = new Canvas(@w, @h)[0]
         context = element.getContext('2d')
-        context.globalCompositeOperation = "destination-over"
-        context.drawImage layer.img(), layer.x, layer.y for layer in @layers
+        layer.drawOnto context for layer in @layers by -1
         return element
       when "png"
         return @export("flatten").toDataURL("image/png")
