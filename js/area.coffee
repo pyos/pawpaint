@@ -253,8 +253,9 @@
         return @export("flatten").toDataURL("image/png")
       when "svg"
         xml = new XMLSerializer()
-        element = $("<svg xmlns='http://www.w3.org/2000/svg' width='#{@w}'
+        element = $("<svg:svg xmlns:svg='http://www.w3.org/2000/svg' width='#{@w}'
                           xmlns:xlink='http://www.w3.org/1999/xlink' height='#{@h}'>")
+        element.css 'isolation', 'isolate'
         element.prepend(layer.svg()) for layer in @layers
         return "data:image/svg+xml;base64," + btoa(xml.serializeToString element[0])
     return null

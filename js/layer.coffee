@@ -139,9 +139,9 @@
   # svg :: -> jQuery
   #
   svg: ->
-    $('<image>').attr('xmlns', 'http://www.w3.org/2000/svg')
-      .attr {'xlink:href': @url(), 'x': "#{@x}px", 'y': "#{@y}px", 'width': "#{@w}px", 'height': "#{@h}px"}
-      .attr {'data-opacity': @opacity, 'data-blend-mode': @blendMode, 'data-hidden': @hidden}
+    $ "<svg:image style='mix-blend-mode: #{@blendMode}'>"
+      .attr 'xlink:href': @url(), 'x': @x, 'y': @y, 'width': @w, 'height': @h
+      .attr 'opacity': @opacity, 'visibility': if @hidden then 'hidden' else @visibility
 
   # Return the immutable state of this layer.
   #
@@ -170,7 +170,7 @@
     w: parseInt elem.attr('width')
     h: parseInt elem.attr('height')
     i: elem.attr('xlink:href')
-    blendMode: elem.attr('data-blend-mode')
-    opacity:   elem.attr('data-opacity')
-    hidden:    elem.attr('data-hidden') == 'true'
+    opacity:   elem.attr('opacity')
+    hidden:    elem.attr('visibility') == 'hidden'
+    blendMode: elem.css('mix-blend-mode')
   }
