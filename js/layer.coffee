@@ -47,28 +47,42 @@
     @element = $ []
     @trigger('redraw', [this])
 
-  # Change the position of this layer.
+  # Change the position of this layer relative to the image.
   #
   # move :: int int -> a
   #
   move: (@x, @y) -> @trigger('resize', [this])
 
-  # Change the size of this layer.
+  # Change the size of this layer without modifying its contents.
+  # The offset is relative to the image.
   #
-  # resize :: int int int int -> a
+  # crop :: int int int int -> a
   #
-  resize: (@x, @y, @w, @h) -> @trigger('resize', [this])
+  crop: (x, y, @w, @h) ->
+    dx = @x - x
+    dy = @y - y
+    @move(x, y)
+    @replace(@element, dx, dy, false)
+
+  # Change the size of this layer and scale the contents at the same time.
+  #
+  # resize :: int int -> a
+  #
+  resize: (@w, @h) ->
+    @trigger('resize', [this])
+    @replace(@element, 0, 0, true)
 
   # Recreate the element that represents this layer.
-  # Optionally, draw something on it.
   #
-  # replace :: (Optional Image) -> a
+  # replace :: [Either Canvas Image] int int bool -> a
   #
-  replace: (img) ->
+  replace: (imgs, x, y, scale) ->
     element = new Canvas(@w, @h).addClass('layer')
     context = element[0].getContext('2d')
-    context.drawImage cnv, 0, 0 for cnv in @element
-    context.drawImage img, 0, 0 if img
+    if scale
+      context.drawImage img, x, y, @w, @h for img in imgs
+    else
+      context.drawImage img, x, y for img in imgs
     @element.remove()
     @element = element.appendTo(@area.element)
     @trigger('redraw', [this])
@@ -95,13 +109,13 @@
     img.src = state.i
     if img.width and img.height
       @clear()
-      @resize(state.x, state.y, state.w or img.width, state.h or img.height)
-      @replace(img)
+      @crop(state.x, state.y, state.w or img.width, state.h or img.height)
+      @replace([img], 0, 0, false)
       @blendMode = state.blendMode
       @opacity   = state.opacity
       @hidden    = state.hidden
       return true
-    @resize(state.x, state.y, 1, 1)
+    @crop(state.x, state.y, 1, 1)
     return false
 
   # Get the image that represents the contents of this layer.

@@ -153,8 +153,7 @@
     if state
       result = layer.set(state)
     else
-      layer.resize 0, 0, @w, @h
-      layer.replace null
+      layer.crop(0, 0, @w, @h)
       result = true
     @changeLayer(index)
     @snap index, action: @UNDO_ADD_LAYER, state: null
