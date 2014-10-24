@@ -21,15 +21,17 @@ $ ->
   xhr.onload = -> area.palettes = Canvas.palettes(new Uint8Array @response)
   xhr.send()
 
-  $(window).on 'unload', -> if area
-    @localStorage?.image   = area.export("svg")
-    @localStorage?.palette = area.palette
-
-  $(window).on 'resize', ->
-    if window.outerWidth == screen.width and window.outerHeight == screen.height
-      $('body').addClass('slim')
-    else
-      $('body').removeClass('slim')
+  $(window)
+    .on 'unload', ->
+      if area
+        @localStorage?.image   = area.export("svg")
+        @localStorage?.palette = area.palette
+    .on 'resize', ->
+      if window.outerWidth == screen.width and window.outerHeight == screen.height
+        $('body').addClass('slim')
+      else
+        $('body').removeClass('slim')
+    .trigger 'resize'
 
   $('body').keymappable()
     .on 'key:ctrl+90',       (_, e) -> e.preventDefault(); area.undo()
