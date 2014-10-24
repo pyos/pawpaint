@@ -253,6 +253,10 @@
     super
     ctx.globalCompositeOperation = "destination-out"
 
+  stop: (ctx) ->
+    ctx.globalCompositeOperation = "source-over"
+    super
+
 
 @Canvas.Tool.Resource = class Resource extends Pen
   start: ->

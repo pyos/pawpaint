@@ -322,7 +322,7 @@
     return context
 
   onMouseDown: (ev) ->
-    if 0 <= @layer < @layers.length and @tool and ev.which == 1 and evdev.reset ev
+    if 0 <= @layer < @layers.length and @tool and not @context and ev.which == 1 and evdev.reset ev
       # FIXME this next line prevents unwanted selection, but breaks focusing.
       ev.preventDefault()
       x = ev.offsetX or ev.layerX
@@ -353,9 +353,10 @@
       @element[0].removeEventListener 'mouseup',    @onMouseUp
       @trigger 'stroke:end', [@layers[@layer], @layer]
       @context.restore()
+      @context = null
 
   onTouchStart: (ev) ->
-    if ev.touches.length == 1 and 0 <= @layer < @layers.length and @tool and ev.which == 0
+    if ev.touches.length == 1 and 0 <= @layer < @layers.length and @tool and not @context and ev.which == 0
       # FIXME this one is even worse depending on the device.
       #   On Chromium OS, this will prevent "back/forward" gestures from
       #   interfering with drawing, but will not focus the broswer window
@@ -386,3 +387,4 @@
       @element[0].removeEventListener 'touchend',  @onTouchEnd
       @trigger 'stroke:end', [@layers[@layer], @layer]
       @context.restore()
+      @context = null
