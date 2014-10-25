@@ -52,7 +52,7 @@
   crosshair: (ctx) ->
   start: (ctx, x, y, pressure, rotation) ->
   move:  (ctx, x, y, pressure, rotation) ->
-  stop:  (ctx, x, y) ->
+  stop:  (ctx) ->
 
   symbol: (ctx, x, y) ->
     if @glyph
@@ -96,7 +96,7 @@
       else 0
     @area.setToolOptions H: round(H * 60), S: round(S * 100), L: round(L * 100)
 
-  stop: ->
+  stop: (ctx) ->
     @data = null
     @rstd = 0
 
@@ -232,7 +232,7 @@
     ctx.arc(nx, ny, ctx.lineWidth / 2, 0, 2 * PI)
     ctx.fill()
 
-  stop: (ctx, x, y) ->
+  stop: (ctx) ->
     dyn.restore ctx, @ for dyn in @options.dynamic
     ctx.restore()
 

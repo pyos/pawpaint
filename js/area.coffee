@@ -344,10 +344,8 @@
       @tool.move(@context, x / @scale, y / @scale, 0, 0)
 
   onMouseUp: (ev) ->
-    if evdev.ok ev
-      x = ev.offsetX or ev.layerX
-      y = ev.offsetY or ev.layerY
-      @tool.stop(@context, x / @scale, y / @scale)
+    if ev.type is "mouseup" or evdev.ok(ev)
+      @tool.stop @context
       @element[0].removeEventListener 'mousemove',  @onMouseMove
       @element[0].removeEventListener 'mouseleave', @onMouseUp
       @element[0].removeEventListener 'mouseup',    @onMouseUp
@@ -382,7 +380,7 @@
 
   onTouchEnd: (ev) ->
     if ev.touches.length == 0
-      @tool.stop @context, @tool.lastX, @tool.lastY
+      @tool.stop @context
       @element[0].removeEventListener 'touchmove', @onTouchMove
       @element[0].removeEventListener 'touchend',  @onTouchEnd
       @trigger 'stroke:end', [@layers[@layer], @layer]
