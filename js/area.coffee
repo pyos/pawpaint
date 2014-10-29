@@ -86,7 +86,6 @@
     # into appropriate event handlers.
     @on 'stroke:end', (layer) -> layer.trigger('redraw', [layer])
 
-    @element[0].addEventListener 'mouseenter', @onMouseDown
     @element[0].addEventListener 'mousedown',  @onMouseDown
     @element[0].addEventListener 'mousemove', (ev) ->
       crosshair.style.left = ev.pageX + 'px'
@@ -322,19 +321,21 @@
     return context
 
   onMouseDown: (ev) ->
-    if 0 <= @layer < @layers.length and @tool and not @context and ev.which == 1 and evdev.reset ev
-      # FIXME this next line prevents unwanted selection, but breaks focusing.
-      ev.preventDefault()
-      x = ev.offsetX or ev.layerX
-      y = ev.offsetY or ev.layerY
-      @context = @_getContext()
-      # TODO pressure & rotation
-      if @tool.start(@context, x / @scale, y / @scale, 0, 0)
-        @snap @layer
-        @trigger 'stroke:begin', [@layers[@layer], @layer]
-        @element[0].addEventListener 'mousemove',  @onMouseMove
-        @element[0].addEventListener 'mouseleave', @onMouseUp
-        @element[0].addEventListener 'mouseup',    @onMouseUp
+    if ev.which is 1 and (ev.buttons is undefined or ev.buttons is 1)
+      if 0 <= @layer < @layers.length and @tool and not @context and evdev.reset ev
+        # FIXME this next line prevents unwanted selection, but breaks focusing.
+        ev.preventDefault()
+        x = ev.offsetX or ev.layerX
+        y = ev.offsetY or ev.layerY
+        @context = @_getContext()
+        # TODO pressure & rotation
+        if @tool.start(@context, x / @scale, y / @scale, 0, 0)
+          @snap @layer
+          @trigger 'stroke:begin', [@layers[@layer], @layer]
+          @element[0].addEventListener 'mouseenter', @onMouseDown if ev.type isnt "mouseenter"
+          @element[0].addEventListener 'mousemove',  @onMouseMove
+          @element[0].addEventListener 'mouseleave', @onMouseUp
+          @element[0].addEventListener 'mouseup',    @onMouseUp
 
   onMouseMove: (ev) ->
     if evdev.ok ev
@@ -346,6 +347,7 @@
   onMouseUp: (ev) ->
     if ev.type is "mouseup" or evdev.ok(ev)
       @tool.stop @context
+      @element[0].removeEventListener 'mouseenter', @onMouseDown if ev.type isnt "mouseleave"
       @element[0].removeEventListener 'mousemove',  @onMouseMove
       @element[0].removeEventListener 'mouseleave', @onMouseUp
       @element[0].removeEventListener 'mouseup',    @onMouseUp
