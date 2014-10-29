@@ -93,7 +93,7 @@
   #
   restyle: (index, scale) ->
     @element.css {
-      'z-index': -index,
+      'z-index': index,
       'left':   @x * scale,
       'top':    @y * scale,
       'width':  @w * scale,

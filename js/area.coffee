@@ -163,7 +163,7 @@
   #
   changeLayer: (i) ->
     if 0 <= i < @layers.length
-      layer.restyle(n, @scale) for n, layer of @layers
+      layer.restyle(@layers.length - n, @scale) for n, layer of @layers
       @layer = i
       @layers[q].element.removeClass 'active' for q of @layers
       @layers[i].element.addClass    'active'

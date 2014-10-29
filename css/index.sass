@@ -1,14 +1,13 @@
 ---
 ---
 
-@mixin fill($z-index)
+@mixin fill()
   position: absolute
   overflow: hidden
   top:     0
   bottom:  0
   left:    0
   right:   0
-  z-index: $z-index
 
 @mixin center-child()
   overflow:   hidden
@@ -28,7 +27,7 @@
   background: url(../img/checkers.png)
 
 body
-  @include fill(0)
+  @include fill()
   cursor: default
   background: gray
   user-select: none
@@ -60,15 +59,12 @@ select
 
 .main-area
   @include center-child()
-  position: relative  // needed for correct z-indexing
-  cursor:   crosshair
-  height:   100%
+  cursor: crosshair
+  height: 100%
 
   & > .background
     @include checkers()
-    position: relative
     overflow: auto
-    z-index: -65536
 
     & > .layers
       isolation: isolate  // do not blend with the checkered background
@@ -90,7 +86,7 @@ select
 .selection
   top: 0
   left: 0
-  z-index: 1
+  z-index: 65538
   opacity: 0.5
 
 .side-area
@@ -152,7 +148,8 @@ select
         display: inline-block
 
 .cover
-  @include fill(65538)
+  @include fill()
+  z-index: 65540
 
   &.selector > *
     position: absolute
