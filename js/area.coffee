@@ -149,10 +149,8 @@
          .on 'redraw', (layer) => @changeLayer(@layer)
     @layers.splice(index, 0, layer)
     @trigger 'layer:add', [layer, index]
-    if state
-      layer.set(state)
-    else
-      layer.crop(0, 0, @w, @h)
+    layer.crop(0, 0, @w, @h)
+    layer.set(state) if state
     @changeLayer(index)
     @snap index, action: @UNDO_ADD_LAYER, state: null
     return layer

@@ -105,7 +105,6 @@
   # set :: State -> a
   #
   set: (state) ->
-    @crop(state.x, state.y, 1, 1)
     img = new Image
     img.onload = =>
       @clear()
