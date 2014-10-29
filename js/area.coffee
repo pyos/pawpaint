@@ -283,11 +283,14 @@
   # paste :: DataTransfer -> a
   #
   paste: (data) ->
-    for i, item of data.items
-      if item.kind == "file" and item.type.match(/image\/.*/)
+    for type in data.types
+      if type.match(/image\/.*/)
+        @import(data.getData(type))
+    for item in data.files
+      if item.type.match(/image\/.*/)
         file = new FileReader
         file.onload = (r) => @import(r.target.result)
-        file.readAsDataURL data.items[i].getAsFile()
+        file.readAsDataURL item
 
   # Copy some options from an object over to the currently selected tool.
   # Emits various events that begin with `tool:` and end with the name of the option
