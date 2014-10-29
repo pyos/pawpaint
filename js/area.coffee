@@ -138,7 +138,7 @@
 
   # Add an empty layer at the end of the stack. Emits `layer:add`.
   #
-  # createLayer :: (Optional int) (Optional State) -> a
+  # createLayer :: (Optional int) (Optional State) -> Layer
   #
   createLayer: (index = 0, state) ->
     layer = new Canvas.Layer @
@@ -150,13 +150,12 @@
     @layers.splice(index, 0, layer)
     @trigger 'layer:add', [layer, index]
     if state
-      result = layer.set(state)
+      layer.set(state)
     else
       layer.crop(0, 0, @w, @h)
-      result = true
     @changeLayer(index)
     @snap index, action: @UNDO_ADD_LAYER, state: null
-    return result
+    return layer
 
   # Switch to a different layer; all drawing events will go to it. Emits `layer:set`.
   #

@@ -105,18 +105,16 @@
   # set :: State -> a
   #
   set: (state) ->
+    @crop(state.x, state.y, 1, 1)
     img = new Image
-    img.src = state.i
-    if img.width and img.height
+    img.onload = =>
       @clear()
       @crop(state.x, state.y, state.w or img.width, state.h or img.height)
       @replace([img], 0, 0, false)
       @blendMode = state.blendMode
       @opacity   = state.opacity
       @hidden    = state.hidden
-      return true
-    @crop(state.x, state.y, 1, 1)
-    return false
+    img.src = state.i
 
   # Get the image that represents the contents of this layer.
   #
