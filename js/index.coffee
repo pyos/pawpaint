@@ -8,12 +8,15 @@ $ ->
     Canvas.Tool.Colorpicker
     Canvas.Tool.Eraser
     Canvas.Tool.Pen
-    class _ extends Canvas.Tool.Resource then rsrc: 'brush-soft-16'
-    class _ extends Canvas.Tool.Resource then rsrc: 'brush-soft-32'
-    class _ extends Canvas.Tool.Resource then rsrc: 'brush-soft-64'
-    class _ extends Canvas.Tool.Resource then rsrc: 'brush-watercolor'
-    class _ extends Canvas.Tool.Resource then rsrc: 'brush-pencil'
-    class _ extends Canvas.Tool.Resource then rsrc: 'brush-skewed-ellipse'; spacingAdjust: 0
+    class _ extends Canvas.Tool.FromImage then img: $id 'r-round-16'
+    class _ extends Canvas.Tool.FromImage then img: $id 'r-round-32'
+    class _ extends Canvas.Tool.FromImage then img: $id 'r-round-64'
+    class _ extends Canvas.Tool.FromImage then img: $id 'r-calligraphy'; spacingAdjust: 0
+    class _ extends Canvas.Tool.FromImage then img: $id 'r-misc-1'; spacingAdjust: 0.2
+    class _ extends Canvas.Tool.FromImage then img: $id 'r-misc-2'; spacingAdjust: 0.2
+    class _ extends Canvas.Tool.FromImage then img: $id 'r-misc-3'; spacingAdjust: 0.2
+    class _ extends Canvas.Tool.FromImage then img: $id 'r-pencil-soft'
+    class _ extends Canvas.Tool.FromImage then img: $id 'r-pencil-hard'
 
   xhr = new XMLHttpRequest
   xhr.open 'GET', 'img/palettes.dat', true

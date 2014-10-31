@@ -258,9 +258,9 @@
     super
 
 
-@Canvas.Tool.Resource = class Resource extends Pen
+@Canvas.Tool.FromImage = class FromImage extends Pen
   start: ->
-    img = Canvas.getResourceWithTint @rsrc, @options.H, @options.S, @options.L
+    img = Canvas.tintImage @img, @options.H, @options.S, @options.L
     @pattern = Canvas.scale img, @options.size, @options.size
     super
 

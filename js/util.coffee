@@ -1,6 +1,7 @@
 ---
 ---
 
+@$id   = document.getElementById.bind document
 @min   = Math.min
 @max   = Math.max
 @sin   = Math.sin
@@ -28,21 +29,13 @@
 @Canvas = (width, height) -> $ "<canvas width='#{width}' height='#{height}'>"
 
 
-# Retrieve a preloaded resource from the page.
+# Take an image, fill it with a color while preserving alpha.
 #
-# getResource :: str -> Element
+# tintImage :: (Either Image Canvas) int int int -> Canvas
 #
-@Canvas.getResource = (selector) -> $(".resources .#{selector}")[0]
-
-
-# Take a color, apply alpha from a resource.
-#
-# getResourceWithColor :: str int int int -> Canvas
-#
-@Canvas.getResourceWithTint = (selector, h, s, l) ->
-  resource = Canvas.getResource selector
-  canvas   = new Canvas(resource.width, resource.height)[0]
-  context  = canvas.getContext('2d')
+@Canvas.tintImage = (resource, h, s, l) ->
+  canvas  = new Canvas(resource.width, resource.height)[0]
+  context = canvas.getContext('2d')
   context.fillStyle = "hsl(#{h}, #{s}%, #{l}%)"
   context.fillRect 0, 0, resource.width, resource.height
   context.globalCompositeOperation = "destination-in"
