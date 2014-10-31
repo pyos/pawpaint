@@ -29,7 +29,7 @@
 body
   @include fill()
   cursor: default
-  background: gray
+  background: black
   user-select: none
   -ms-user-select: none
   -moz-user-select: -moz-none
@@ -92,12 +92,11 @@ select
 .side-area
   position: relative
   overflow: hidden
-  width:  100px
+  width:  45px
   height: 100%
   float: right
 
-  box-shadow: 10px 0 20px -10px #000 inset
-  background: #222
+  background: black
   color:      white
 
   & > .toolbar-row
@@ -116,14 +115,16 @@ select
         vertical-align: middle
 
     & > .action-tool
-      border-bottom-right-radius: 10px
       box-shadow: 0 0 10px -5px #000 inset
+
+    & > .action-undo, & > .action-redo
+      display: none
 
   & > .layer-menu
     overflow-x: hidden
     overflow-y: auto
     width:  100%
-    height: calc(100% - 180px)
+    height: calc(100% - 225px)
 
     & > li
       @include checkers()
@@ -144,8 +145,13 @@ select
 
       & > canvas
         max-height: 60px
-        max-width:  90px
+        max-width:  45px
         display: inline-block
+        outline: 1px dashed gray
+        outline-offset: -1px
+
+      &.active > canvas
+        outline-color: yellow
 
 .cover
   @include fill()
@@ -159,7 +165,7 @@ select
 
     &.fixed
       /* Must sync up with .side-area{width} */
-      right: 100px
+      right: 45px
       left: auto !important
       border-top-right-radius: 0
       border-bottom-right-radius: 0
@@ -235,32 +241,3 @@ select
       border-bottom-left-radius: 5px
       box-shadow: 0 20px 20px -20px #000 inset
       margin-bottom: -15px
-
-body.slim
-  background: black
-
-  .side-area
-    width: 45px
-    background: black
-    box-shadow: none
-
-    & > .toolbar-row
-      & > .action-tool
-        border-radius: 0
-
-      & > .action-undo, & > .action-redo
-        display: none
-
-    & > .layer-menu
-      height: calc(100% - 225px)
-
-      & > li > canvas
-        outline: 1px dashed gray
-        outline-offset: -1px
-        max-width: 45px
-
-      & > .active > canvas
-        outline-color: yellow
-
-  .cover > .fixed
-    right: 45px
