@@ -33,7 +33,7 @@
   reset: (ctx, tool) -> @_f = @options.fn()
   start: (ctx, tool, dx, dy, pressure, rotation) ->
     v = switch @options.type
-      when 1 then atan2(dy, dx) / 2 / PI
+      when 1 then atan2(dy, dx) / 2 / PI + 0.5
       when 2 then pressure
       when 3 then rotation / 2 / PI
       when 4 then Math.random()
@@ -65,9 +65,12 @@
 
   start: (ctx, tool, dx, dy, pressure, rotation) ->
     @_value = super * @_scache
-    @stop ctx, tool if @_first
-    @_delta = @_value - (ctx[@_target] or tool.options[@_tgcopy])
-    @_first = false
+    if @_first
+      @stop ctx, tool
+      @_delta = 0
+      @_first = false
+    else
+      @_delta = @_value - (ctx[@_target] or tool.options[@_tgcopy])
 
   step: (ctx, tool, total) ->
     tool.options[@_tgcopy] += @_delta / total if @_tgcopy
