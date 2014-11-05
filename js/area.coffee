@@ -198,7 +198,7 @@
       @redos = []
       @undos.splice 0, 0, jQuery.extend({
           index:  i
-          state:  @layers[i].state()
+          state:  @layers[i].state(true)
           action: @UNDO_DRAW
         }, options)
       @undos.splice @undoLimit

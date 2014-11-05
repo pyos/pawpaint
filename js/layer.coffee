@@ -105,15 +105,22 @@
   # set :: State -> a
   #
   set: (state) ->
+    return @setFromData(state, null) if state.data
     img = new Image
-    img.onload = =>
-      @clear()
-      @crop(state.x, state.y, state.w or img.width, state.h or img.height)
-      @replace([img], 0, 0, false)
-      @blendMode = state.blendMode
-      @opacity   = state.opacity
-      @hidden    = state.hidden
+    img.onload = => @setFromData(state, img)
     img.src = state.i
+
+  setFromData: (state, img) ->
+    @clear()
+    @crop(state.x, state.y, state.w or img.width, state.h or img.height)
+    if img
+      @replace([img], 0, 0, false)
+    else
+      @replace([], 0, 0, false)
+      @img().getContext('2d').putImageData(state.data, 0, 0)
+    @blendMode = state.blendMode
+    @opacity   = state.opacity
+    @hidden    = state.hidden
 
   # Get the image that represents the contents of this layer.
   #
@@ -152,9 +159,10 @@
   #
   # state :: -> State
   #
-  state: -> {
-    x: @x, y: @y, w: @w, h: @h, i: @url(),
-    blendMode: @blendMode, opacity: @opacity, hidden: @hidden
+  state: (imdata) -> {
+    x: @x, y: @y, w: @w, h: @h, i: if imdata then null else @url(),
+    blendMode: @blendMode, opacity: @opacity, hidden: @hidden,
+    data: if imdata then @img().getContext('2d').getImageData(0, 0, @w, @h) else null
   }
 
   # Create a new state given a data: URL.
