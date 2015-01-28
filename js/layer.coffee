@@ -118,6 +118,7 @@
     else
       @replace([], 0, 0, false)
       @img().getContext('2d').putImageData(state.data, 0, 0)
+      @trigger('redraw', [this])
     @blendMode = state.blendMode
     @opacity   = state.opacity
     @hidden    = state.hidden
