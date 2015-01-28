@@ -11,13 +11,7 @@ $ ->
     class _ extends Canvas.Tool.FromImage then img: $id 'r-round-16'
     class _ extends Canvas.Tool.FromImage then img: $id 'r-round-32'
     class _ extends Canvas.Tool.FromImage then img: $id 'r-round-64'
-    class _ extends Canvas.Tool.FromImage then img: $id 'r-pencil-soft'
-    class _ extends Canvas.Tool.FromImage then img: $id 'r-pencil-hard'
-    class _ extends Canvas.Tool.FromImage then img: $id 'r-calligraphy'; spacingAdjust: 0
-    class _ extends Canvas.Tool.FromImage then img: $id 'r-hstroke'; spacingAdjust: 0
-    class _ extends Canvas.Tool.FromImage then img: $id 'r-misc-1'; spacingAdjust: 0.2
-    class _ extends Canvas.Tool.FromImage then img: $id 'r-misc-2'; spacingAdjust: 0.2
-    class _ extends Canvas.Tool.FromImage then img: $id 'r-misc-3'; spacingAdjust: 0.2
+    class _ extends Canvas.Tool.FromImage then img: $id 'r-line'; spacingAdjust: 0
 
   xhr = new XMLHttpRequest
   xhr.open 'GET', 'img/palettes.dat', true

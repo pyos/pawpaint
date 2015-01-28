@@ -38,7 +38,7 @@
         %canvas.selector.selector-palette                    width="25"  height="200"
         %canvas.selector.selector-width                      width="40"  height="200"
         %canvas.selector.selector-tools.small.not-fixed-only width="50"  height="200"
-        %canvas.selector.selector-tools.fixed-only           width="200" height="200"
+        %canvas.selector.selector-tools.fixed-only           width="150" height="200"
 
       %div.selector-export.selector-text
         %div.header -> Export as
@@ -184,10 +184,4 @@
       %img id="r-round-16"    src="img/round.16.png"
       %img id="r-round-32"    src="img/round.32.png"
       %img id="r-round-64"    src="img/round.64.png"
-      %img id="r-pencil-soft" src="img/pencil.soft.png"
-      %img id="r-pencil-hard" src="img/pencil.hard.png"
-      %img id="r-calligraphy" src="img/calligraphy.png"
-      %img id="r-hstroke"     src="img/hstroke.png"
-      %img id="r-misc-1"      src="img/misc.1.png"
-      %img id="r-misc-2"      src="img/misc.2.png"
-      %img id="r-misc-3"      src="img/misc.3.png"
+      %img id="r-line"        src="img/line.png"
