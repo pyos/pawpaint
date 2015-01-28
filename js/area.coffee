@@ -316,7 +316,7 @@
   _getContext: ->
     context = @layers[@layer].img().getContext '2d'
     context.save()
-    context.translate -@layers[@layer].x, -@layers[@layer].y
+    context.translate 0.5 - @layers[@layer].x, 0.5 - @layers[@layer].y
     context.clip path for path in @selection
     return context
 
