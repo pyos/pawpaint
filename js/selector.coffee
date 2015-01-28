@@ -38,7 +38,10 @@ $.fn.selector_canvas = (area, value, update, redraw, nodrag) ->
     $(@).trigger('change', [value])
         .trigger('redraw')
 
-  @on 'redraw', (_, init) -> redraw.call(@, value, @getContext('2d'), init)
+  @each ->
+    @_context = @getContext '2d'
+    @_context.translate 0.5, 0.5
+  @on 'redraw', (_, init) -> redraw.call(@, value, @_context, init)
   @on 'mousedown',  (ev) -> _updateM.call @, ev; $(@).on 'mousemove', _updateM unless nodrag
   @on 'touchstart', (ev) -> _updateT.call @, ev; $(@).on 'touchmove', _updateT unless nodrag
   @on 'touchend',   (ev) -> $(@).off 'touchmove'
