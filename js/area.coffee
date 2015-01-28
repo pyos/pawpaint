@@ -27,6 +27,8 @@
   UNDO_ADD_LAYER:  1
   UNDO_DEL_LAYER:  2
   UNDO_MOVE_LAYER: 3
+  UNDO_MERGE_DOWN: 4
+  REDO_MERGE_DOWN: 5
 
   constructor: (selector, tools...) ->
     super
@@ -189,6 +191,25 @@
       @trigger 'layer:move', [i, delta]
       @changeLayer(i + delta)
 
+  # Merge the layer down onto the next one, if there is one.
+  #
+  # mergeDown :: int -> a
+  #
+  mergeDown: (i) ->
+    if 0 <= i < @layers.length - 1
+      @snap i, action: @UNDO_MERGE_DOWN, below: @layers[i + 1].state(true)
+      top = @layers.splice(i, 1)[0]
+      bot = @layers[i]
+      bot.crop(x = min(top.x, bot.x), y = min(top.y, bot.y),
+          max(top.w + top.x, bot.w + bot.x) - x,
+          max(top.h + top.y, bot.h + bot.y) - y)
+      ctx = bot.img().getContext('2d')
+      ctx.translate -bot.x, -bot.y
+      top.drawOnto ctx
+      top.clear()
+      @trigger 'layer:del', [i]
+      @changeLayer min(@layer, @layers.length - 1)
+
   # Save a snapshot of a single layer in the undo stack.
   #
   # snap :: int (Optional Object) -> a
@@ -217,6 +238,11 @@
         when @UNDO_DEL_LAYER  then @createLayer data.index, data.state
         when @UNDO_ADD_LAYER  then @deleteLayer data.index
         when @UNDO_MOVE_LAYER then @moveLayer   data.index + data.delta, -data.delta
+        when @REDO_MERGE_DOWN then @mergeDown   data.index
+        when @UNDO_MERGE_DOWN
+          @createLayer data.index, data.state
+          @layers[data.index + 1].set(data.below)
+          @undos[0].action = @REDO_MERGE_DOWN
 
     # The above operations all call `@snap`, which resets the redo stack and adds something
     # to `@undos`. We don't want the former, and possibly the latter, too.
