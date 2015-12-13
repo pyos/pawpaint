@@ -182,24 +182,13 @@
 
 @Canvas.Tool.Pen = class Pen extends Tool
   crosshair: (ctx) ->
-    h = @options.H
-    s = @options.S
-    l = @options.L
-    o = @options.opacity
-    d = @options.dynamic
-    @options.H = 0
-    @options.S = 0
-    @options.L = 50
-    @options.opacity = 0.5
-    @options.dynamic = []
+    opt = H: 0, S: 0, L: 50, opacity: 0.5, dynamic: []
+    opt.__proto__ = @options
+    @options = opt
     @start ctx, 0, 0, 1, 0
     @move  ctx, 0, 1, 1, 0
     @stop  ctx, 0, 1, 1, 0
-    @options.H = h
-    @options.S = s
-    @options.L = l
-    @options.opacity = o
-    @options.dynamic = d
+    @options = opt.__proto__
 
   start: (ctx, x, y, pressure, rotation) ->
     ctx.save()
@@ -207,25 +196,30 @@
     ctx.globalAlpha = @options.opacity
     ctx.strokeStyle = ctx.fillStyle = "hsl(#{@options.H}, #{@options.S}%, #{@options.L}%)"
     dyn.reset ctx, @, x, y, pressure, rotation for dyn in @options.dynamic
-    @lastX = @prevX = x
-    @lastY = @prevY = y
+    @windowX = [@prevX = x, x, x]
+    @windowY = [@prevY = y, y, y]
     @empty = true
 
   move: (ctx, x, y, pressure, rotation) ->
-    dx = x - @lastX
-    dy = y - @lastY
+    # target = average of (x, y) and 4 previous points
+    dx = (x - @windowX[0]) / @windowX.length
+    dy = (y - @windowY[0]) / @windowY.length
     sp = floor(@options.spacing + ctx.lineWidth * @spacingAdjust)
-    dyn.start ctx, @, x - @prevX, y - @prevY, pressure, rotation for dyn in @options.dynamic
     if steps = floor(pow(pow(dx, 2) + pow(dy, 2), 0.5) / sp) or @empty
+      @windowX.shift(); @windowX.push(x)
+      @windowY.shift(); @windowY.push(y)
+      dyn.start ctx, @, dx, dy, pressure, rotation for dyn in @options.dynamic
       dx /= steps
       dy /= steps
+      sx = @prevX
+      sy = @prevY
       for i in [0...steps]
         dyn.step ctx, @, steps for dyn in @options.dynamic
-        @step(ctx, @lastX, @lastY, @lastX += dx, @lastY += dy)
+        @step(ctx, sx, sy, sx += dx, sy += dy)
       @empty = false
-    dyn.stop ctx, @ for dyn in @options.dynamic
-    @prevX = x
-    @prevY = y
+      dyn.stop ctx, @ for dyn in @options.dynamic
+      @prevX = sx
+      @prevY = sy
 
   step: (ctx, x, y, nx, ny) ->
     ctx.beginPath()
