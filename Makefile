@@ -2,7 +2,7 @@
 	sed 's/^---$$//g' "$<" | coffee scripts/compile.coffee -- "$@"
 
 %.css: %.sass
-	sed 's/^---$$//g' "$<" | sass --style compressed /dev/stdin "$@"
+	(sed 's/^---$$//g' "$<" > _tmp.sass && sass --style compressed _tmp.sass "$@"); rm _tmp.sass
 
 %.html: %.hamlike
 	python3 -m dg -m hamlike --trim < "$<" > "$@"
