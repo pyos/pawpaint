@@ -31,13 +31,21 @@ $ ->
     .on 'key:ctrl+48',       (_, e) -> e.preventDefault(); area.setScale(1)  # Ctrl+0
     .on 'key:ctrl+189',      (_, e) -> e.preventDefault(); area.setScale(area.scale * 0.8)   # Ctrl+-
     .on 'key:ctrl+187',      (_, e) -> e.preventDefault(); area.setScale(area.scale * 1.25)  # Ctrl+=
-    .on 'key:ctrl+83',       (_, e) -> e.preventDefault(); $('.action-export').click()  # Ctrl+S
     .on 'key:27',            (_, e) -> e.preventDefault(); $('.cover').click()  # Esc
+    .on 'key:ctrl+83',       (_, e) ->  # Ctrl+S
+      e.preventDefault()
+      link = document.createElement 'a'
+      link.download = 'image.png'
+      link.href     = area.export('png')
+      link.click()
 
     .on 'key:81', -> area.createLayer()  # Q
+    .on 'key:78', -> area.createLayer()  # N
+    .on 'key:88', -> area.deleteLayer(area.layer)  # X
     .on 'key:87', -> area.setToolOptions(kind: area.tool.options.last)  # W
     .on 'key:69', -> area.setToolOptions(kind: Canvas.Tool.Eraser)      # E
     .on 'key:65', -> area.mergeDown(area.layer)  # A
+    .on 'key:77', -> area.mergeDown(area.layer)  # M
 
     .on 'click', '.action-add-layer', -> area.createLayer()
     .on 'click', '.action-del-layer', -> area.deleteLayer(area.layer)
