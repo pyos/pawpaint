@@ -7,53 +7,54 @@
   t = new TextDecoder('utf-8')
   # Assuming `data` is an array view.
   while i < data.length
-    # 1. 4 bytes = N
+    # struct Palette {
+    #     uint16_t sz_name;
+    #     uint16_t sz_swatches;
+    #     char name[sz_name];
+    #     struct { unsigned H: 10, S: 7, L: 7; } swatches[sz_swatches];
+    # }
     return null if data.length < i + 4
-    n = data[i] << 24 | data[i + 1] << 16 | data[i + 2] << 8 | data[i + 3]
-    i = i + 4
-    # 2. N bytes = name in UTF-8
-    return null if data.length < i + n
+    n = data[i++] << 8 | data[i++]
+    k = data[i++] << 8 | data[i++]
+    return null if data.length < i + n + k * 3
     c = r[t.decode(new DataView(data.buffer, i, n))] = []
-    i = i + n
-    # 3. 2 bytes = N
-    return null if data.length < i + 2
-    n = data[i] << 8 | data[i + 1]
-    i = i + 2
-    # 4. N blocks of 3 bytes = compressed HSL (10 bit H [0..360], 7 bit S [0..100], 7 bit L [0..100])
-    for _ in [0...n]
-      return null if data.length < i + 3
-      h =  data[i + 0] << 2 | data[i + 1] >> 6
-      s = (data[i + 1] << 1 | data[i + 2] >> 7) & 127
-      l =  data[i + 2] & 127
-      c.push(H: h, S: s, L: l)
-      i = i + 3
+    i += n
+    for _ in [0...k]
+      c.push
+        H: (data[i++] << 2 | data[i] >> 6) & 0x3FF,
+        S: (data[i++] << 1 | data[i] >> 7) & 0x7F,
+        L: (data[i++]) & 0x7F
   return r
 
 
 $.fn.selector_canvas = (area, value, update, redraw, nodrag) ->
-  _updateT = (ev) -> ev.preventDefault(); _update.call @, ev.originalEvent.touches[0]
-  _updateM = (ev) -> ev.preventDefault(); _update.call @, ev
-  _update  = (t) ->
-    update.call(@, value, t.clientX - $(@).offset().left, t.clientY - $(@).offset().top)
-    $(@).trigger('change', [value])
+  ontmove = (ev) -> ev.preventDefault(); on_move @, ev.originalEvent.touches[0]
+  onmmove = (ev) -> ev.preventDefault(); on_move @, ev
+  on_move = (e, ev) ->
+    r = e.getBoundingClientRect()
+    update.call(e, value, ev.clientX - r.left, ev.clientY - r.top)
+    $(e).trigger('change', [value])
         .trigger('redraw')
 
   @each ->
     @_context = @getContext '2d'
     @_context.translate 0.5, 0.5
   @on 'redraw', (_, init) -> redraw.call(@, value, @_context, init)
-  @on 'mousedown',  (ev) -> _updateM.call @, ev; $(@).on 'mousemove', _updateM unless nodrag
-  @on 'touchstart', (ev) -> _updateT.call @, ev; $(@).on 'touchmove', _updateT unless nodrag
-  @on 'touchend',   (ev) -> $(@).off 'touchmove'
-  @on 'mouseup',    (ev) -> $(@).off 'mousemove'
-  return @each -> redraw.call(@, value, @getContext('2d'), true)
+  @on 'mousedown',  onmmove
+  @on 'touchstart', ontmove
+  unless nodrag
+    @on 'mousedown',  (ev) -> $(@).on  'mousemove', onmmove
+    @on 'touchstart', (ev) -> $(@).on  'touchmove', ontmove
+    @on 'touchend',   (ev) -> $(@).off 'touchmove'
+    @on 'mouseup',    (ev) -> $(@).off 'mousemove'
+  return @trigger('redraw', [true])
 
 
 $.fn.selector_color = (area) ->
   @each ->
     @outerR = min(@width, @height) / 2
     @innerR = 30 / 40 * @outerR
-    @triagR = 26 / 40 * @outerR
+    @triagR = 25 / 40 * @outerR
     @triagA = sqrt(3) * @triagR
     @triagH = sqrt(3) * @triagA / 2
 
@@ -146,8 +147,8 @@ $.fn.selector_vertical = (area, options) ->
 
   @selector_canvas area, value,
     (value, x, y) ->
-      value[opt] = v = max(0, min(1, (@height - y - @margin) / (@height - 2 * @margin))) * (@high - @low) + @low
-      value[opt] = floor v unless options.float
+      v = max(0, min(1, (@height - y - @margin) / (@height - 2 * @margin))) * (@high - @low) + @low
+      value[opt] = options.fn v
 
     (value, ctx, init) ->
       ctx.save()
@@ -159,7 +160,7 @@ $.fn.selector_vertical = (area, options) ->
       ondraw?.call this, value, ctx, init, tool
       ctx.restore()
 
-      y = (@high - value[opt]) * (@height - 2 * @margin) / (@high - @low) + @margin
+      y = (@high - options.inv(value[opt])) * (@height - 2 * @margin) / (@high - @low) + @margin
       ctx.lineWidth = 2
       ctx.strokeStyle = "rgba(127, 127, 127, 0.7)"
       ctx.beginPath()
@@ -169,15 +170,19 @@ $.fn.selector_vertical = (area, options) ->
 
 
 $.fn.selector_width = (area) -> @selector_vertical area,
-  what:   'size'
+  fn:  (x) -> floor(x ** 2 / 100)
+  inv: (x) -> sqrt(x * 100)
+  what: 'size'
   ondraw: (value, ctx, init, tool) ->
     tool.crosshair ctx
 
 
 $.fn.selector_spacing = (area) -> @selector_vertical area,
-  min: -> 1
-  max: -> @low + @height / 2
-  what:   'spacing'
+  fn:  (x) -> floor x
+  inv: (x) -> x
+  min:     -> 1
+  max:     -> @low + @height / 2
+  what: 'spacing'
   ondraw: (value, ctx, init, tool) ->
     tool.start ctx, 0, -@height * 0.4, 1, 0
     tool.move  ctx, 0,  @height * 0.4, 1, 0
@@ -185,7 +190,8 @@ $.fn.selector_spacing = (area) -> @selector_vertical area,
 
 
 $.fn.selector_opacity = (area) -> @selector_vertical area,
-  float: true
+  fn:  (x) -> x
+  inv: (x) -> x
   min: -> 0
   max: -> 1
   what: 'opacity'
