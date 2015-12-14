@@ -20,7 +20,7 @@
 #   layer:set    (ev: Event, index: int)
 #   layer:del    (ev: Event, index: int)
 #
-# Area :: (Either str jQuery Node) (Optional [Type extends Canvas.Tool]) -> Canvas.Area
+# Area :: Node Type[Canvas.Tool]... -> Canvas.Area
 #
 @Canvas.Area = class Area extends EventSystem
   UNDO_DRAW:       0
@@ -30,72 +30,43 @@
   UNDO_MERGE_DOWN: 4
   REDO_MERGE_DOWN: 5
 
-  constructor: (selector, tools...) ->
+  constructor: (@element, @tools...) ->
     super
-
-    @element = $(selector).eq(0)
-    @element.data 'area', @
-
-    # A list of subclasses of `Canvas.Tool`.
-    # You may use whatever tool you want through `setToolOptions`, but only
-    # these will be displayed in the options window.
-    @tools = tools
-
-    # A `name -> [color]` mapping that describes color presets.
-    # Simply overwrite it if desired. `palette` is the currently selected one.
-    @palettes = {}
-    @palette  = ""
-
-    # A complete list of layers ordered by z-index; each one is a `jQuery` object
-    # wrapping a single `Canvas`.
-    @layers = []
-    @layer  = 0
+    @palettes = {}  # :: {String: [{H, S, L}]} -- maps names to lists of colors
+    @palette  = ""  # :: String -- current palette
     @scale  = 1
-
-    # An undo is a complete snapshot of a layer as a {layer: int, canvas: str}
-    # object, where `canvas` is a PNG data URL.
-    @undos = []
-    @redos = []
+    @layer  = 0
+    @layers = []  # :: [Canvas.Layer]
+    @undos  = []
+    @redos  = []
     @undoLimit = 25
-
-    # This canvas follows the mouse cursor around. Tools may
-    # display something on it.
-    @crosshair = crosshair = $('<canvas class="crosshair">').appendTo('body')[0]
-
-    # This one displays the selection.
-    @selectui = $('<canvas class="hidden selection">').appendTo(@element)[0]
+    @crosshair = crosshair = Canvas(0, 0).addClass('crosshair').appendTo('body')[0]
+    @selectui = Canvas(0, 0).addClass('hidden selection').appendTo(@element)[0]
     @selection = []
 
-    # CoffeeScript's `=>` results in an ugly `__bind` wrapper.
-    @onMouseMove  = @onMouseMove  .bind @
-    @onMouseDown  = @onMouseDown  .bind @
-    @onMouseUp    = @onMouseUp    .bind @
-    @onTouchStart = @onTouchStart .bind @
-    @onTouchMove  = @onTouchMove  .bind @
-    @onTouchEnd   = @onTouchEnd   .bind @
-
-    # Note: we only need to update the size of the area on these events
-    # because `layer:resize` implies `layer:set`.
-    @on 'layer:del layer:set', =>
+    @on 'layer:del layer:set', (->
       mw = 0
       mh = 0
       for layer in @layers
         mw = max(mw, layer.w + layer.x)
         mh = max(mh, layer.h + layer.y)
       @resize(mw, mh)
+    ).bind(@)
 
-    # Note: this doesn't actually redraw anything, only calls
-    # into appropriate event handlers.
-    @on 'stroke:end', (layer) -> layer.trigger('redraw', [layer])
+    @on 'stroke:end', (layer) -> layer.trigger('redraw', layer)
 
-    @element[0].addEventListener 'mousedown',  @onMouseDown
-    @element[0].addEventListener 'mousemove', (ev) ->
+    for kind in ['Mouse', 'Touch']
+      for ev in ['Down', 'Move', 'Up']
+        @['on' + kind + ev] = @['on' + kind + ev].bind(@)
+
+    @element.addEventListener 'mouseleave', (ev) -> crosshair.style.display = 'none'
+    @element.addEventListener 'touchstart', (ev) -> crosshair.style.display = 'none'
+    @element.addEventListener 'touchstart', @onTouchDown
+    @element.addEventListener 'mousedown',  @onMouseDown
+    @element.addEventListener 'mousemove',  (ev) ->
       crosshair.style.left = ev.pageX + 'px'
       crosshair.style.top  = ev.pageY + 'px'
       crosshair.style.display = ''
-    @element[0].addEventListener 'mouseleave', (ev) -> crosshair.style.display = 'none'
-    @element[0].addEventListener 'touchstart', (ev) -> crosshair.style.display = 'none'
-    @element[0].addEventListener 'touchstart', @onTouchStart
     @resize(0, 0)
 
   # Change the size of the area.
@@ -103,7 +74,8 @@
   # resize :: int int -> a
   #
   resize: (@w, @h) ->
-    @element.css(width: @w * @scale, height: @h * @scale)
+    @element.style.width  = "#{@w * @scale}px"
+    @element.style.height = "#{@h * @scale}px"
     @selectui.width  = @w * @scale
     @selectui.height = @h * @scale
     @setSelection @selection
@@ -116,7 +88,7 @@
     @scale = max(0, min(20, x))
     @resize(@w, @h)
     @setToolOptions {}  # rescale the crosshair
-    @changeLayer(@layer)
+    @changeLayer(@layer)  # restyle all canvases
 
   # Select an area. Selecting an area clips all operations to that area.
   # It also enables copying and cutting.
@@ -127,14 +99,14 @@
     @selection = paths
     if paths.length
       @selectui.className = "selection"
-      context = @selectui.getContext '2d'
-      context.save()
-      context.fillStyle = "hsl(0, 0%, 50%)"
-      context.fillRect 0, 0, @selectui.width, @selectui.height
-      context.scale @scale, @scale
-      context.clip(path) for path in paths
-      context.clearRect 0, 0, @selectui.width / @scale, @selectui.height / @scale
-      context.restore()
+      ctx = @selectui.getContext '2d'
+      ctx.save()
+      ctx.fillStyle = "hsl(0, 0%, 50%)"
+      ctx.fillRect 0, 0, @selectui.width, @selectui.height
+      ctx.scale @scale, @scale
+      ctx.clip(path) for path in paths
+      ctx.clearRect 0, 0, @selectui.width / @scale, @selectui.height / @scale
+      ctx.restore()
     else
       @selectui.className = "hidden selection"
 
@@ -144,13 +116,13 @@
   #
   createLayer: (index = 0, state) ->
     layer = new Canvas.Layer @
-    layer.on 'reprop', (layer) => @trigger 'layer:reprop', [layer, @layers.indexOf(layer)]
-         .on 'redraw', (layer) => @trigger 'layer:redraw', [layer, @layers.indexOf(layer)]
-         .on 'resize', (layer) => @trigger 'layer:resize', [layer, @layers.indexOf(layer)]
+    layer.on 'reprop', (layer) => @trigger('layer:reprop', layer, @layers.indexOf(layer))
+         .on 'redraw', (layer) => @trigger('layer:redraw', layer, @layers.indexOf(layer))
+         .on 'resize', (layer) => @trigger('layer:resize', layer, @layers.indexOf(layer))
          .on 'resize', (layer) => @changeLayer(@layer)  # to update the element
          .on 'redraw', (layer) => @changeLayer(@layer)
     @layers.splice(index, 0, layer)
-    @trigger 'layer:add', [layer, index]
+    @trigger 'layer:add', layer, index
     layer.crop(0, 0, @w, @h)
     layer.set(state) if state
     @changeLayer(index)
@@ -167,7 +139,7 @@
       @layer = i
       @layers[q].element.removeClass 'active' for q of @layers
       @layers[i].element.addClass    'active'
-      @trigger 'layer:set', [i]
+      @trigger 'layer:set', i
 
   # Remove a layer. Emits `layer:del`.
   #
@@ -177,7 +149,7 @@
     if 0 <= i < @layers.length
       @snap i, action: @UNDO_DEL_LAYER
       @layers.splice(i, 1)[0].clear()
-      @trigger 'layer:del', [i]
+      @trigger 'layer:del', i
       @changeLayer min(@layer, @layers.length - 1)
 
   # Move a layer `delta` items closer to the top of the stack. Emits `layer:move`.
@@ -188,7 +160,7 @@
     if 0 <= i < @layers.length and 0 <= i + delta < @layers.length
       @snap i, action: @UNDO_MOVE_LAYER, delta: delta
       @layers.splice(i + delta, 0, @layers.splice(i, 1)[0])
-      @trigger 'layer:move', [i, delta]
+      @trigger 'layer:move', i, delta
       @changeLayer(i + delta)
 
   # Merge the layer down onto the next one, if there is one.
@@ -207,7 +179,7 @@
       ctx.translate -bot.x, -bot.y
       top.drawOnto ctx
       top.clear()
-      @trigger 'layer:del', [i]
+      @trigger 'layer:del', i
       @changeLayer min(@layer, @layers.length - 1)
 
   # Save a snapshot of a single layer in the undo stack.
@@ -326,8 +298,8 @@
     k = options.kind
     @tool = new k(@, if @tool then @tool.options else {}) if k
     @tool.setOptions options
-    @trigger('tool:' + k, [v, @tool.options]) for k, v of if k then @tool.options else options
-    @trigger('tool:options', [@tool.options])
+    @trigger('tool:' + k, v, @tool.options) for k, v of if k then @tool.options else options
+    @trigger('tool:options', @tool.options)
 
     sz = @tool.options.size * @scale
     cr = $ @crosshair
@@ -357,11 +329,11 @@
         # TODO pressure & rotation
         if @tool.start(@context, x / @scale, y / @scale, 0, 0)
           @snap @layer
-          @trigger 'stroke:begin', [@layers[@layer], @layer]
-          @element[0].addEventListener 'mouseenter', @onMouseDown if ev.type isnt "mouseenter"
-          @element[0].addEventListener 'mousemove',  @onMouseMove
-          @element[0].addEventListener 'mouseleave', @onMouseUp
-          @element[0].addEventListener 'mouseup',    @onMouseUp
+          @trigger 'stroke:begin', @layers[@layer], @layer
+          @element.addEventListener 'mouseenter', @onMouseDown if ev.type isnt "mouseenter"
+          @element.addEventListener 'mousemove',  @onMouseMove
+          @element.addEventListener 'mouseleave', @onMouseUp
+          @element.addEventListener 'mouseup',    @onMouseUp
 
   onMouseMove: (ev) ->
     if evdev.ok ev
@@ -373,15 +345,15 @@
   onMouseUp: (ev) ->
     if ev.type is "mouseup" or evdev.ok(ev)
       @tool.stop @context
-      @element[0].removeEventListener 'mouseenter', @onMouseDown if ev.type isnt "mouseleave"
-      @element[0].removeEventListener 'mousemove',  @onMouseMove
-      @element[0].removeEventListener 'mouseleave', @onMouseUp
-      @element[0].removeEventListener 'mouseup',    @onMouseUp
-      @trigger 'stroke:end', [@layers[@layer], @layer]
+      @element.removeEventListener 'mouseenter', @onMouseDown if ev.type isnt "mouseleave"
+      @element.removeEventListener 'mousemove',  @onMouseMove
+      @element.removeEventListener 'mouseleave', @onMouseUp
+      @element.removeEventListener 'mouseup',    @onMouseUp
+      @trigger 'stroke:end', @layers[@layer], @layer
       @context.restore()
       @context = null
 
-  onTouchStart: (ev) ->
+  onTouchDown: (ev) ->
     if ev.touches.length == 1 and 0 <= @layer < @layers.length and @tool and not @context and ev.which == 0
       # FIXME this one is even worse depending on the device.
       #   On Chromium OS, this will prevent "back/forward" gestures from
@@ -389,28 +361,28 @@
       #   if the user taps the canvas.
       ev.preventDefault()
       @context = @_getContext()
-      @_elem_offsetX = @element.offset().left
-      @_elem_offsetY = @element.offset().top
+      r = @element.getBoundingClientRect()
       t = ev.touches[0]
-      x = t.clientX - @_elem_offsetX
-      y = t.clientY - @_elem_offsetY
+      x = t.clientX - r.left
+      y = t.clientY - r.top
       if @tool.start @context, x / @scale, y / @scale, t.force, t.rotationAngle * PI / 180
         @snap @layer
-        @trigger 'stroke:begin', [@layers[@layer], @layer]
-        @element[0].addEventListener 'touchmove', @onTouchMove
-        @element[0].addEventListener 'touchend',  @onTouchEnd
+        @trigger 'stroke:begin', @layers[@layer], @layer
+        @element.addEventListener 'touchmove', @onTouchMove
+        @element.addEventListener 'touchend',  @onTouchUp
 
   onTouchMove: (ev) ->
+    r = @element.getBoundingClientRect()
     t = ev.touches[0]
-    x = t.clientX - @_elem_offsetX
-    y = t.clientY - @_elem_offsetY
+    x = t.clientX - r.left
+    y = t.clientY - r.top
     @tool.move @context, x / @scale, y / @scale, t.force, t.rotationAngle * PI / 180
 
-  onTouchEnd: (ev) ->
+  onTouchUp: (ev) ->
     if ev.touches.length == 0
       @tool.stop @context
-      @element[0].removeEventListener 'touchmove', @onTouchMove
-      @element[0].removeEventListener 'touchend',  @onTouchEnd
-      @trigger 'stroke:end', [@layers[@layer], @layer]
+      @element.removeEventListener 'touchmove', @onTouchMove
+      @element.removeEventListener 'touchend',  @onTouchUp
+      @trigger 'stroke:end', @layers[@layer], @layer
       @context.restore()
       @context = null

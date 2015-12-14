@@ -2,7 +2,7 @@
 ---
 
 $ ->
-  area = window.area = new Canvas.Area '.main-area .layers',
+  area = window.area = new Canvas.Area $('.main-area .layers')[0],
     Canvas.Tool.Selection.Rect
     Canvas.Tool.Move
     Canvas.Tool.Colorpicker

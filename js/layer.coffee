@@ -8,9 +8,8 @@
   #   redraw (layer: Layer)  -- when the contents change
   #   reprop (layer: Layer)  -- when some other property (e.g. opacity) changes
   #
-  constructor: (area) ->
+  constructor: (@area) ->
     super
-    @area    = area
     @element = $ []
 
   @property 'hidden',
@@ -36,7 +35,7 @@
         when "toolColor" then "hsl(#{opt.H},#{opt.S}%,#{opt.L}%)"
         else v
       ctx.fillRect 0, 0, @w, @h
-      @trigger('redraw', [this])
+      @trigger('redraw', this)
 
   # Remove the contents of this layer. (And the element that represents it.)
   #
@@ -45,13 +44,13 @@
   clear: ->
     @element.remove()
     @element = $ []
-    @trigger('redraw', [this])
+    @trigger('redraw', this)
 
   # Change the position of this layer relative to the image.
   #
   # move :: int int -> a
   #
-  move: (@x, @y) -> @trigger('resize', [this])
+  move: (@x, @y) -> @trigger('resize', this)
 
   # Change the size of this layer without modifying its contents.
   # The offset is relative to the image.
@@ -69,7 +68,7 @@
   # resize :: int int -> a
   #
   resize: (@w, @h) ->
-    @trigger('resize', [this])
+    @trigger('resize', this)
     @replace(@element, 0, 0, true)
 
   # Recreate the element that represents this layer.
@@ -85,7 +84,7 @@
       context.drawImage img, x, y for img in imgs
     @element.remove()
     @element = element.appendTo(@area.element)
-    @trigger('redraw', [this])
+    @trigger('redraw', this)
 
   # Update the style of the element that represents this layer.
   #
@@ -118,7 +117,7 @@
     else
       @replace([], 0, 0, false)
       @img().getContext('2d').putImageData(state.data, 0, 0)
-      @trigger('redraw', [this])
+      @trigger('redraw', this)
     @blendMode = state.blendMode
     @opacity   = state.opacity
     @hidden    = state.hidden

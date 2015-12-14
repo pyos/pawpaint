@@ -76,15 +76,15 @@
 
   start: (ctx, x, y) ->
     cnv = @area.export 'flatten'
-    @rstd = cnv.width * 4
-    @data = cnv.getContext('2d').getImageData(0, 0, cnv.width, cnv.height).data
+    @stride = cnv.width
+    @data   = cnv.getContext('2d').getImageData(0, 0, cnv.width, cnv.height).data
     @move ctx, x, y
     true
 
   move: (ctx, x, y) ->
-    r = @data[floor(x) * 4 + @rstd * floor(y)] / 255
-    g = @data[floor(x) * 4 + @rstd * floor(y) + 1] / 255
-    b = @data[floor(x) * 4 + @rstd * floor(y) + 2] / 255
+    r = @data[(floor(x) + @stride * floor(y)) * 4] / 255
+    g = @data[(floor(x) + @stride * floor(y)) * 4 + 1] / 255
+    b = @data[(floor(x) + @stride * floor(y)) * 4 + 2] / 255
     m = min(r, g, b)
     M = max(r, g, b)
     L = (m + M) / 2
@@ -96,9 +96,7 @@
       else 0
     @area.setToolOptions H: round(H * 60), S: round(S * 100), L: round(L * 100)
 
-  stop: (ctx) ->
-    @data = null
-    @rstd = 0
+  stop: (ctx) -> @data = null
 
 
 @Canvas.Tool.Move = class Move extends Tool

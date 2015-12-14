@@ -101,7 +101,7 @@
 # movingAverage :: -> float -> float
 #
 Dynamic.movingAverage = ->
-  limit = @avgOf || 75
+  limit = @avgOf || 10
   value = 0
   count = 0
   array = []

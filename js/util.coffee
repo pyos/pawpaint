@@ -122,7 +122,7 @@ class @EventSystem
 
   # Add an event handler.
   #
-  # on :: str (a -> b) -> c
+  # on :: String (Object... -> ()) -> EventSystem
   #
   on: (name, fn) ->
     for n in name.split(' ')
@@ -132,8 +132,8 @@ class @EventSystem
 
   # Call all handlers associated with an event.
   #
-  # trigger :: str [a] -> b
+  # trigger :: String Object... -> EventSystem
   #
-  trigger: (name, args) ->
+  trigger: (name, args...) ->
     fn.apply @, args for fn in @_events[name] or []
     return @

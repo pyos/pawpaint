@@ -68,7 +68,7 @@
                     %option value="4" -> Random
               %tr
                 %th -> smoothness
-                %td -> %input type="range" data-option="avgOf" min="1" max="100" step="1" value="75"
+                %td -> %input type="range" data-option="avgOf" min="1" max="100" step="1" value="10"
               %tr
                 %th -> minimum
                 %td -> %input type="range" data-option="min" min="0.01" max="2.01" step="0.05" value="0.01"

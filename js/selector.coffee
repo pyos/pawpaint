@@ -5,17 +5,16 @@
   i = 0
   r = {}
   t = new TextDecoder('utf-8')
-  # Assuming `data` is an array view.
+
   while i < data.length
-    # struct Palette {
+    # struct Palette:
     #     uint16_t sz_name;
     #     uint16_t sz_swatches;
-    #     char name[sz_name];
-    #     struct { unsigned H: 10, S: 7, L: 7; } swatches[sz_swatches];
-    # }
     return null if data.length < i + 4
     n = data[i++] << 8 | data[i++]
     k = data[i++] << 8 | data[i++]
+    #     char name[sz_name];
+    #     struct { unsigned H: 10, S: 7, L: 7; } swatches[sz_swatches];
     return null if data.length < i + n + k * 3
     c = r[t.decode(new DataView(data.buffer, i, n))] = []
     i += n
@@ -36,10 +35,7 @@ $.fn.selector_canvas = (area, value, update, redraw, nodrag) ->
     $(e).trigger('change', [value])
         .trigger('redraw')
 
-  @each ->
-    @_context = @getContext '2d'
-    @_context.translate 0.5, 0.5
-  @on 'redraw', (_, init) -> redraw.call(@, value, @_context, init)
+  @on 'redraw', (_, init) -> redraw.call(@, value, @getContext('2d'), init)
   @on 'mousedown',  onmmove
   @on 'touchstart', ontmove
   unless nodrag
@@ -63,8 +59,7 @@ $.fn.selector_color = (area) ->
       x -= @outerR
       y -= @outerR
 
-      if pow(@innerR, 2) <= pow(x, 2) + pow(y, 2)
-        # Got a click inside the ring.
+      if @innerR * @innerR <= x * x + y * y
         value.H = floor(atan2(y, x) * 180 / PI)
       else
         a = -value.H * PI / 180
@@ -84,13 +79,14 @@ $.fn.selector_color = (area) ->
 
         ctx.clearRect(-@outerR, -@outerR, @width, @height)
         ctx.save()
-        steps = 10
+        steps = 8
         delta = 2 * PI / steps
+        dgrad = 360 / steps
 
         for i in [0...steps]
           grad = ctx.fillStyle = ctx.createLinearGradient(@outerR, 0, @outerR * cos(delta), @outerR * sin(delta))
-          grad.addColorStop 0, "hsl(#{i * 36},      100%, 50%)"
-          grad.addColorStop 1, "hsl(#{i * 36 + 36}, 100%, 50%)"
+          grad.addColorStop 0, "hsl(#{i * dgrad},         100%, 50%)"
+          grad.addColorStop 1, "hsl(#{i * dgrad + dgrad}, 100%, 50%)"
           ctx.beginPath()
           ctx.arc(0, 0, @outerR, 0, delta, false)
           ctx.arc(0, 0, @innerR, delta, 0, true)
