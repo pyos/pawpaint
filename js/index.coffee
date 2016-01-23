@@ -2,7 +2,7 @@
 ---
 
 $ ->
-  area = window.area = new Canvas.Area $('.main-area .layers')[0],
+  area = window.area = new Area $('.main-area .layers')[0], [
     Canvas.Tool.Selection.Rect
     Canvas.Tool.Move
     Canvas.Tool.Colorpicker
@@ -12,6 +12,7 @@ $ ->
     class _ extends Canvas.Tool.FromImage then img: $id 'r-round-32'
     class _ extends Canvas.Tool.FromImage then img: $id 'r-round-64'
     class _ extends Canvas.Tool.FromImage then img: $id 'r-line'; spacingAdjust: 0
+  ]
 
   xhr = new XMLHttpRequest
   xhr.open 'GET', 'img/palettes.dat', true
@@ -39,15 +40,15 @@ $ ->
       link.href     = area.export('png')
       link.click()
 
-    .on 'key:81', -> area.createLayer()  # Q
-    .on 'key:78', -> area.createLayer()  # N
+    .on 'key:81', -> area.createLayer(0)  # Q
+    .on 'key:78', -> area.createLayer(0)  # N
     .on 'key:88', -> area.deleteLayer(area.layer)  # X
     .on 'key:87', -> area.setToolOptions(kind: area.tool.options.last)  # W
     .on 'key:69', -> area.setToolOptions(kind: Canvas.Tool.Eraser)      # E
     .on 'key:65', -> area.mergeDown(area.layer)  # A
     .on 'key:77', -> area.mergeDown(area.layer)  # M
 
-    .on 'click', '.action-add-layer', -> area.createLayer()
+    .on 'click', '.action-add-layer', -> area.createLayer(0)
     .on 'click', '.action-del-layer', -> area.deleteLayer(area.layer)
     .on 'click', '.action-undo',      -> area.undo()
     .on 'click', '.action-redo',      -> area.redo()
@@ -79,9 +80,6 @@ $ ->
   menu = $ '.layer-menu'
   menu.selector_layers area, '.templates .selector-layer-config'
 
-  area.on 'layer:add', ->
-    area.resize main.innerWidth(), main.innerHeight() if area.w == 0 or area.h == 0
-
   area.on 'tool:options', (v) ->
     tool.css 'background', "hsl(#{v.H},#{v.S}%,#{v.L}%)"
     tool.find('canvas').each ->
@@ -91,6 +89,10 @@ $ ->
       t.symbol(ctx, @width / 2, @height / 2)
 
   area.setToolOptions(kind: Canvas.Tool.Pen, last: Canvas.Tool.Pen)
-  area.import    window.localStorage.image   if window.localStorage?.image
-  area.palette = window.localStorage.palette if window.localStorage?.palette
-  area.createLayer().fill = 'white' if not area.layers.length
+  area.import(window.localStorage.image, true) if window.localStorage?.image
+
+  if not area.layers.length
+      area.setSize main.innerWidth(), main.innerHeight()
+      area.createLayer(0).fill = 'white'
+  else
+      area.palette = window.localStorage.palette

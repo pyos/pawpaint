@@ -381,7 +381,7 @@ $.fn.selector_layers = (area, template) ->
 
   @on 'click', 'li', (ev) ->
     ev.preventDefault()
-    if area.layer == $(@).index() then $(@).trigger 'contextmenu' else area.changeLayer $(@).index()
+    if area.layer == $(@).index() then $(@).trigger 'contextmenu' else area.setLayer $(@).index()
 
   @on 'contextmenu', 'li', (ev) ->
     ev.preventDefault()
@@ -463,7 +463,7 @@ $.fn.selector_layers = (area, template) ->
 $.fn.selector_layer_config = (area, index, x, y, fixed) ->
   t = @clone()
   t.on 'change', '[data-prop]', ->
-    area.snap index
+    area.snap index: index
     area.layers[index][@getAttribute 'data-prop'] =
       if @type == "checkbox" then @checked else @value
   t.find('[data-prop]').each ->

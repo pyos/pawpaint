@@ -252,8 +252,12 @@
 
 @Canvas.Tool.FromImage = class FromImage extends Pen
   start: ->
-    img = Canvas.tintImage @img, @options.H, @options.S, @options.L
-    @pattern = Canvas.scale img, @options.size, @options.size
+    @pattern = Canvas(@options.size, @options.size)[0]
+    ctx = @pattern.getContext('2d')
+    ctx.fillStyle = "hsl(#{@options.H}, #{@options.S}%, #{@options.L}%)"
+    ctx.fillRect(0, 0, @options.size, @options.size)
+    ctx.globalCompositeOperation = "destination-in"
+    ctx.drawImage(@img, 0, 0, @options.size, @options.size)
     super
 
   step: (ctx, x, y, nx, ny) ->
