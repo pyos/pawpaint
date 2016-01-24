@@ -8,16 +8,6 @@
     %link rel="stylesheet" href="3rdparty/css/font-awesome.min.css"
     %link rel="stylesheet" href="css/index.css"
 
-    %script src="3rdparty/js/jquery.min.js"
-    %script src="3rdparty/js/bootstrap.min.js"
-    %script src="js/util.js"
-    %script src="js/layer.js"
-    %script src="js/area.js"
-    %script src="js/tools.js"
-    %script src="js/dynamic.js"
-    %script src="js/selector.js"
-    %script src="js/index.js"
-
   %body
     %div.side-area
       %div.toolbar-row
@@ -30,7 +20,7 @@
       %div.toolbar-row
         %a.action-add-layer.fa.fa-asterisk title="New layer"
         %a.action-del-layer.fa.fa-trash    title="Remove layer"
-    %div.main-area data-selector-menu="main" -> %div.background -> %div.layers
+    %div.main-area data-selector-menu="main" -> %div.background -> %div.layers id="area"
 
     %div.hidden.templates
       %div.selector-main
@@ -185,3 +175,12 @@
       %img id="r-round-32"    src="img/round.32.png"
       %img id="r-round-64"    src="img/round.64.png"
       %img id="r-line"        src="img/line.png"
+
+    %script src="3rdparty/js/jquery.min.js"
+    %script src="3rdparty/js/bootstrap.min.js"
+    %script src="js/layer.js"
+    %script src="js/area.js"
+    %script src="js/tools.js"
+    %script src="js/dynamic.js"
+    %script src="js/selector.js"
+    %script src="js/index.js"

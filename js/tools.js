@@ -47,7 +47,7 @@ class Tool
     /* Change some of the values. The rest remain intact. */
     setOptions(options)
     {
-        for (var k in options)
+        for (const k in options)
             if (options.hasOwnProperty(k))
                 this.options[k] = options[k];
     }
@@ -96,7 +96,7 @@ class ColorpickerTool extends Tool
 
     start(ctx, x, y)
     {
-        var canvas = this.area.export('flatten');
+        const canvas = this.area.export('flatten');
         this.stride = canvas.width;
         this.imdata = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
         this.move(ctx, x, y);
@@ -104,21 +104,21 @@ class ColorpickerTool extends Tool
 
     move(ctx, x, y)
     {
-        var i = floor(x) * 4 + this.stride * floor(y) * 4,
-            r = this.imdata[i + 0] / 255,
-            g = this.imdata[i + 1] / 255,
-            b = this.imdata[i + 2] / 255;
+        const i = Math.floor(x) * 4 + this.stride * Math.floor(y) * 4,
+              r = this.imdata[i + 0] / 255,
+              g = this.imdata[i + 1] / 255,
+              b = this.imdata[i + 2] / 255;
 
-        var m = min(r, g, b),
-            M = max(r, g, b),
-            L = (m + M) / 2,
-            S = M - m < 0.001 ? 0 : (M - m) / (L < 0.5 ? M + m : 2 - M - m),
-            H = M - m < 0.001 ? 0 :
-                M == r ?     (g - b) / (M - m) :
-                M == g ? 2 + (b - r) / (M - m) :
-                M == b ? 4 + (r - g) / (M - m) : 0;
+        const m = Math.min(r, g, b),
+              M = Math.max(r, g, b),
+              L = (m + M) / 2,
+              S = M - m < 0.001 ? 0 : (M - m) / (L < 0.5 ? M + m : 2 - M - m),
+              H = M - m < 0.001 ? 0 :
+                  M == r ?     (g - b) / (M - m) :
+                  M == g ? 2 + (b - r) / (M - m) :
+                  M == b ? 4 + (r - g) / (M - m) : 0;
 
-        this.area.setToolOptions({H: round(H * 60), S: round(S * 100), L: round(L * 100)});
+        this.area.setToolOptions({H: Math.round(H * 60), S: Math.round(S * 100), L: Math.round(L * 100)});
     }
 
     stop(ctx)
@@ -164,39 +164,39 @@ class SelectionTool extends Tool
 
     move(ctx, x, y)
     {
-        var dx = x - this.startX;
-        var dy = y - this.startY;
+        let dx = x - this.startX;
+        let dy = y - this.startY;
 
-        if (SHIFT) {  // Shift+drag: lock aspect ratio at 1
-            var m = min(abs(dx), abs(dy));
-            dy *= m / abs(dy);
-            dx *= m / abs(dx);
+        if (window.SHIFT) {  // Shift+drag: lock aspect ratio at 1
+            const m = Math.min(Math.abs(dx), Math.abs(dy));
+            dy *= m / Math.abs(dy);
+            dx *= m / Math.abs(dx);
         }
 
-        this.dX = dx;
-        this.dY = dy;
+        this.dX = Math.abs(dx);
+        this.dY = Math.abs(dy);
 
-        var path = new Path2D();
-        this.select(path, this.startX + min(0, dx), this.startY + min(0, dy), abs(dx), abs(dy));
-        var paths = [];
+        const path = new Path2D();
+        const paths = [];
+        this.select(path, this.startX + Math.min(0, dx), this.startY + Math.min(0, dy), this.dX, this.dY);
 
-        if (CTRL && ALT) {  // Ctrl+Alt+drag -- XOR
-            for (var p of this.old)
+        if (window.CTRL && window.ALT) {  // Ctrl+Alt+drag -- XOR
+            for (const p of this.old)
                 paths.push(p);
 
             paths.push(path);
-        } else if (CTRL) {  // Ctrl+drag -- union
-            for (var q of this.old) {
-                var upath = new Path2D();
+        } else if (window.CTRL && this.old) {  // Ctrl+drag -- union
+            for (const p of this.old) {
+                const upath = new Path2D();
                 upath.addPath(path);
-                upath.addPath(q);
+                upath.addPath(p);
                 paths.push(upath);
             }
-        } else if (ALT) {  // Alt+drag -- subtraction
-            for (var r of this.old)
-                paths.push(r);
+        } else if (window.ALT) {  // Alt+drag -- subtraction
+            for (const p of this.old)
+                paths.push(p);
 
-            var npath = new Path2D();
+            const npath = new Path2D();
             // fill the whole image with a rectangle of negative winding.
             // (`path` has positive winding to counteract it.)
             // the dimensions are greater than `this.area.w * this.area.h`
@@ -205,16 +205,16 @@ class SelectionTool extends Tool
             npath.addPath(path);
             paths.push(npath);
         } else {  // no modifiers -- replace
-            paths = [path];
+            paths.push(path);
         }
 
-        this.area.setSelection(paths);
+        this.area.selection = paths;
     }
 
     stop(ctx)
     {
-        if (this.dX + this.dY < 5 && !CTRL && !ALT && !SHIFT)
-            this.area.setSelection([]);
+        if (this.dX + this.dY < 5 && !window.CTRL && !window.ALT && !window.SHIFT)
+            this.area.selection = [];
     }
 
     symbol(ctx, x, y)
@@ -245,7 +245,7 @@ class EllipseSelectionTool extends SelectionTool
 {
     select(path, x, y, dx, dy)
     {
-        path.ellipse(x + dx / 2, y + dy / 2, dx / 2, dy / 2, 0, 0, PI * 2);
+        path.ellipse(x + dx / 2, y + dy / 2, dx / 2, dy / 2, 0, 0, Math.PI * 2);
     }
 }
 
@@ -254,7 +254,7 @@ class PenTool extends Tool
 {
     crosshair(ctx)
     {
-        var opts = {H: 0, S: 0, L: 50, opacity: 0.5, dynamic: []};
+        const opts = {H: 0, S: 0, L: 50, opacity: 0.5, dynamic: []};
         Object.setPrototypeOf(opts, this.options);
         this.options = opts;
         this.start(ctx, 0, 0, 1, 0);
@@ -269,7 +269,7 @@ class PenTool extends Tool
         ctx.lineWidth   = this.options.size;
         ctx.globalAlpha = this.options.opacity;
         ctx.strokeStyle = ctx.fillStyle = `hsl(${this.options.H},${this.options.S}%,${this.options.L}%)`;
-        for (var dyn of this.options.dynamic)
+        for (const dyn of this.options.dynamic)
             dyn.reset(ctx, this, x, y);
         this.windowX = [this.prevX = x, x, x];
         this.windowY = [this.prevY = y, y, y];
@@ -280,32 +280,32 @@ class PenTool extends Tool
     move(ctx, x, y, pressure, rotation)
     {
         // target = moving average of 5 last points including (x, y)
-        var i = this.count % this.windowX.length;
-        var dx = (x - this.windowX[i]) / this.windowX.length;
-        var dy = (y - this.windowY[i]) / this.windowY.length;
-        var sp = this.options.spacing + ctx.lineWidth * this.spacingAdjust;
-        var steps = floor(pow(dx * dx + dy * dy, 0.5) / sp) || this.empty;
+        const i = this.count % this.windowX.length;
+        const dx = (x - this.windowX[i]) / this.windowX.length;
+        const dy = (y - this.windowY[i]) / this.windowY.length;
+        const sp = this.options.spacing + ctx.lineWidth * this.spacingAdjust;
+        const steps = Math.floor(Math.sqrt(dx * dx + dy * dy) / sp) || this.empty;
 
         if (steps) {
             this.count++;
             this.windowX[i] = x;
             this.windowY[i] = y;
-            for (var dyn of this.options.dynamic)
+            for (const dyn of this.options.dynamic)
                 dyn.start(ctx, this, dx, dy, pressure, rotation);
 
-            dx /= steps;
-            dy /= steps;
-            var sx = this.prevX;
-            var sy = this.prevY;
+            const dx_step = dx / steps;
+            const dy_step = dy / steps;
+            let sx = this.prevX;
+            let sy = this.prevY;
 
-            for (var k = 0; k < steps; k++) {
-                for (var dyn of this.options.dynamic)
+            for (let k = 0; k < steps; k++) {
+                for (const dyn of this.options.dynamic)
                     dyn.step(ctx, this, steps);
 
-                this.step(ctx, sx, sy, sx += dx, sy += dy);
+                this.step(ctx, sx, sy, sx += dx_step, sy += dy_step);
             }
 
-            for (var dyn of this.options.dynamic)
+            for (const dyn of this.options.dynamic)
                 dyn.stop(ctx, this);
 
             this.empty = 0;
@@ -317,13 +317,13 @@ class PenTool extends Tool
     step(ctx, x, y, nx, ny)
     {
         ctx.beginPath();
-        ctx.arc(nx, ny, ctx.lineWidth / 2, 0, 2 * PI);
+        ctx.arc(nx, ny, ctx.lineWidth / 2, 0, 2 * Math.PI);
         ctx.fill();
     }
 
     stop(ctx)
     {
-        for (var dyn of this.options.dynamic)
+        for (const dyn of this.options.dynamic)
             dyn.restore(ctx, this);
 
         ctx.restore();
@@ -344,7 +344,7 @@ class EraserTool extends PenTool
         ctx.lineWidth   = 1;
         ctx.globalAlpha = 0.5;
         ctx.beginPath();
-        ctx.arc(0, 0, this.options.size / 2, 0, 2 * PI, false);
+        ctx.arc(0, 0, this.options.size / 2, 0, 2 * Math.PI, false);
         ctx.stroke();
         ctx.restore();
     }
@@ -366,9 +366,11 @@ class ImagePenTool extends PenTool
 
     start(ctx, x, y, pressure, rotation)
     {
-        var size = this.options.size;
-        this.pattern = new Canvas(size, size)[0];
-        var imctx = this.pattern.getContext('2d');
+        const size = this.options.size;
+        this.pattern = document.createElement('canvas');
+        this.pattern.width  = size;
+        this.pattern.height = size;
+        const imctx = this.pattern.getContext('2d');
         imctx.fillStyle = `hsl(${this.options.H},${this.options.S}%,${this.options.L}%)`;
         imctx.fillRect(0, 0, size, size);
         imctx.globalCompositeOperation = "destination-in";
@@ -378,7 +380,7 @@ class ImagePenTool extends PenTool
 
     step(ctx, x, y, nx, ny)
     {
-        var ds = ctx.lineWidth;
+        const ds = ctx.lineWidth;
         ctx.save();
         ctx.translate(nx, ny);
         ctx.rotate(this.options.rotation);

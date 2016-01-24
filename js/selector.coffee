@@ -1,29 +1,15 @@
 ---
 ---
 
-@Canvas.palettes = (data) ->
-  i = 0
-  r = {}
-  t = new TextDecoder('utf-8')
-
-  while i < data.length
-    # struct Palette:
-    #     uint16_t sz_name;
-    #     uint16_t sz_swatches;
-    return null if data.length < i + 4
-    n = data[i++] << 8 | data[i++]
-    k = data[i++] << 8 | data[i++]
-    #     char name[sz_name];
-    #     struct { unsigned H: 10, S: 7, L: 7; } swatches[sz_swatches];
-    return null if data.length < i + n + k * 3
-    c = r[t.decode(new DataView(data.buffer, i, n))] = []
-    i += n
-    for _ in [0...k]
-      c.push
-        H: (data[i++] << 2 | data[i] >> 6) & 0x3FF,
-        S: (data[i++] << 1 | data[i] >> 7) & 0x7F,
-        L: (data[i++]) & 0x7F
-  return r
+min   = Math.min
+max   = Math.max
+sin   = Math.sin
+cos   = Math.cos
+atan2 = Math.atan2
+abs   = Math.abs
+sqrt  = Math.sqrt
+floor = Math.floor
+PI    = Math.PI
 
 
 $.fn.selector_canvas = (area, value, update, redraw, nodrag) ->

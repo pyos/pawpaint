@@ -1,17 +1,10 @@
 "use strict";
 
 
-class Layer extends EventSystem
+class Layer
 {
-    // A single raster layer. Emits the following events:
-    //
-    //   resize (layer: Layer)  -- when the dimensions change
-    //   redraw (layer: Layer)  -- when the contents change
-    //   reprop (layer: Layer)  -- when some other property (e.g. opacity) changes
-    //
     constructor(area)
     {
-        super();
         this.area    = area;
         this.element = $([]);
         this.x = this.y = this.w = this.h = 0;
@@ -32,11 +25,11 @@ class Layer extends EventSystem
     get fill( ) { return 'transparent'; }
     set fill(v)
     {
-        var opt = this.area.tool.options;
-        var ctx = this.img().getContext('2d');
+        const opt = this.area.tool.options;
+        const ctx = this.img().getContext('2d');
         ctx.fillStyle = v == 'toolColor' ? `hsl(${opt.H},${opt.S}%,${opt.L}%)` : v;
         ctx.fillRect(0, 0, this.w, this.h);
-        this.trigger('redraw', this);
+        this.area.onLayerRedraw(this);
     }
 
     // Remove the contents of this layer. (And the element that represents it.)
@@ -44,7 +37,7 @@ class Layer extends EventSystem
     {
         this.element.remove();
         this.element = $([]);
-        this.trigger('redraw', this);
+        this.area.onLayerRedraw(this);
     }
 
     // Change the position of this layer relative to the image.
@@ -52,15 +45,15 @@ class Layer extends EventSystem
     {
         this.x = x;
         this.y = y;
-        this.trigger('resize', this);
+        this.area.onLayerResize(this);
     }
 
     // Change the size of this layer without modifying its contents.
     // The offset is relative to the image.
     crop(x, y, w, h)
     {
-        var dx = this.x - x;
-        var dy = this.y - y;
+        const dx = this.x - x;
+        const dy = this.y - y;
         this.w = w;
         this.h = h;
         this.move(x, y);
@@ -72,7 +65,7 @@ class Layer extends EventSystem
     {
         this.w = w;
         this.h = h;
-        this.trigger('resize', this);
+        this.move(this.x, this.y);
         this.replace(this.element, 0, 0, true);
     }
 
@@ -80,10 +73,10 @@ class Layer extends EventSystem
     // Optionally, rescale them to fit the new size.
     replace(imgs, x, y, rescale)
     {
-        var tag = new Canvas(this.w, this.h).addClass('layer');
-        var ctx = tag[0].getContext('2d');
+        const tag = $(`<canvas width="${this.w}" height="${this.h}">`).addClass('layer');
+        const ctx = tag[0].getContext('2d');
 
-        for (var i = 0; i < imgs.length; i++)
+        for (let i = 0; i < imgs.length; i++)
             if (rescale)
                 ctx.drawImage(imgs[i], x, y, this.w, this.h);
             else
@@ -91,7 +84,7 @@ class Layer extends EventSystem
 
         this.element.remove();
         this.element = tag.appendTo(this.area.element);
-        this.trigger('redraw', this);
+        this.area.onLayerRedraw(this);
     }
 
     // Update the style of the element that represents this layer.
@@ -115,7 +108,7 @@ class Layer extends EventSystem
         if (typeof state.data !== 'string')
             return this.loadFromData(state, null);
 
-        var img = new Image();
+        const img = new Image();
         img.onload = () => this.loadFromData(state, img);
         img.src = state.data;
     }
@@ -136,7 +129,7 @@ class Layer extends EventSystem
         else {
             this.replace([], 0, 0, false);  // create an empty canvas
             this.img().getContext('2d').putImageData(state.data, 0, 0);
-            this.trigger('redraw', this);
+            this.area.onLayerRedraw(this);
         }
 
         if (state.blendMode !== undefined) this.blendMode = state.blendMode;
@@ -173,7 +166,7 @@ class Layer extends EventSystem
     // Encode the contents of this layer as an SVG shape.
     svg()
     {
-        var tag = $(`<svg:image xlink:href='${this.url()}'>`);
+        const tag = $(`<svg:image xlink:href='${this.url()}'>`);
         tag.attr({'x': this.x, 'y': this.y, 'width': this.w, 'height': this.h});
         if (this.blendMode != 'normal') tag.css('mix-blend-mode', this.blendMode);
         if (this.opacity != '1') tag.attr('opacity', this.opacity);

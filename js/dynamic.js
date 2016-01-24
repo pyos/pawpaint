@@ -18,7 +18,7 @@ class Dynamic
         this.max   = 1;
         this.avgOf = 10;
 
-        for (var k in options)
+        for (const k in options)
             this[k] = options[k];
     }
 
@@ -34,13 +34,13 @@ class Dynamic
     //
     reset(ctx, tool)
     {
-        var value = 0;
-        var count = 0;
-        var array = [];
+        let value = 0;
+        let count = 0;
+        let array = [];
 
         this._f = (current) => {
             if (count === 0) {
-                for (var i = 0; i < this.avgOf; i++)
+                for (let i = 0; i < this.avgOf; i++)
                     array.push(current);
 
                 value = current;
@@ -56,17 +56,13 @@ class Dynamic
 
     start(ctx, tool, dx, dy, pressure, rotation)
     {
-        var v;
+        let v = this.type == 1 ? Math.atan2(dy, dx) / 2 / Math.PI + 0.5
+              : this.type == 2 ? pressure
+              : this.type == 3 ? rotation
+              : this.type == 4 ? Math.random()
+              : Math.pow(dx * dx + dy * dy, 0.5) / 20;
 
-        switch (this.type) {
-            case 1:  v = atan2(dy, dx) / 2 / PI + 0.5; break;
-            case 2:  v = pressure; break;
-            case 3:  v = rotation / 2 / PI; break;
-            case 4:  v = Math.random(); break;
-            default: v = pow(dx * dx + dy * dy, 0.5) / 20; break;
-        }
-
-        return this.min + (this.max - this.min) * min(1, max(0, this._f(v)));
+        return this.min + (this.max - this.min) * Math.min(1, Math.max(0, this._f(v)));
     }
 
     step(ctx, tool, total) {}
