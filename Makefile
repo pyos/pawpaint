@@ -7,7 +7,7 @@
 %.html: %.hamlike
 	python3 -m dg -m hamlike --trim < "$<" > "$@"
 
-all: js/dynamic.js js/index.js js/selector.js js/tools.js css/index.css index.html
+all: js/selector.js js/tools.js css/index.css index.html
 
 watch: all
 	bash scripts/watch.sh

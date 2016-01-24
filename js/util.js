@@ -82,10 +82,10 @@ window.evdev = {
 $.fn.keymappable = function () {
     return this
         .on('keydown', (ev) => {
-            var n = (ev.ctrlKey  ? 'ctrl+'  : '')
-                  + (ev.shiftKey ? 'shift+' : '')
-                  + (ev.altKey   ? 'alt+'   : '')
-                  + (ev.metaKey  ? 'meta+'  : '');
+            var n = (ev.ctrlKey  ? 'C-'  : '')
+                  + (ev.shiftKey ? 'S-' : '')
+                  + (ev.altKey   ? 'A-'   : '')
+                  + (ev.metaKey  ? 'M-'  : '');
             return $(this).trigger(`key:${n}${ev.keyCode}`, [ev]);
         })
 

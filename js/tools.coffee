@@ -5,7 +5,7 @@
 #
 # Options::
 #
-#   dynamic :: Canvas.Dynamic -- see `dynamic.coffee`
+#   dynamic :: Dynamic -- see `dynamic.js`
 #   size     :: float -- greater than 0
 #   H, S, L  :: int -- same ranges as in CSS3 `hsl` function. Same purpose, too.
 #   opacity  :: float -- 0 to 1, transparent to opaque

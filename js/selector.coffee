@@ -358,7 +358,7 @@ $.fn.selector_dynamics = (area, x, y, fixed) ->
         _ = area.tool.options.dynamic.splice(i, 1)
         return self.data('dynamic', null)
       if not data and @value
-        data = new Canvas.Dynamic.Option kind: self.attr('data-kind')
+        data = new OptionDynamic kind: self.attr('data-kind')
         self.data('dynamic', data)
         self.find('[data-option]').trigger('change')
         area.tool.options.dynamic.push(data)
@@ -366,12 +366,12 @@ $.fn.selector_dynamics = (area, x, y, fixed) ->
     .on 'change', '[data-option]', ->
       value = if @getAttribute('data-raw') is null then parseFloat @value else @value
       data = $(@).parents('[data-kind]').data('dynamic')
-      data.options[@getAttribute 'data-option'] = value if data
+      data[@getAttribute 'data-option'] = value if data
 
   for dyn in area.tool.options.dynamic
-    elem = t.find("[data-kind='#{dyn.options.kind}']")
+    elem = t.find("[data-kind='#{dyn.kind}']")
     elem.data('dynamic', dyn)
-    elem.find('[data-option]').each -> @value = dyn.options[@getAttribute 'data-option']
+    elem.find('[data-option]').each -> @value = dyn[@getAttribute 'data-option']
 
   t.selector_modal(x, y, fixed)
 
