@@ -19,8 +19,8 @@ class CanvasSelector
             for (const selector of linked) selector.redraw();
         };
 
-        const touch = (ev) => { ev.preventDefault(); click(ev.touches[0]); };
-        const mouse = (ev) => { ev.preventDefault(); click(ev); };
+        const touch = (ev) => { if (ev.touches.length === 1) { ev.preventDefault(); click(ev.touches[0]); } };
+        const mouse = (ev) => { if (ev.which === 1) { ev.preventDefault(); click(ev); } };
 
         e.addEventListener('mousedown',  mouse);
         e.addEventListener('touchstart', touch);

@@ -343,7 +343,7 @@ class EraserTool extends PenTool
         ctx.lineWidth   = 2;
         ctx.globalAlpha = 0.5;
         ctx.beginPath();
-        ctx.arc(0, 0, this.options.size / 2 - 1, 0, 2 * Math.PI, false);
+        ctx.arc(0, 0, Math.max(0, this.options.size / 2 - 1), 0, 2 * Math.PI, false);
         ctx.strokeStyle = `hsl(0,0%,50%)`;
         ctx.stroke();
         ctx.restore();

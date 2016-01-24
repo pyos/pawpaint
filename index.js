@@ -69,6 +69,11 @@
             const sel = this.getAttribute('data-selector-menu');
             $(`.templates .selector-${sel}`)[`selector_${sel}`](area, ev.clientX, ev.clientY).appendTo('body');
             ev.preventDefault();
+        })
+
+        .on('contextmenu', '.selector-main', function (ev) {
+            $('.cover').click();
+            ev.preventDefault();
         });
 
     area.on('tool:H tool:S tool:L', (_, v) =>
