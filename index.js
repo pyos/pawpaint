@@ -8,6 +8,8 @@
     window.META  = false;
     const area = window.area = new Area(document.getElementById('area'));
 
+    let beforeCtrl = null;
+
     area.on('key:27',   /* Esc */ () => $('.cover').click())
         .on('key:C-90',   /* Z */ () => area.undo())
         .on('key:C-89',   /* Y */ () => area.redo())
@@ -25,6 +27,18 @@
             link.download = 'image.png';
             link.href     = area.export('png');
             link.click();
+        })
+        .on('key:C-17', () => {
+            if (beforeCtrl === null) {
+                beforeCtrl = area.tool.options.kind;
+                area.setToolOptions({ kind: ColorpickerTool });
+            }
+        })
+        .on('key:17', () => {
+            if (beforeCtrl !== null) {
+                area.setToolOptions({ kind: beforeCtrl });
+                beforeCtrl = null;
+            }
         });
 
     $(document.body)
@@ -33,6 +47,9 @@
             window.SHIFT = e.shiftKey;
             window.ALT   = e.altKey;
             window.META  = e.metaKey;
+            if (e.type === 'keyup' && 16 /* Shift */ <= e.keyCode && e.keyCode <= 18 /* Alt */)
+                if (area.trigger('key:' + e.keyCode))
+                    e.preventDefault();
         })
 
         .on('keydown', (e) => {
