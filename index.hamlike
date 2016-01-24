@@ -12,127 +12,29 @@
     %div.side-area
       %div.toolbar-row
         %a.action-tool data-selector="main" -> %canvas width="25" height="25"
-        %a.action-dynamics.fa.fa-random title="Dynamics..." data-selector="dynamics"
         %a.action-undo.fa.fa-undo   title="Undo"
         %a.action-redo.fa.fa-repeat title="Redo"
         %a.action-export.fa.fa-save title="Export as..." data-selector="export"
       %ul.layer-menu
       %div.toolbar-row
-        %a.action-add-layer.fa.fa-asterisk title="New layer"
-        %a.action-del-layer.fa.fa-trash    title="Remove layer"
+        %a.action-add-layer.fa.fa-asterisk    title="New layer"
+        %a.action-del-layer.fa.fa-trash       title="Remove layer"
+        %a.action-merge-down.fa.fa-level-down title="Remove layer"
     %div.main-area data-selector-menu="main" -> %div.background -> %div.layers id="area"
 
     %div.hidden.templates
       %div.selector-main
-        %canvas.selector.selector-color                      width="200" height="200"
-        %canvas.selector.selector-palette                    width="25"  height="200"
-        %canvas.selector.selector-width                      width="40"  height="200"
-        %canvas.selector.selector-tools.small.not-fixed-only width="50"  height="200"
-        %canvas.selector.selector-tools.fixed-only           width="150" height="200"
+        %canvas.selector.selector-color                     width="200" height="200"
+        %canvas.selector.selector-palette                   width="25"  height="200"
+        %canvas.selector.selector-size                      width="40"  height="200"
+        %canvas.selector.selector-tool.small.not-fixed-only width="50"  height="200"
+        %canvas.selector.selector-tool.fixed-only           width="150" height="200"
 
       %div.selector-export.selector-text
         %div.header -> Export as
         %div.btn-group.btn-group-lg
           %a.btn.btn-success data-type="png" -> PNG
           %a.btn.btn-default data-type="svg" -> SVG
-
-      %div.selector-dynamics.selector-text
-        %div.tabs
-          %ul.tabbar
-            %li.active data-target="[data-kind=size]"     -> Size
-            %li        data-target="[data-kind=opacity]"  -> Opacity
-            %li        data-target="[data-kind=rotation]" -> Rotation
-            %li        data-target="[data-kind=spacing]"  -> Spacing
-          %div.tab.active data-kind="size"
-            %input type="hidden" data-raw data-option="source" value="size"
-            %input type="hidden" data-raw data-option="target" value="lineWidth"
-            %table.table
-              %tr
-                %th -> a function of
-                %td -> %select data-option="type"
-                    %option value=""  -> Nothing
-                    %option value="0" -> Velocity
-                    %option value="1" -> Direction
-                    %option value="2" -> Pressure
-                    %option value="3" -> Rotation
-                    %option value="4" -> Random
-              %tr
-                %th -> smoothness
-                %td -> %input type="range" data-option="avgOf" min="1" max="100" step="1" value="10"
-              %tr
-                %th -> minimum
-                %td -> %input type="range" data-option="min" min="0.01" max="2.01" step="0.05" value="0.01"
-              %tr
-                %th -> maximum
-                %td -> %input type="range" data-option="max" min="0.01" max="2.01" step="0.05" value="1.01"
-
-          %div.tab data-kind="opacity"
-            %input type="hidden" data-raw data-option="source" value="opacity"
-            %input type="hidden" data-raw data-option="target" value="globalAlpha"
-            %table.table
-              %tr
-                %th -> a function of
-                %td -> %select data-option="type"
-                    %option value=""  -> Nothing
-                    %option value="0" -> Velocity
-                    %option value="1" -> Direction
-                    %option value="2" -> Pressure
-                    %option value="3" -> Rotation
-                    %option value="4" -> Random
-              %tr
-                %th -> smoothness
-                %td -> %input type="range" data-option="avgOf" min="1" max="100" step="1" value="75"
-              %tr
-                %th -> minimum
-                %td -> %input type="range" data-option="min" min="0.01" max="2.01" step="0.05" value="0.01"
-              %tr
-                %th -> maximum
-                %td -> %input type="range" data-option="max" min="0.01" max="2.01" step="0.05" value="1.01"
-
-          %div.tab data-kind="rotation"
-            %input type="hidden" data-raw data-option="tgcopy" value="rotation"
-            %table.table
-              %tr
-                %th -> a function of
-                %td -> %select data-option="type"
-                    %option value=""  -> Nothing
-                    %option value="0" -> Velocity
-                    %option value="1" -> Direction
-                    %option value="2" -> Pressure
-                    %option value="3" -> Rotation
-                    %option value="4" -> Random
-              %tr
-                %th -> smoothness
-                %td -> %input type="range" data-option="avgOf" min="1" max="100" step="1" value="75"
-              %tr
-                %th -> minimum
-                %td -> %input type="range" data-option="min" min="0" max="6.38" step="0.0638" value="0"
-              %tr
-                %th -> maximum
-                %td -> %input type="range" data-option="max" min="0" max="6.38" step="0.0638" value="6.38"
-
-          %div.tab data-kind="spacing"
-            %input type="hidden" data-raw data-option="source" value="spacing"
-            %input type="hidden" data-raw data-option="tgcopy" value="spacing"
-            %table.table
-              %tr
-                %th -> a function of
-                %td -> %select data-option="type"
-                    %option value=""  -> Nothing
-                    %option value="0" -> Velocity
-                    %option value="1" -> Direction
-                    %option value="2" -> Pressure
-                    %option value="3" -> Rotation
-                    %option value="4" -> Random
-              %tr
-                %th -> smoothness
-                %td -> %input type="range" data-option="avgOf" min="1" max="100" step="1" value="75"
-              %tr
-                %th -> minimum
-                %td -> %input type="range" data-option="min" min="0.01" max="2.01" step="0.05" value="0.01"
-              %tr
-                %th -> maximum
-                %td -> %input type="range" data-option="max" min="0.01" max="2.01" step="0.05" value="1.01"
 
       %div.selector-layer-config.selector-text
         %div.header -> Layer options

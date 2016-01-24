@@ -303,7 +303,8 @@ class Area
             return;
 
         this.snap({index: i, action: Area.UNDO_DEL_LAYER});
-        this.layers.splice(i, 1)[0].clear();
+        this.layers[i].clear();
+        this.layers.splice(i, 1);
         this.trigger('layer:del', i);
         this.setLayer(Math.min(this.layer, this.layers.length - 1));
     }
@@ -330,8 +331,8 @@ class Area
 
         this.snap({index: i, action: Area.UNDO_MERGE_DOWN, below: this.layers[i + 1].state(true)});
 
-        const top = this.layers.splice(i, 1)[0];
-        const bot = this.layers[i];
+        const top = this.layers[i];
+        const bot = this.layers[i + 1];
 
         bot.crop(Math.min(top.x, bot.x), Math.min(top.y, bot.y),
                  Math.max(top.w + top.x, bot.w + bot.x) - Math.min(top.x, bot.x),
@@ -344,6 +345,8 @@ class Area
         top.clear();
         ctx.restore();
 
+        this.onLayerRedraw(bot);
+        this.layers.splice(i, 1);
         this.trigger('layer:del', i);
         this.setLayer(Math.min(this.layer, this.layers.length - 1));
     }

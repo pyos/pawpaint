@@ -50,10 +50,11 @@
         .on('drop',     (e) => { e.preventDefault(); area.paste(e.originalEvent.dataTransfer);  })
         .on('dragover', (e) => { e.preventDefault() })
 
-        .on('click', '.action-add-layer', () => area.createLayer(0))
-        .on('click', '.action-del-layer', () => area.deleteLayer(area.layer))
-        .on('click', '.action-undo',      () => area.undo())
-        .on('click', '.action-redo',      () => area.redo())
+        .on('click', '.action-add-layer',  () => area.createLayer(0))
+        .on('click', '.action-del-layer',  () => area.deleteLayer(area.layer))
+        .on('click', '.action-merge-down', () => area.mergeDown(area.layer))
+        .on('click', '.action-undo',       () => area.undo())
+        .on('click', '.action-redo',       () => area.redo())
         .on('click', '.cover', (e) => {
             if (e.target === e.currentTarget)  // ignore clicks on children of .cover
                 e.target.remove();
@@ -90,7 +91,7 @@
             }));
 
     area.setToolOptions({kind: PenTool, last: PenTool});
-    area.palettes = {};
+    area.palettes = [];
     area.tools = [ RectSelectionTool
                  , MoveTool
                  , ColorpickerTool
@@ -114,12 +115,14 @@
 
             if (data.length < i + n + k * 3) return;
             let name   = new TextDecoder('utf-8').decode(new DataView(data.buffer, i, n));
-            let colors = area.palettes[name] = new Array(k);
+            let colors = new Array(k);
 
             for (i += n; k--; i += 3)
                 colors[k] = { H:  data[i + 0] << 2 | data[i + 1] >> 6
                             , S: (data[i + 1] << 1 | data[i + 2] >> 7) & 0x7F
                             , L:  data[i + 2] & 0x7F };
+
+            area.palettes.push({ name, colors });
         }
     };
 
@@ -129,7 +132,8 @@
 
     if (localStorage.image) {
         area.import(localStorage.image, true);
-        area.palette = localStorage.palette;
+        area.palette = parseInt(localStorage.palette);
+        if (isNaN(area.palette)) area.palette = 0;
     }
 
     window.addEventListener('unload', () => {

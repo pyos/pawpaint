@@ -80,7 +80,6 @@ class Tool
             ctx.restore();
         } else {
             this.start(ctx, x, y, 1, 0);
-            this.move (ctx, x, y, 1, 0);
             this.stop (ctx);
         }
     }
@@ -258,7 +257,6 @@ class PenTool extends Tool
         Object.setPrototypeOf(opts, this.options);
         this.options = opts;
         this.start(ctx, 0, 0, 1, 0);
-        this.move (ctx, 0, 0, 1, 0);
         this.stop (ctx);
         this.options = Object.getPrototypeOf(opts);
     }
@@ -275,6 +273,7 @@ class PenTool extends Tool
         this.windowY = [this.prevY = y, y, y];
         this.empty = 1;
         this.count = 0;
+        this.move(ctx, x, y, pressure, rotation);
     }
 
     move(ctx, x, y, pressure, rotation)
@@ -341,18 +340,26 @@ class EraserTool extends PenTool
     crosshair(ctx)
     {
         ctx.save();
-        ctx.lineWidth   = 1;
+        ctx.lineWidth   = 2;
         ctx.globalAlpha = 0.5;
         ctx.beginPath();
-        ctx.arc(0, 0, this.options.size / 2, 0, 2 * Math.PI, false);
+        ctx.arc(0, 0, this.options.size / 2 - 1, 0, 2 * Math.PI, false);
+        ctx.strokeStyle = `hsl(0,0%,50%)`;
         ctx.stroke();
         ctx.restore();
     }
 
     start(ctx, x, y, pressure, rotation)
     {
-        super.start(ctx, x, y, pressure, rotation);
+        ctx.save();
         ctx.globalCompositeOperation = "destination-out";
+        super.start(ctx, x, y, pressure, rotation);
+    }
+
+    stop(ctx)
+    {
+        super.stop(ctx);
+        ctx.restore();
     }
 }
 
