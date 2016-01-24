@@ -1,11 +1,14 @@
 $(function () {
-    var area = new Area($('.main-area .layers')[0],
-        [ Canvas.Tool.Selection.Rect
-        , Canvas.Tool.Move
-        , Canvas.Tool.Colorpicker
-        , Canvas.Tool.Eraser
-        , Canvas.Tool.Pen
-     // , FromImage: #r-round-16, #r-round-32, #r-round-64, r-line{spacingAdjust=0}
+    var area = window.area = new Area($('.main-area .layers')[0],
+        [ RectSelectionTool
+        , MoveTool
+        , ColorpickerTool
+        , EraserTool
+        , PenTool
+        , ImagePenTool.make(document.getElementById('r-round-16'))
+        , ImagePenTool.make(document.getElementById('r-round-32'))
+        , ImagePenTool.make(document.getElementById('r-round-64'))
+        , ImagePenTool.make(document.getElementById('r-line'), 0)
         ]);
 
     var xhr = new XMLHttpRequest();
@@ -39,7 +42,7 @@ $(function () {
         .on('key:88' /* X */, () => area.deleteLayer(area.layer))
         .on('key:77' /* M */, () => area.mergeDown(area.layer))
         .on('key:87' /* W */, () => area.setToolOptions({ kind: area.tool.options.last }))
-        .on('key:69' /* E */, () => area.setToolOptions({ kind: Canvas.Tool.Eraser }))
+        .on('key:69' /* E */, () => area.setToolOptions({ kind: EraserTool }))
 
       //.on('copy',     (e) => area.copy(e.originalEvent.clipboardData))
       //.on('cut',      (e) => area.copy(e.originalEvent.clipboardData))
@@ -90,14 +93,14 @@ $(function () {
         });
     });
 
-    area.setToolOptions({kind: Canvas.Tool.Pen, last: Canvas.Tool.Pen});
+    area.setToolOptions({kind: PenTool, last: PenTool});
 
-    if (localStorage.image)
+    if (localStorage.image) {
         area.import(localStorage.image, true);
-
-    if (area.layers.length)
         area.palette = localStorage.palette;
-    else {
+    }
+
+    if (!area.layers.length) {
         area.setSize(main.innerWidth(), main.innerHeight());
         area.createLayer(0).fill = 'white';
     }

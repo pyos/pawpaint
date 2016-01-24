@@ -1,5 +1,4 @@
 "use strict";
-window.$id   = document.getElementById.bind(document);
 window.min   = Math.min;
 window.max   = Math.max;
 window.sin   = Math.sin;

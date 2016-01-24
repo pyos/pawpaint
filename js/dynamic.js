@@ -79,7 +79,7 @@ class Dynamic
 // tool option (e.g. `context.lineWidth` <=> `tool.options.size`).
 //
 // Options::
-//   source -- the option to use as an upper limit (see `Canvas.Tool.options`)
+//   source -- the option to use as an upper limit (see `Tool.options`)
 //   target -- the property of a 2d context to update with the result
 //   tgcopy -- the option of the tool to update with the result
 //

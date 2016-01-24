@@ -270,10 +270,10 @@ $.fn.selector_palette = (area) ->
 
 $.fn.selector_tools = (area) -> @each ->
   reduced = [
-    Canvas.Tool.Selection.Rect,
+    RectSelectionTool,
     area.tool.options.last,
-    Canvas.Tool.Eraser,
-    Canvas.Tool.Colorpicker
+    EraserTool,
+    ColorpickerTool,
   ]
 
   $(@).selector_discrete area,
