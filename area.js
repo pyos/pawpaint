@@ -24,6 +24,7 @@ class Area
         this._selection = [];  // :: [Path2D]
         this.select_ui  = $('<canvas width="0" height="0">').addClass('hidden selection').appendTo(element)[0];
         this.crosshair  = $('<canvas width="0" height="0">').addClass('crosshair').appendTo('body')[0];
+        this.drawing    = false;
 
         let context = null;
 
@@ -43,6 +44,7 @@ class Area
             const r = element.getBoundingClientRect();
             const x = (ev.clientX - r.left) / this.scale;
             const y = (ev.clientY - r.top)  / this.scale;
+            this.drawing = true;
             this.snap({index: this.layer, action: Area.UNDO_DRAW});
             this.tool.start(context, x, y, ev.force || 0, (ev.rotationAngle || 0) / 360);
             return true;
@@ -60,6 +62,7 @@ class Area
         {
             this.tool.stop(context);
             this.trigger('layer:redraw', this.layers[this.layer], this.layer);
+            this.drawing = false;
             context.restore();
             context = null;
         };
@@ -510,6 +513,9 @@ class Area
      * in the array are left untouched. */
     setToolOptions(options)
     {
+        if (options.kind && this.drawing)
+            return false;
+
         if (options.kind)
             this.tool = new options.kind(this, this.tool ? this.tool.options : {});
 
@@ -524,5 +530,6 @@ class Area
             this.trigger('tool:' + k, options[k], this.tool.options);
 
         this.trigger('tool:options', this.tool.options);
+        return true;
     }
 }
