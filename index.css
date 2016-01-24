@@ -38,7 +38,7 @@ select {
 }
 
 #area-background {
-    background: url(../img/checkers.png);
+    background: url(img/checkers.png);
     overflow: auto;
     cursor: crosshair;
 }
@@ -112,7 +112,7 @@ select {
 }
 
 #side-area > .layer-menu > li {
-    background: url(../img/checkers.png);
+    background: url(img/checkers.png);
     opacity: 0.5;
     display: table;
     font-size: 0;
