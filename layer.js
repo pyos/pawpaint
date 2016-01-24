@@ -22,16 +22,6 @@ class Layer
     get blendMode( ) { return this.element.css('mix-blend-mode'); }
     set blendMode(v) { return this.element.css('mix-blend-mode', v); }
 
-    get fill( ) { return 'transparent'; }
-    set fill(v)
-    {
-        const opt = this.area.tool.options;
-        const ctx = this.img().getContext('2d');
-        ctx.fillStyle = v == 'toolColor' ? `hsl(${opt.H},${opt.S}%,${opt.L}%)` : v;
-        ctx.fillRect(0, 0, this.w, this.h);
-        this.area.onLayerRedraw(this);
-    }
-
     // Remove the contents of this layer. (And the element that represents it.)
     clear()
     {

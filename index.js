@@ -13,8 +13,8 @@
         .on('key:C-89',   /* Y */ () => area.redo())
         .on('key:C-S-90', /* Z */ () => area.redo())
         .on('key:C-48',   /* 0 */ () => area.scale = 1)
-        .on('key:C-187',  /* = */ () => area.scale *= 1.1)
-        .on('key:C-189',  /* - */ () => area.scale *= 0.9)
+        .on('key:C-187',  /* = */ () => area.scale *= 10/9)
+        .on('key:C-189',  /* - */ () => area.scale *= 9/10)
         .on('key:78',     /* N */ () => area.createLayer(0))
         .on('key:88',     /* X */ () => area.deleteLayer(area.layer))
         .on('key:77',     /* M */ () => area.mergeDown(area.layer))
@@ -60,13 +60,6 @@
                 e.target.remove();
         })
 
-        .on('click', '.tabbar li', function () {
-            const attr = this.getAttribute('data-target');
-            const self = $(this);
-            self.addClass('active').siblings().removeClass('active');
-            self.parent().parent().find('.tab').removeClass('active').filter(attr).addClass('active');
-        })
-
         .on('click', '[data-selector]', function (ev) {
             const sel = this.getAttribute('data-selector');
             $(`.templates .selector-${sel}`)[`selector_${sel}`](area, this.offsetLeft, this.offsetTop, true).appendTo('body');
@@ -77,8 +70,6 @@
             $(`.templates .selector-${sel}`)[`selector_${sel}`](area, ev.clientX, ev.clientY).appendTo('body');
             ev.preventDefault();
         });
-
-    $('.layer-menu').selector_layers(area, '.templates .selector-layer-config');
 
     area.on('tool:H tool:S tool:L', (_, v) =>
             $('.action-tool').css('background', `hsl(${v.H}, ${v.S}%, ${v.L}%)`))
@@ -130,6 +121,8 @@
     xhr.open('GET', 'img/palettes.dat', true);
     xhr.send();
 
+    $('.layer-menu').selector_layers(area, '.templates .selector-layer-config');
+
     if (localStorage.image) {
         area.import(localStorage.image, true);
         area.palette = parseInt(localStorage.palette);
@@ -142,7 +135,12 @@
     });
 
     if (!area.layers.length) {
-        area.setSize($('.main-area').innerWidth(), $('.main-area').innerHeight());
-        area.createLayer(0).fill = 'white';
+        area.setSize($('#area-container').innerWidth(), $('#area-container').innerHeight());
+
+        const layer = area.createLayer(0);
+        const ctx = layer.img().getContext('2d');
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, layer.w, layer.h);
+        area.onLayerRedraw(layer);
     }
 })();

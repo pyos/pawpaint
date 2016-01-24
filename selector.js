@@ -343,7 +343,7 @@ $.fn.selector_main = function (area, x, y, fixed)
 };
 
 
-$.fn.selector_export = function (area, x, y, fixed)
+$.fn.selector_save = function (area, x, y, fixed)
 {
     return this.clone().on('click', 'a[data-type]', function (ev) {
         const type = this.getAttribute('data-type');

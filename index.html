@@ -1,1 +1,93 @@
-<!doctype html> <html> <head> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"> <title>WebKit + pen tablet = nope</title> <link rel="stylesheet" href="3rdparty/css/bootstrap.min.css"> <link rel="stylesheet" href="3rdparty/css/font-awesome.min.css"> <link rel="stylesheet" href="css/index.css"></head> <body> <div class="side-area"> <div class="toolbar-row"> <a data-selector="main" class="action-tool"><canvas width="25" height="25"></canvas></a> <a   title="Undo" class="action-undo fa fa-undo"></a> <a title="Redo" class="action-redo fa fa-repeat"></a> <a title="Export as..." data-selector="export" class="action-export fa fa-save"></a></div> <ul class="layer-menu"></ul> <div class="toolbar-row"> <a    title="New layer" class="action-add-layer fa fa-asterisk"></a> <a       title="Remove layer" class="action-del-layer fa fa-trash"></a> <a title="Remove layer" class="action-merge-down fa fa-level-down"></a></div></div> <div data-selector-menu="main" class="main-area"><div class="background"><div id="area" class="layers"></div></div></div> <div class="hidden templates"> <div class="selector-main"> <canvas                     width="200" height="200" class="selector selector-color"></canvas> <canvas                   width="25"  height="200" class="selector selector-palette"></canvas> <canvas                      width="40"  height="200" class="selector selector-size"></canvas> <canvas width="50"  height="200" class="selector selector-tool small not-fixed-only"></canvas> <canvas           width="150" height="200" class="selector selector-tool fixed-only"></canvas></div> <div class="selector-export selector-text"> <div class="header">Export as</div> <div class="btn-group btn-group-lg"> <a data-type="png" class="btn btn-success">PNG</a> <a data-type="svg" class="btn btn-default">SVG</a></div></div> <div class="selector-layer-config selector-text"> <div class="header">Layer options</div> <table class="table"> <tr> <td>Hidden</td> <td><input type="checkbox" data-prop="hidden"></td></tr> <tr> <td>Opacity</td> <td><input type="range" data-prop="opacity" min="0.0" max="1.0" step="0.05" value="1.0"></td></tr> <tr> <td>Blend mode</td> <td><select data-prop="blendMode" value="normal"> <option value="normal">Normal</option> <option value="lighten">Lighten</option> <option value="darken">Darken</option> <option value="multiply">Multiply</option> <option value="screen">Screen</option> <option value="overlay">Overlay</option> <option value="color-dodge">Color Dodge</option> <option value="color-burn">Color Burn</option> <option value="hard-light">Hard Light</option> <option value="soft-light">Soft Light</option> <option value="difference">Difference</option> <option value="exclusion">Exclusion</option> <option value="hue">Hue</option> <option value="saturation">Saturation</option> <option value="color">Color</option> <option value="luminosity">Luminosity</option></select></td></tr> <tr> <td>Fill with</td> <td><select data-prop="fill" value="transparent"> <option value="transparent">...</option> <option value="white">White</option> <option value="black">Black</option> <option value="toolColor">Current color</option></select></td></tr></table></div></div> <div class="hidden"> <img id="r-round-16"    src="img/round.16.png"> <img id="r-round-32"    src="img/round.32.png"> <img id="r-round-64"    src="img/round.64.png"> <img id="r-line"        src="img/line.png"></div> <script src="3rdparty/js/jquery.min.js"></script> <script src="3rdparty/js/bootstrap.min.js"></script> <script src="js/layer.js"></script> <script src="js/area.js"></script> <script src="js/tools.js"></script> <script src="js/dynamic.js"></script> <script src="js/selector.js"></script> <script src="js/index.js"></script></body></html> 
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <title>WebKit + pen table = nope</title>
+    <link rel="stylesheet" href="3rdparty/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="3rdparty/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body>
+    <div id="side-area">
+      <div class="toolbar-row">
+        <a class="action-tool" data-selector="main"><canvas width="25" height="25"></canvas></a>
+        <!--a class="action-undo fa fa-undo" title="Undo"></a-->
+        <!--a class="action-redo fa fa-redo" title="Redo"></a-->
+        <a class="action-save fa fa-save" title="Save" data-selector="save"></a>
+      </div>
+      <ul class="layer-menu"></ul>
+      <div class="toolbar-row">
+        <a class="action-add-layer  fa fa-asterisk"   title="New layer"></a>
+        <a class="action-del-layer  fa fa-trash"      title="Remove layer"></a>
+        <a class="action-merge-down fa fa-level-down" tield="Merge down"></a>
+      </div>
+    </div>
+
+    <div id="area-container" data-selector-menu="main"><div id="area-background"><div id="area"></div></div></div>
+
+    <div class="hidden templates">
+      <div class="selector-main">
+        <canvas width="200" height="200" class="selector selector-color"></canvas>
+        <canvas width="25"  height="200" class="selector selector-palette"></canvas>
+        <canvas width="40"  height="200" class="selector selector-size"></canvas>
+        <canvas width="150" height="200" class="selector selector-tool fixed-only"></canvas>
+        <canvas width="50"  height="200" class="selector selector-tool small not-fixed-only"></canvas>
+      </div>
+
+      <div class="selector-save selector-text">
+        <div class="header">Save as</div>
+        <div class="btn-group btn-group-lg">
+          <a class="btn btn-success" data-type="png">PNG</a>
+          <a class="btn btn-default" data-type="svg">SVG</a>
+        </div>
+      </div>
+
+      <div class="selector-layer-config selector-text">
+        <div class="header">Layer options</div>
+        <table class="table">
+          <tr><td>Hidden</td>  <td><input type="checkbox" data-prop="hidden" /></td></tr>
+          <tr><td>Opacity</td> <td><input type="range" data-prop="opacity" min="0" max="1" step="0.05" value="1" /></td></tr>
+          <tr><td>Blend mode</td>
+              <td>
+                <select data-prop="blendMode" value="normal">
+                  <option value="normal"      > Normal      </option>
+                  <option value="lighten"     > Lighten     </option>
+                  <option value="darken"      > Darken      </option>
+                  <option value="multiply"    > Multiply    </option>
+                  <option value="screen"      > Screen      </option>
+                  <option value="overlay"     > Overlay     </option>
+                  <option value="color-dodge" > Color Dodge </option>
+                  <option value="color-burn"  > Color Burn  </option>
+                  <option value="hard-light"  > Hard Light  </option>
+                  <option value="soft-light"  > Soft Light  </option>
+                  <option value="difference"  > Difference  </option>
+                  <option value="exclusion"   > Exclusion   </option>
+                  <option value="hue"         > Hue         </option>
+                  <option value="saturation"  > Saturation  </option>
+                  <option value="color"       > Color       </option>
+                  <option value="luminosity"  > Luminosity  </option>
+                </select>
+              </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="hidden">
+      <img id="r-round-16" src="img/round.16.png" />
+      <img id="r-round-32" src="img/round.32.png" />
+      <img id="r-round-64" src="img/round.64.png" />
+      <img id="r-line"     src="img/line.png"     />
+    </div>
+
+    <script src="3rdparty/js/jquery.min.js"></script>
+    <script src="3rdparty/js/bootstrap.min.js"></script>
+    <script src="area.js"></script>
+    <script src="dynamic.js"></script>
+    <script src="layer.js"></script>
+    <script src="selector.js"></script>
+    <script src="tools.js"></script>
+    <script src="index.js"></script>
+  </body>
+</html>
