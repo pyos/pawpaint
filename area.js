@@ -24,47 +24,62 @@ class Area
         this._selection = [];  // :: [Path2D]
         this.select_ui  = $('<canvas width="0" height="0">').addClass('hidden selection').appendTo(element)[0];
         this.crosshair  = $('<canvas width="0" height="0">').addClass('crosshair').appendTo('body')[0];
-        this.drawing    = false;
+        this.drawing    = 0;
 
+        let tools   = {};
         let context = null;
 
-        const onDown = (ev) =>
+        const onDown = (dev, ev) =>
         {
-            if (!this.layers.length || !this.tool)
-                return false;
+            if (this.drawing++ === 0) {
+                if (!this.layers.length || !this.tool)
+                    return false;
 
-            const layer = this.layers[this.layer];
-            context = layer.img().getContext('2d');
-            context.save();
-            context.translate(0.5 - layer.x, 0.5 - layer.y);
+                const layer = this.layers[this.layer];
+                context = layer.img().getContext('2d');
+                context.save();
+                context.translate(0.5 - layer.x, 0.5 - layer.y);
 
-            for (const path of this.selection)
-                context.clip(path);
+                for (const path of this.selection)
+                    context.clip(path);
+
+                this.snap({index: this.layer, action: Area.UNDO_DRAW});
+            }
 
             const r = element.getBoundingClientRect();
             const x = (ev.clientX - r.left) / this.scale;
             const y = (ev.clientY - r.top)  / this.scale;
-            this.drawing = true;
-            this.snap({index: this.layer, action: Area.UNDO_DRAW});
-            this.tool.start(context, x, y, ev.force || 0, (ev.rotationAngle || 0) / 360);
+
+            tools[dev] = new this.tool.options.kind(this, {});
+            tools[dev].options = this.tool.options;  // FIXME should not share dynamics
+            tools[dev].start(context, x, y, ev.force || 0, (ev.rotationAngle || 0) / 360);
             return true;
         };
 
-        const onMove = (ev) =>
+        const onMove = (dev, ev) =>
         {
-            const r = element.getBoundingClientRect();
-            const x = (ev.clientX - r.left) / this.scale;
-            const y = (ev.clientY - r.top)  / this.scale;
-            this.tool.move(context, x, y, ev.force || 0, (ev.rotationAngle || 0) / 360);
+            if (tools.hasOwnProperty(dev)) {
+                const r = element.getBoundingClientRect();
+                const x = (ev.clientX - r.left) / this.scale;
+                const y = (ev.clientY - r.top)  / this.scale;
+                tools[dev].move(context, x, y, ev.force || 0, (ev.rotationAngle || 0) / 360);
+            }
         };
 
-        const onUp = () =>
+        const onUp = (dev) =>
         {
-            this.tool.stop(context);
-            this.trigger('layer:redraw', this.layers[this.layer], this.layer);
-            this.drawing = false;
-            context.restore();
-            context = null;
+            if (tools.hasOwnProperty(dev)) {
+                tools[dev].stop(context);
+                delete tools[dev];
+
+                if (--this.drawing === 0) {
+                    context.restore();
+                    context = null;
+
+                    if (this.layers.length)  // might have changed since `onDown`
+                        this.trigger('layer:redraw', this.layers[this.layer], this.layer);
+                }
+            }
         };
 
         // When using tablets, evdev may bug out and send the cursor jumping when doing
@@ -91,7 +106,7 @@ class Area
                 lastX = ev.pageX;
                 lastY = ev.pageY;
 
-                if (onDown(ev)) {
+                if (onDown('mouse', ev)) {
                     element.addEventListener('mouseup',    onMouseUp);
                     element.addEventListener('mouseleave', onMouseUp);
                     element.addEventListener('mousemove',  onMouseMove);
@@ -100,11 +115,11 @@ class Area
             }
         };
 
-        const onMouseMove = (ev) => { if (isValidMouseEvent(ev)) onMove(ev); };
+        const onMouseMove = (ev) => { if (isValidMouseEvent(ev)) onMove('mouse', ev); };
         const onMouseUp = (ev) =>
         {
             if (ev.type === "mouseup" || isValidMouseEvent(ev)) {
-                onUp();
+                onUp('mouse');
                 element.removeEventListener('mouseup',    onMouseUp);
                 element.removeEventListener('mouseleave', onMouseUp);
                 element.removeEventListener('mousemove',  onMouseMove);
@@ -115,25 +130,35 @@ class Area
 
         const onTouchDown = (ev) =>
         {
-            if (ev.touches.length === 1 && ev.which === 0) {
-                // FIXME this one is even worse depending on the device.
-                //   On Chromium OS, this will prevent "back/forward" gestures from
-                //   interfering with drawing, but will not focus the broswer window
-                //   if the user taps the canvas.
-                ev.preventDefault();
+            // FIXME this one is even worse depending on the device.
+            //   On Chromium OS, this will prevent "back/forward" gestures from
+            //   interfering with drawing, but will not focus the broswer window
+            //   if the user taps the canvas.
+            ev.preventDefault();
 
-                if (onDown(ev.touches[0])) {
+            for (let i = 0; i < ev.changedTouches.length; i++) {
+                const touch = ev.changedTouches[i];
+                if (onDown('touch' + touch.identifier, touch)) {
                     element.addEventListener('touchmove', onTouchMove);
                     element.addEventListener('touchend',  onTouchUp);
                 }
             }
         };
 
-        const onTouchMove = (ev) => { onMove(ev.touches[0]); };
+        const onTouchMove = (ev) =>
+        {
+            for (let i = 0; i < ev.changedTouches.length; i++) {
+                const touch = ev.changedTouches[i];
+                onMove('touch' + touch.identifier, touch);
+            }
+        };
+
         const onTouchUp = (ev) =>
         {
+            for (let i = 0; i < ev.changedTouches.length; i++)
+                onUp('touch' + ev.changedTouches[i].identifier);
+
             if (ev.touches.length === 0) {
-                onUp();
                 element.removeEventListener('touchmove', onTouchMove);
                 element.removeEventListener('touchend',  onTouchUp);
             }
