@@ -82,7 +82,7 @@ class ColorControl extends CanvasControl
             const a = -this.area.tool.options.H * Math.PI / 180;
             const St = (x * Math.cos(a) - y * Math.sin(a)) / satHeight + 1/3;
             const Lt = (x * Math.sin(a) + y * Math.cos(a)) / satSide   + 1/2;
-            const S = 100 * Math.min(1, Math.max(0, St / Math.abs(1 - Math.abs(Lt * 2 - 1))));
+            const S = 100 * Math.min(1, Math.max(0, St / (1 - Math.abs(Lt * 2 - 1))));
             const L = 100 * Math.min(1, Math.max(0, Lt));
             this.area.setToolOptions({ S, L });
         } else
@@ -104,16 +104,18 @@ class ColorControl extends CanvasControl
 
         ctx.rotate(this.area.tool.options.H * Math.PI / 180);
         ctx.translate(-this.satRadius / 2, 0);
+
         ctx.beginPath();
         ctx.moveTo(0, -satSide / 2);
         ctx.lineTo(0, +satSide / 2);
         ctx.lineTo(satHeight, 0);
-        ctx.closePath();
+        ctx.fillStyle = `hsl(${this.area.tool.options.H}, 100%, 50%)`;
+        ctx.fill();
 
         {
-            const grad = ctx.createLinearGradient(0, -satSide / 4, satHeight, 0);
-            grad.addColorStop(0, "#000");
-            grad.addColorStop(1, `hsl(${this.area.tool.options.H}, 100%, 50%)`);
+            const grad = ctx.createLinearGradient(0, -satSide / 2, satHeight, 0);
+            grad.addColorStop(0, 'rgba(0, 0, 0, 1)');
+            grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
             ctx.fillStyle = grad;
             ctx.fill();
         }

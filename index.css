@@ -62,7 +62,7 @@ select {
 }
 
 .side-area {
-    background: black;
+    background: #111;
     font-size: 0;
     position: relative;
     overflow: hidden;
