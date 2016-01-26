@@ -77,18 +77,6 @@ class Layer
         this.area.onLayerRedraw(this);
     }
 
-    // Update the style of the element that represents this layer.
-    restyle(index, scale)
-    {
-        this.element.css({
-            'z-index': index,
-            'left':   this.x * scale,
-            'top':    this.y * scale,
-            'width':  this.w * scale,
-            'height': this.h * scale,
-        });
-    }
-
     // Load a layer from an old state. A state should contain fields `x`, `y`,
     // `w`, `h`, and `data`, plus optionally the values for the properties.
     // `data` may be either an URL or a Canvas image data array. If it is an URL,

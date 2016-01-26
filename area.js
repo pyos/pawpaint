@@ -12,19 +12,24 @@ class Area
 
     constructor(element)
     {
+        element.appendChild(this.select_ui = document.createElement('canvas'));
+        element.appendChild(this.crosshair = document.createElement('canvas'));
+        this.select_ui.style.top = this.select_ui.style.left = 0;
+        this.select_ui.classList.add('selection');
+        this.crosshair.classList.add('crosshair');
+
         this.element    = element;
         this._scale     = 1;
         this.layer      = 0;
         this.w          = 0;
         this.h          = 0;
+        this.drawing    = 0;   // number of active input devices
         this.layers     = [];  // :: [Layer]
+        this.selection  = [];  // :: [Path2D]
         this.undos      = [];  // :: [{action, index, state, ...}]
         this.redos      = [];
         this.events     = {};
-        this._selection = [];  // :: [Path2D]
-        this.select_ui  = $('<canvas width="0" height="0">').addClass('hidden selection').appendTo(element)[0];
-        this.crosshair  = $('<canvas width="0" height="0">').addClass('crosshair').appendTo('body')[0];
-        this.drawing    = 0;
+        this.setToolOptions({ kind: Tool });
 
         let tools   = {};
         let context = null;
@@ -40,7 +45,7 @@ class Area
                 context.save();
                 context.translate(0.5 - layer.x, 0.5 - layer.y);
 
-                for (const path of this.selection)
+                for (let path of this.selection)
                     context.clip(path);
 
                 this.snap({index: this.layer, action: Area.UNDO_DRAW});
@@ -88,16 +93,6 @@ class Area
         let lastX = 0;
         let lastY = 0;
 
-        const isValidMouseEvent = (ev) => {
-            if (Math.abs(ev.pageX - lastX) + Math.abs(ev.pageY - lastY) < 200) {
-                lastX = ev.pageX;
-                lastY = ev.pageY;
-                return true;
-            }
-
-            return false;
-        };
-
         const onMouseDown = (ev) =>
         {
             if (ev.which === 1 && (ev.buttons === undefined || ev.buttons === 1)) {
@@ -115,17 +110,23 @@ class Area
             }
         };
 
-        const onMouseMove = (ev) => { if (isValidMouseEvent(ev)) onMove('mouse', ev); };
+        const onMouseMove = (ev) =>
+        {
+            if (Math.abs(ev.pageX - lastX) + Math.abs(ev.pageY - lastY) < 200) {
+                lastX = ev.pageX;
+                lastY = ev.pageY;
+                onMove('mouse', ev);
+            }
+        };
+
         const onMouseUp = (ev) =>
         {
-            if (ev.type === "mouseup" || isValidMouseEvent(ev)) {
-                onUp('mouse');
-                element.removeEventListener('mouseup',    onMouseUp);
-                element.removeEventListener('mouseleave', onMouseUp);
-                element.removeEventListener('mousemove',  onMouseMove);
-                if (ev.type !== 'mouseleave')
-                    element.removeEventListener('mouseenter', onMouseDown);
-            }
+            onUp('mouse');
+            element.removeEventListener('mouseup',    onMouseUp);
+            element.removeEventListener('mouseleave', onMouseUp);
+            element.removeEventListener('mousemove',  onMouseMove);
+            if (ev.type !== 'mouseleave')
+                element.removeEventListener('mouseenter', onMouseDown);
         };
 
         const onTouchDown = (ev) =>
@@ -166,18 +167,19 @@ class Area
 
         element.addEventListener('mousedown',  onMouseDown);
         element.addEventListener('touchstart', onTouchDown);
-        element.addEventListener('mouseleave', (ev) => { this.crosshair.style.display = 'none' });
-        element.addEventListener('touchstart', (ev) => { this.crosshair.style.display = 'none' });
+        element.addEventListener('mouseleave', (ev) => { this.crosshair.style.visibility = 'hidden' });
+        element.addEventListener('touchstart', (ev) => { this.crosshair.style.visibility = 'hidden' });
         element.addEventListener('mousemove',  (ev) => {
-            this.crosshair.style.left = ev.pageX + 'px';
-            this.crosshair.style.top  = ev.pageY + 'px';
-            this.crosshair.style.display = '';
+            const r = element.getBoundingClientRect();
+            this.crosshair.style.left = ev.clientX - r.left + 'px';
+            this.crosshair.style.top  = ev.clientY - r.top  + 'px';
+            this.crosshair.style.visibility = 'visible';
         });
     }
 
     on(name, fn)
     {
-        for (const n of name.split(' ')) {
+        for (let n of name.split(' ')) {
             this.events[n] = this.events[n] || [];
             this.events[n].push(fn);
         }
@@ -190,7 +192,7 @@ class Area
         if (!this.events.hasOwnProperty(name))
             return false;
 
-        for (const fn of this.events[name] || [])
+        for (let fn of this.events[name] || [])
             fn.apply(this, args);
 
         return true;
@@ -211,14 +213,9 @@ class Area
     restyleCrosshair()
     {
         const sz = this.tool.options.size * this.scale;
-        const cr = $(this.crosshair);
-        cr.attr({'width': sz, 'height': sz});
-        cr.css({'margin-left': -sz / 2, 'margin-top': -sz / 2});
-
-        if (this.tool.options.size > 5)
-            cr.removeClass('hidden');
-        else
-            cr.addClass('hidden');
+        this.crosshair.width = this.crosshair.height = sz;
+        this.crosshair.style.marginLeft = this.crosshair.style.marginTop = -sz / 2 + "px";
+        this.crosshair.style.display = sz > 5 ? '' : 'none';
 
         const ctx = this.crosshair.getContext('2d');
         ctx.translate(sz / 2, sz / 2);
@@ -228,9 +225,16 @@ class Area
 
     restyleLayers()
     {
-        for (const n in this.layers) {
-            this.layers[n].active = n == this.layer;
-            this.layers[n].restyle(this.layers.length - n, this.scale);
+        for (let n in this.layers) {
+            const layer = this.layers[n];
+            layer.active = n == this.layer;
+            layer.element.css({
+                'z-index': -1 - n,
+                'left':   layer.x * this.scale,
+                'top':    layer.y * this.scale,
+                'width':  layer.w * this.scale,
+                'height': layer.h * this.scale,
+            });
         }
     }
 
@@ -238,10 +242,8 @@ class Area
      * Uncovered part of the image is transparent, while the overflow is hidden. */
     setSize(w, h)
     {
-        this.w = w;
-        this.h = h;
-        this.element.style.width  = (this.select_ui.width  = w * this.scale) + "px";
-        this.element.style.height = (this.select_ui.height = h * this.scale) + "px";
+        this.element.style.width  = (this.w = w) * this.scale + "px";
+        this.element.style.height = (this.h = h) * this.scale + "px";
         this.selection = this.selection;  // refresh the selection UI
     }
 
@@ -267,21 +269,19 @@ class Area
     set selection(paths)
     {
         this._selection = paths;
-
-        if (paths.length) {
-            this.select_ui.className = "selection";
-            // TODO an animated dashed border instead of this:
-            const ctx = this.select_ui.getContext('2d');
-            ctx.save();
-            ctx.scale(this.scale, this.scale);
-            ctx.fillStyle = "hsl(0, 0%, 50%)";
-            ctx.fillRect(0, 0, this.w, this.h);
-            for (const path of paths) ctx.clip(path);
-            ctx.clearRect(0, 0, this.w, this.h);
-            ctx.restore();
-        } else {
-            this.select_ui.className = "hidden selection";
-        }
+        this.select_ui.width  = this.w * this.scale;
+        this.select_ui.height = this.h * this.scale;
+        // TODO an animated dashed border instead of this:
+        const ctx = this.select_ui.getContext('2d');
+        ctx.save();
+        ctx.scale(this.scale, this.scale);
+        ctx.globalAlpha = 0.33;
+        ctx.globalCompositeOperation = "copy";
+        ctx.fillStyle = "hsl(0, 0%, 50%)";
+        ctx.fillRect(0, 0, this.w, this.h);
+        for (let path of paths) ctx.clip(path);
+        ctx.clearRect(0, 0, this.w, this.h);
+        ctx.restore();
     }
 
     /* Save a snapshot of a single layer in the undo stack.
@@ -300,6 +300,8 @@ class Area
      * optionally from a previously saved `Layer` state. */
     createLayer(index, state)
     {
+        if (index > this.layers.size) index = this.layers.size;
+
         const layer = new Layer(this);
         this.layers.splice(index, 0, layer);
         this.trigger('layer:add', layer, index);
@@ -320,8 +322,8 @@ class Area
         if (i < 0 || this.layers.length <= i)
             return;
 
-        this.restyleLayers();
         this.trigger('layer:set', this.layer = i);
+        this.restyleLayers();
     }
 
     /* Remove a layer from the stack. */
@@ -462,7 +464,7 @@ class Area
             case "svg":
                 const tag = $("<svg:svg xmlns:svg='http://www.w3.org/2000/svg' width='" + this.w + "' "
                                 + "xmlns:xlink='http://www.w3.org/1999/xlink' height='" + this.h + "'>");
-                for (const layer of this.layers) tag.prepend(layer.svg());
+                for (let layer of this.layers) tag.prepend(layer.svg());
                 // force the bottommost layer to have a "normal" blending mode
                 // should this image be inserted into an html document.
                 tag.css('isolation', 'isolate');
@@ -551,7 +553,7 @@ class Area
             // if the tool has changed, emit every event.
             options = this.tool.options;
 
-        for (const k in options)
+        for (let k in options)
             this.trigger('tool:' + k, options[k], this.tool.options);
 
         this.trigger('tool:options', this.tool.options);

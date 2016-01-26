@@ -1,25 +1,24 @@
 body {
-    background: black;
+    background: #ddd;
     position: absolute;
-    overflow: hidden;
     left:   0;
     top:    0;
     right:  0;
     bottom: 0;
-    cursor: default;
-}
-
-ul {
-    list-style: none;
-    margin:  0;
-    padding: 0;
+    user-select: none;
+    -ms-user-select: none;
+    -moz-user-select: -moz-none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    -ms-touch-action: none;
 }
 
 select {
-    color: black
+    color: black;
 }
 
 #area-container {
+    font-size: 0;
     text-align: center;
     overflow: hidden;
     height: 100%;
@@ -30,7 +29,8 @@ select {
     height: 100%;
 }
 
-#area-container:before, #area-container > * {
+#area-container:before,
+#area-background {
     vertical-align: middle;
     max-height: 100%;
     max-width:  100%;
@@ -49,177 +49,121 @@ select {
     overflow: hidden;
 }
 
-#area > *, .crosshair {
+#area > * {
     position: absolute;
     pointer-events: none;
 }
 
 #area > .active {
-    /* FIXME layer contents obscure the outline */
-    outline: 1px dashed yellow;
-    outline-offset: -1px;
+    border: 1px dashed red;
+    box-sizing: content-box;
+    margin-left: -1px;
+    margin-top: -1px;
 }
 
-.crosshair {
-    will-change: left, top;  /* probably doesn't help */
-}
-
-.selection {
-    top: 0;
-    left: 0;
-    z-index: 65538;
-    opacity: 0.5;
-}
-
-#side-area {
+.side-area {
+    background: black;
+    font-size: 0;
     position: relative;
     overflow: hidden;
-    width:  45px;
     height: 100%;
-    float: right;
-
-    background: black;
-    color:      white;
+    width: 45px;
+    color: white;
+    float: left;
 }
 
-#side-area > .toolbar-row > * {
-    width:   45px;
-    height:  45px;
+.side-area-right {
+    float: right;
+}
+
+.toolbar-row > * {
+    width: 45px;
+    height: 45px;
     padding: 6px;
     display: inline-block;
 
-    font-size:  20px;
+    font-size: 20px;
     text-align: center;
-    color:      inherit;
-    cursor:     pointer;
+    color: inherit;
+    cursor: pointer;
 }
 
-#side-area > .toolbar-row,
-#side-area > .toolbar-row:before,
-#side-area > .toolbar-row * {
+.toolbar-row *,
+.toolbar-row *:before {
     vertical-align: middle;
 }
 
-#side-area > .toolbar-row > .action-tool {
-    box-shadow: 0 0 10px -5px #000 inset;
-}
-
-#side-area > .layer-menu {
+.layer-menu {
     overflow-x: hidden;
     overflow-y: auto;
-    width:  100%;
-    height: calc(100% - 225px);  /* - 5 x 45px buttons */
+    height: calc(100% - 135px);  /* - 3 x 45px buttons */
 }
 
-#side-area > .layer-menu > li {
-    background: url(img/checkers.png);
+.layer-menu-item:not(.active) {
     opacity: 0.5;
-    display: table;
-    font-size: 0;
-    text-align: center;
 }
 
-#side-area > .layer-menu > li:not(:first-child) {
-    border-top: 1px solid #777;
-}
-
-#side-area > .layer-menu > li.active {
-    opacity: 1;
-}
-
-#side-area > .layer-menu > li > canvas {
-    max-height: 60px;
-    max-width:  45px;
-    display: inline-block;
-    outline: 1px dashed gray;
-    outline-offset: -1px;
-}
-
-#side-area > .layer-menu > li.active > canvas {
-    outline-color: yellow;
+.layer-menu-item > canvas {
+    background: url(img/checkers.png);
+    max-height: 45px;
+    max-width:  100%;
 }
 
 .cover {
-    z-index: 65540;
     position: absolute;
     overflow: hidden;
+    z-index: 99;
     left:   0;
     top:    0;
     right:  0;
     bottom: 0;
 }
 
-.cover.selector > * {
-    position: absolute;
-    color: white;
-    background: #000;
+.control {
+    border-radius: 5px;
     box-shadow: 0 0 20px -5px #000;
+    background: white;
+    white-space: nowrap;
+    position: absolute;
+    overflow: hidden;
 }
 
-.cover.selector > .fixed {
-    /* Must sync up with #side-area{width} */
+.control.fixed-left {
+    left: 45px;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.control.fixed-right {
     right: 45px;
-    left: auto !important;
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
 }
 
-.cover.selector > .fixed .not-fixed-only,
-.cover.selector > :not(.fixed) .fixed-only {
-    display: none;
-}
-
-.selector-main {
-    border-radius: 100px 0 0 100px;
-    white-space: nowrap;
+.control-menu {
+    border-radius: 100px 5px 5px 100px;
+    margin-left: -205px;
+    margin-top: -100px;
+    background: #111;
     font-size: 0;
 }
 
-.selector-main:not(.fixed) {
-    margin-left: -215px;
-    margin-top: -100px;
+.control-color {
+    border-radius: 0 100px 100px 0;
+    background: #111;
+    font-size: 0;
 }
 
-.selector-main > * {
-    vertical-align: top;
-    display: inline-block;
+[data-control="SizeControl"]    { cursor: ns-resize; }
+[data-control="ColorControl"]   { cursor: crosshair; }
+[data-control="PaletteControl"] { cursor: crosshair; }
+[data-control="ColorButtonControl"] { box-shadow: 0 0 15px -5px #000 inset; }
+
+.control.table {
+    width: auto;
 }
 
-.selector-size {
-    border-left:  1px solid #444;
-    border-right: 1px solid #444;
-    text-align: center;
-    box-sizing: content-box;
-    cursor: ns-resize;
-}
-
-.selector-color, .selector-palette {
-    cursor: crosshair;
-}
-
-.selector-color {
-    margin-right: 10px;
-}
-
-.selector-text {
+.control.table td,
+.control.table th {
     padding: 15px;
-    overflow: hidden;
-    border-radius: 5px;
-}
-
-.selector-text > :not(:last-child) {
-    margin-bottom: 15px;
-}
-
-.selector-text > .header {
-    font-weight: bold;
-}
-
-.selector-text .table:last-child {
-    margin-bottom: 0;
-}
-
-.selector-text .table th,
-.selector-text .table td {
-    border-color: #444;
 }

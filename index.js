@@ -17,7 +17,7 @@
         .on('key:C-48',   /* 0 */ () => area.scale = 1)
         .on('key:C-187',  /* = */ () => area.scale *= 10/9)
         .on('key:C-189',  /* - */ () => area.scale *= 9/10)
-        .on('key:78',     /* N */ () => area.createLayer(0))
+        .on('key:78',     /* N */ () => area.createLayer(area.layer))
         .on('key:88',     /* X */ () => area.deleteLayer(area.layer))
         .on('key:77',     /* M */ () => area.mergeDown(area.layer))
         .on('key:87',     /* W */ () => area.setToolOptions({ kind: area.tool.options.last }))
@@ -67,7 +67,7 @@
         .on('drop',     (e) => { e.preventDefault(); area.paste(e.originalEvent.dataTransfer);  })
         .on('dragover', (e) => { e.preventDefault() })
 
-        .on('click', '.action-add-layer',  () => area.createLayer(0))
+        .on('click', '.action-add-layer',  () => area.createLayer(area.layer))
         .on('click', '.action-del-layer',  () => area.deleteLayer(area.layer))
         .on('click', '.action-merge-down', () => area.mergeDown(area.layer))
         .on('click', '.action-undo',       () => area.undo())
@@ -77,31 +77,20 @@
                 e.target.remove();
         })
 
-        .on('click', '[data-selector]', function (ev) {
-            const sel = this.getAttribute('data-selector');
-            $(`.templates .selector-${sel}`)[`selector_${sel}`](area, this.offsetLeft, this.offsetTop, true).appendTo('body');
+        .on('click', '[data-control-click]', function (e) {
+            $(this.getAttribute('data-control-click')).clone().control(area, 0, 0, this);
+            e.preventDefault();
         })
 
-        .on('contextmenu', '[data-selector-menu]', function (ev) {
-            const sel = this.getAttribute('data-selector-menu');
-            $(`.templates .selector-${sel}`)[`selector_${sel}`](area, ev.clientX, ev.clientY).appendTo('body');
-            ev.preventDefault();
+        .on('contextmenu', '[data-control-menu]', function (e) {
+            $(this.getAttribute('data-control-menu')).clone().control(area, e.clientX, e.clientY);
+            e.preventDefault();
         })
 
-        .on('contextmenu', '.selector-main', function (ev) {
-            $('.cover').click();
-            ev.preventDefault();
+        .on('contextmenu', '.cover', function (e) {
+            e.currentTarget.remove();
+            e.preventDefault();
         });
-
-    area.on('tool:H tool:S tool:L', (_, v) =>
-            $('.action-tool').css('background', `hsl(${v.H}, ${v.S}%, ${v.L}%)`))
-        .on('tool:L tool:kind', (_, v) =>
-            $('.action-tool canvas').each(function () {
-                const ctx = this.getContext('2d');
-                const obj = new v.kind(null, { size: this.width * 0.75, L: v.L > 50 ? 0 : 100 });
-                ctx.clearRect(0, 0, this.width, this.height);
-                obj.symbol(ctx, this.width / 2, this.height / 2);
-            }));
 
     area.setToolOptions({kind: PenTool, last: PenTool});
     area.palettes = [];
@@ -117,33 +106,11 @@
                  ];
 
     let xhr = new XMLHttpRequest();
-    xhr.onload = function ()
-    {
-        const data = new Uint8Array(this.response);
-
-        for (let i = 0; i < data.length; ) {
-            if (data.length < i + 4) return;
-            let n = data[i++] << 8 | data[i++];
-            let k = data[i++] << 8 | data[i++];
-
-            if (data.length < i + n + k * 3) return;
-            let name   = new TextDecoder('utf-8').decode(new DataView(data.buffer, i, n));
-            let colors = new Array(k);
-
-            for (i += n; k--; i += 3)
-                colors[k] = { H:  data[i + 0] << 2 | data[i + 1] >> 6
-                            , S: (data[i + 1] << 1 | data[i + 2] >> 7) & 0x7F
-                            , L:  data[i + 2] & 0x7F };
-
-            area.palettes.push({ name, colors });
-        }
-    };
-
-    xhr.responseType = 'arraybuffer';
-    xhr.open('GET', 'img/palettes.dat', true);
+    xhr.onload = function () { area.palettes = JSON.parse(this.responseText); };
+    xhr.open('GET', 'img/palettes.json', true);
     xhr.send();
 
-    $('.layer-menu').selector_layers(area, '.templates .selector-layer-config');
+    $('[data-control]:not(.templates [data-control])').control(area);
 
     if (localStorage.image) {
         area.import(localStorage.image, true);
@@ -159,7 +126,7 @@
     if (!area.layers.length) {
         area.setSize($('#area-container').innerWidth(), $('#area-container').innerHeight());
 
-        const layer = area.createLayer(0);
+        const layer = area.createLayer(area.layer);
         const ctx = layer.img().getContext('2d');
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, layer.w, layer.h);

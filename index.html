@@ -9,69 +9,82 @@
     <link rel="stylesheet" href="index.css" />
   </head>
   <body>
-    <div id="side-area">
+    <div class="side-area">
       <div class="toolbar-row">
-        <a class="action-tool" data-selector="main"><canvas width="25" height="25"></canvas></a>
-        <!--a class="action-undo fa fa-undo" title="Undo"></a-->
-        <!--a class="action-redo fa fa-redo" title="Redo"></a-->
-        <a class="action-save fa fa-save" title="Save" data-selector="save"></a>
+        <canvas data-control="ColorButtonControl" data-control-click=".templates .control-color" width="45" height="45"></canvas>
+        <a class="action-save fa fa-save"   title="Save" data-control-click=".templates .control-save"></a>
+        <a class="action-undo fa fa-undo"   title="Undo"></a>
+        <a class="action-redo fa fa-repeat" title="Redo"></a>
       </div>
-      <ul class="layer-menu"></ul>
+    </div>
+
+    <div class="side-area side-area-right">
       <div class="toolbar-row">
         <a class="action-add-layer  fa fa-asterisk"   title="New layer"></a>
         <a class="action-del-layer  fa fa-trash"      title="Remove layer"></a>
         <a class="action-merge-down fa fa-level-down" tield="Merge down"></a>
       </div>
+      <div class="layer-menu" data-control="LayerControl" data-control-layer-config=".templates .control-layer-config"></div>
     </div>
 
-    <div id="area-container" data-selector-menu="main"><div id="area-background"><div id="area"></div></div></div>
+    <div id="area-container" data-control-menu=".templates .control-menu">
+      <div id="area-background">
+        <div id="area"></div>
+      </div>
+    </div>
 
     <div class="hidden templates">
-      <div class="selector-main">
-        <canvas width="200" height="200" class="selector selector-color"></canvas>
-        <canvas width="25"  height="200" class="selector selector-palette"></canvas>
-        <canvas width="40"  height="200" class="selector selector-size"></canvas>
-        <canvas width="150" height="200" class="selector selector-tool fixed-only"></canvas>
-        <canvas width="50"  height="200" class="selector selector-tool small not-fixed-only"></canvas>
+      <div class="control control-color" data-control="JointControl">
+        <canvas width="150" height="200" data-control="ToolControl" data-item-height="50"></canvas>
+        <canvas width="40"  height="200" data-control="SizeControl"></canvas>
+        <canvas width="25"  height="200" data-control="PaletteControl"></canvas>
+        <canvas width="200" height="200" data-control="ColorControl"></canvas>
       </div>
 
-      <div class="selector-save selector-text">
-        <div class="header">Save as</div>
-        <div class="btn-group btn-group-lg">
-          <a class="btn btn-success" data-type="png">PNG</a>
-          <a class="btn btn-default" data-type="svg">SVG</a>
-        </div>
+      <div class="control control-menu" data-control="JointControl">
+        <canvas width="200" height="200" data-control="ColorControl"></canvas>
+        <canvas width="25"  height="200" data-control="PaletteControl"></canvas>
+        <canvas width="40"  height="200" data-control="SizeControl"></canvas>
+        <canvas width="50"  height="200" data-control="ToolControl" data-item-height="50"></canvas>
       </div>
 
-      <div class="selector-layer-config selector-text">
-        <div class="header">Layer options</div>
-        <table class="table">
-          <tr><td>Hidden</td>  <td><input type="checkbox" data-prop="hidden" /></td></tr>
-          <tr><td>Opacity</td> <td><input type="range" data-prop="opacity" min="0" max="1" step="0.05" value="1" /></td></tr>
-          <tr><td>Blend mode</td>
-              <td>
-                <select data-prop="blendMode" value="normal">
-                  <option value="normal"      > Normal      </option>
-                  <option value="lighten"     > Lighten     </option>
-                  <option value="darken"      > Darken      </option>
-                  <option value="multiply"    > Multiply    </option>
-                  <option value="screen"      > Screen      </option>
-                  <option value="overlay"     > Overlay     </option>
-                  <option value="color-dodge" > Color Dodge </option>
-                  <option value="color-burn"  > Color Burn  </option>
-                  <option value="hard-light"  > Hard Light  </option>
-                  <option value="soft-light"  > Soft Light  </option>
-                  <option value="difference"  > Difference  </option>
-                  <option value="exclusion"   > Exclusion   </option>
-                  <option value="hue"         > Hue         </option>
-                  <option value="saturation"  > Saturation  </option>
-                  <option value="color"       > Color       </option>
-                  <option value="luminosity"  > Luminosity  </option>
-                </select>
-              </td>
-          </tr>
-        </table>
-      </div>
+      <table class="control table control-save" data-control="SaveControl">
+        <tr><th>Save as</th></tr>
+        <tr>
+          <td class="btn-group btn-group-lg">
+            <a class="btn btn-lg btn-success" data-type="png" data-name="image.png">PNG</a>
+            <a class="btn btn-lg btn-default" data-type="svg" data-name="image.svg">SVG</a>
+          </td>
+        </tr>
+      </table>
+
+      <table class="control table control-layer-config" data-control="LayerConfigControl">
+        <tr><th colspan="2">Layer options</th></tr>
+        <tr><td>Hidden</td>  <td><input type="checkbox" data-prop="hidden" /></td></tr>
+        <tr><td>Opacity</td> <td><input type="range" data-prop="opacity" min="0" max="1" step="0.05" value="1" /></td></tr>
+        <tr><td>Blend mode</td>
+            <td>
+              <select data-prop="blendMode" value="normal">
+                <option value="normal"      > Normal      </option>
+                <option value="lighten"     > Lighten     </option>
+                <option value="darken"      > Darken      </option>
+                <option value="multiply"    > Multiply    </option>
+                <option value="screen"      > Screen      </option>
+                <option value="overlay"     > Overlay     </option>
+                <option value="color-dodge" > Color Dodge </option>
+                <option value="color-burn"  > Color Burn  </option>
+                <option value="hard-light"  > Hard Light  </option>
+                <option value="soft-light"  > Soft Light  </option>
+                <option value="difference"  > Difference  </option>
+                <option value="exclusion"   > Exclusion   </option>
+                <option value="hue"         > Hue         </option>
+                <option value="saturation"  > Saturation  </option>
+                <option value="color"       > Color       </option>
+                <option value="luminosity"  > Luminosity  </option>
+              </select>
+            </td>
+        </tr>
+      </table>
     </div>
 
     <div class="hidden">
@@ -84,9 +97,9 @@
     <script src="3rdparty/js/jquery.min.js"></script>
     <script src="3rdparty/js/bootstrap.min.js"></script>
     <script src="area.js"></script>
+    <script src="control.js"></script>
     <script src="dynamic.js"></script>
     <script src="layer.js"></script>
-    <script src="selector.js"></script>
     <script src="tools.js"></script>
     <script src="index.js"></script>
   </body>

@@ -47,7 +47,7 @@ class Tool
     /* Change some of the values. The rest remain intact. */
     setOptions(options)
     {
-        for (const k in options)
+        for (let k in options)
             if (options.hasOwnProperty(k))
                 this.options[k] = options[k];
     }
@@ -180,19 +180,19 @@ class SelectionTool extends Tool
         this.select(path, this.startX + Math.min(0, dx), this.startY + Math.min(0, dy), this.dX, this.dY);
 
         if (window.CTRL && window.ALT) {  // Ctrl+Alt+drag -- XOR
-            for (const p of this.old)
+            for (let p of this.old)
                 paths.push(p);
 
             paths.push(path);
         } else if (window.CTRL && this.old) {  // Ctrl+drag -- union
-            for (const p of this.old) {
+            for (let p of this.old) {
                 const upath = new Path2D();
                 upath.addPath(path);
                 upath.addPath(p);
                 paths.push(upath);
             }
         } else if (window.ALT) {  // Alt+drag -- subtraction
-            for (const p of this.old)
+            for (let p of this.old)
                 paths.push(p);
 
             const npath = new Path2D();
@@ -267,7 +267,7 @@ class PenTool extends Tool
         ctx.lineWidth   = this.options.size;
         ctx.globalAlpha = this.options.opacity;
         ctx.strokeStyle = ctx.fillStyle = `hsl(${this.options.H},${this.options.S}%,${this.options.L}%)`;
-        for (const dyn of this.options.dynamic)
+        for (let dyn of this.options.dynamic)
             dyn.reset(ctx, this, x, y);
         this.windowX = [this.prevX = x, x, x];
         this.windowY = [this.prevY = y, y, y];
@@ -289,7 +289,7 @@ class PenTool extends Tool
             this.count++;
             this.windowX[i] = x;
             this.windowY[i] = y;
-            for (const dyn of this.options.dynamic)
+            for (let dyn of this.options.dynamic)
                 dyn.start(ctx, this, dx, dy, pressure, rotation);
 
             const dx_step = dx / steps;
@@ -298,13 +298,13 @@ class PenTool extends Tool
             let sy = this.prevY;
 
             for (let k = 0; k < steps; k++) {
-                for (const dyn of this.options.dynamic)
+                for (let dyn of this.options.dynamic)
                     dyn.step(ctx, this, steps);
 
                 this.step(ctx, sx, sy, sx += dx_step, sy += dy_step);
             }
 
-            for (const dyn of this.options.dynamic)
+            for (let dyn of this.options.dynamic)
                 dyn.stop(ctx, this);
 
             this.empty = 0;
@@ -322,7 +322,7 @@ class PenTool extends Tool
 
     stop(ctx)
     {
-        for (const dyn of this.options.dynamic)
+        for (let dyn of this.options.dynamic)
             dyn.restore(ctx, this);
 
         ctx.restore();

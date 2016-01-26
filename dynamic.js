@@ -18,7 +18,7 @@ class Dynamic
         this.max   = 1;
         this.avgOf = 10;
 
-        for (const k in options)
+        for (let k in options)
             this[k] = options[k];
     }
 
