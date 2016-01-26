@@ -63,6 +63,10 @@ class ColorControl extends CanvasControl
             ctx.fill();
         }
 
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath();
+        ctx.arc(0, 0, this.hueInnerR / this.hueOuterR, 0, Math.PI * 2);
+        ctx.fill();
         ctx.restore();
     }
 
@@ -94,7 +98,7 @@ class ColorControl extends CanvasControl
         ctx.save();
         ctx.translate(this.hueOuterR, this.hueOuterR);
         ctx.beginPath();
-        ctx.arc(0, 0, this.hueInnerR, 0, Math.PI * 2, false);
+        ctx.arc(0, 0, this.hueInnerR - 1, 0, Math.PI * 2, false);
         ctx.clip();
         ctx.clearRect(-this.hueInnerR, -this.hueInnerR, this.hueInnerR * 2, this.hueInnerR * 2);
 
@@ -139,6 +143,7 @@ class ColorControl extends CanvasControl
 
 class BarControl extends CanvasControl
 {
+    // get title -> String
     // get value -> [0..1]
     // set value <- [0..1]
 
@@ -147,25 +152,34 @@ class BarControl extends CanvasControl
         super(e, area, linked, true);
     }
 
-    get y()
-    {
-        return (1 - this.value + 1 / 18) * this.element.height * 9 / 10;
-    }
+    get vertical () { return this.element.height >= this.element.width; }
+    get length   () { return this.vertical ? this.element.height : this.element.width;  }
 
     select(x, y)
     {
-        this.value = 1 - Math.max(0, Math.min(1, y / this.element.height * 10 / 9 - 1 / 18));
+        this.value = Math.max(0, Math.min(1, (this.vertical ? this.length - y : x) / this.length * 10 / 9 - 1 / 18));
     }
 
     redraw()
     {
         const ctx = this.element.getContext('2d');
+        ctx.font        = '14px Helvetica';
+        ctx.lineWidth   = 3;
+        ctx.fillStyle   = '#aaa';
+        ctx.strokeStyle = '#aaa';
         ctx.clearRect(0, 0, this.element.width, this.element.height);
         ctx.beginPath();
-        ctx.moveTo(0.5, this.y + 0.5);
-        ctx.lineTo(this.element.width + 0.5, this.y + 0.5);
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = '#aaa';
+        if (this.vertical) {
+            const y = 0.5 + (19 / 18 - this.value) * this.element.height * 9 / 10;
+            ctx.fillText(this.title, 5.5, y - 5);
+            ctx.moveTo(0.5, y);
+            ctx.lineTo(0.5 + this.element.width, y);
+        } else {
+            const x = 0.5 + (1  / 18 + this.value) * this.element.width * 9 / 10;
+            ctx.fillText(this.title, x + 5, this.element.height - 4.5);
+            ctx.moveTo(x, 0.5);
+            ctx.lineTo(x, 0.5 + this.element.height);
+        }
         ctx.stroke();
     }
 }
@@ -173,8 +187,9 @@ class BarControl extends CanvasControl
 
 class SizeControl extends BarControl
 {
-    get value( ) { return Math.sqrt((this.area.tool.options.size - 1) / this.element.height); }
-    set value(v) { this.area.setToolOptions({ size: v * v * this.element.height + 1 }); }
+    get title( ) { return Math.round(this.area.tool.options.size); }
+    get value( ) { return Math.sqrt((this.area.tool.options.size - 1) / this.length); }
+    set value(v) { this.area.setToolOptions({ size: v * v * this.length + 1 }); }
 
     redraw()
     {
@@ -184,10 +199,6 @@ class SizeControl extends BarControl
         ctx.translate(this.element.width / 2, this.element.height / 2);
         this.area.tool.crosshair(ctx);
         ctx.restore();
-
-        ctx.font = '14px Helvetica';
-        ctx.fillStyle = '#aaa';
-        ctx.fillText(Math.round(this.area.tool.options.size), 0.5, this.y - 4.5);
     }
 }
 

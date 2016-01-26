@@ -67,14 +67,19 @@
         .on('drop',     (e) => { e.preventDefault(); area.paste(e.originalEvent.dataTransfer);  })
         .on('dragover', (e) => { e.preventDefault() })
 
-        .on('click', '.action-add-layer',  () => area.createLayer(area.layer))
-        .on('click', '.action-del-layer',  () => area.deleteLayer(area.layer))
-        .on('click', '.action-merge-down', () => area.mergeDown(area.layer))
-        .on('click', '.action-undo',       () => area.undo())
-        .on('click', '.action-redo',       () => area.redo())
+        .on('click', '.action-create-layer', () => area.createLayer(area.layer))
+        .on('click', '.action-remove-layer', () => area.deleteLayer(area.layer))
+        .on('click', '.action-merge-down',   () => area.mergeDown(area.layer))
+        .on('click', '.action-undo',         () => area.undo())
+        .on('click', '.action-redo',         () => area.redo())
         .on('click', '.cover', (e) => {
             if (e.target === e.currentTarget)  // ignore clicks on children of .cover
                 e.target.remove();
+        })
+
+        .on('contextmenu', '.cover', function (e) {
+            e.currentTarget.remove();
+            e.preventDefault();
         })
 
         .on('click', '[data-control-click]', function (e) {
@@ -84,11 +89,6 @@
 
         .on('contextmenu', '[data-control-menu]', function (e) {
             $(this.getAttribute('data-control-menu')).clone().control(area, e.clientX, e.clientY);
-            e.preventDefault();
-        })
-
-        .on('contextmenu', '.cover', function (e) {
-            e.currentTarget.remove();
             e.preventDefault();
         });
 
@@ -118,11 +118,6 @@
         if (isNaN(area.palette)) area.palette = 0;
     }
 
-    window.addEventListener('unload', () => {
-        localStorage.image   = area.export('svg');
-        localStorage.palette = area.palette;
-    });
-
     if (!area.layers.length) {
         area.setSize($('#area-container').innerWidth(), $('#area-container').innerHeight());
 
@@ -132,4 +127,9 @@
         ctx.fillRect(0, 0, layer.w, layer.h);
         area.onLayerRedraw(layer);
     }
+
+    window.addEventListener('unload', () => {
+        localStorage.image   = area.export('svg');
+        localStorage.palette = area.palette;
+    });
 })();
