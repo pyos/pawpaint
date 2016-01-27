@@ -393,7 +393,7 @@ class ColorButtonControl extends CanvasControl
     constructor(e, area)
     {
         super(e, area);
-        area.on('tool:H tool:S tool:L tool:kind', this.redraw.bind(this));
+        area.on('tool:options', this.redraw.bind(this));
         this.tool = {};
     }
 

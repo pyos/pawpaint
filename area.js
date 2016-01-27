@@ -19,8 +19,8 @@ class Area
         this.select_ui.classList.add('selection');
         this.crosshair.classList.add('crosshair');
 
+        this.tool       = new Tool(this, {});
         this.element    = element;
-        this._scale     = 1;
         this.layer      = 0;
         this.drawing    = 0;   // number of active input devices
         this.layers     = [];  // :: [Layer]
@@ -28,7 +28,7 @@ class Area
         this.undos      = [];  // :: [{action, index, state, ...}]
         this.redos      = [];
         this.events     = {};
-        this.tool       = new Tool(this, {});
+        this.scale      = 1;
         this.setSize(0, 0);
 
         let tools   = {};
@@ -101,7 +101,7 @@ class Area
                 lastX = ev.pageX;
                 lastY = ev.pageY;
 
-                if (onDown('mouse', ev)) {
+                if (onDown(0, ev)) {
                     element.addEventListener('mouseup',    onMouseUp);
                     element.addEventListener('mouseleave', onMouseUp);
                     element.addEventListener('mousemove',  onMouseMove);
@@ -115,13 +115,13 @@ class Area
             if (Math.abs(ev.pageX - lastX) + Math.abs(ev.pageY - lastY) < 200) {
                 lastX = ev.pageX;
                 lastY = ev.pageY;
-                onMove('mouse', ev);
+                onMove(0, ev);
             }
         };
 
         const onMouseUp = (ev) =>
         {
-            onUp('mouse');
+            onUp(0);
             element.removeEventListener('mouseup',    onMouseUp);
             element.removeEventListener('mouseleave', onMouseUp);
             element.removeEventListener('mousemove',  onMouseMove);
@@ -139,7 +139,7 @@ class Area
 
             for (let i = 0; i < ev.changedTouches.length; i++) {
                 const touch = ev.changedTouches[i];
-                if (onDown('touch' + touch.identifier, touch)) {
+                if (onDown(touch.identifier + 1, touch)) {
                     element.addEventListener('touchmove', onTouchMove);
                     element.addEventListener('touchend',  onTouchUp);
                 }
@@ -150,14 +150,14 @@ class Area
         {
             for (let i = 0; i < ev.changedTouches.length; i++) {
                 const touch = ev.changedTouches[i];
-                onMove('touch' + touch.identifier, touch);
+                onMove(touch.identifier + 1, touch);
             }
         };
 
         const onTouchUp = (ev) =>
         {
             for (let i = 0; i < ev.changedTouches.length; i++)
-                onUp('touch' + ev.changedTouches[i].identifier);
+                onUp(ev.changedTouches[i].identifier + 1);
 
             if (ev.touches.length === 0) {
                 element.removeEventListener('touchmove', onTouchMove);
@@ -217,13 +217,6 @@ class Area
         this.tool.crosshair(ctx);
     }
 
-    restyleLayers()
-    {
-        let i = 0;
-        for (let layer of this.layers)
-            layer.restyle(i++ == this.layer, -i);
-    }
-
     get w( ) { return this._w; }
     get h( ) { return this._h; }
     set w(w) { this.setSize(w, this._h); }
@@ -233,8 +226,8 @@ class Area
      * Uncovered part of the image is transparent, while the overflow is hidden. */
     setSize(w, h)
     {
-        this.element.style.width  = (this._w = w) * this.scale + "px";
-        this.element.style.height = (this._h = h) * this.scale + "px";
+        this.element.style.width  = (this._w = w) + "em";
+        this.element.style.height = (this._h = h) + "em";
         this.selection = this.selection;  // refresh the selection UI
     }
 
@@ -246,9 +239,8 @@ class Area
     set scale(x)
     {
         this._scale = Math.max(0.05, Math.min(20, x));
-        this.setSize(this.w, this.h);
+        this.element.style.fontSize = `${this._scale}px`;
         this.restyleCrosshair();
-        this.restyleLayers();
         // TODO make the viewport centered at the same position as it was
     }
 
@@ -259,15 +251,14 @@ class Area
 
     set selection(paths)
     {
-        this._selection = paths;
-        this.select_ui.width  = this.w * this.scale;
-        this.select_ui.height = this.h * this.scale;
-        // TODO an animated dashed border instead of this:
+        this._selection = paths;  // TODO grayscale masks
+        this.select_ui.width  = this.w;
+        this.select_ui.height = this.h;
+        this.select_ui.style.width  = this.w + "em";
+        this.select_ui.style.height = this.h + "em";
         const ctx = this.select_ui.getContext('2d');
         ctx.save();
-        ctx.scale(this.scale, this.scale);
         ctx.globalAlpha = 0.33;
-        ctx.globalCompositeOperation = "copy";
         ctx.fillStyle = "hsl(0, 0%, 50%)";
         ctx.fillRect(0, 0, this.w, this.h);
         for (let path of paths) ctx.clip(path);
@@ -315,7 +306,10 @@ class Area
             return;
 
         this.trigger('layer:set', this.layer = i);
-        this.restyleLayers();
+
+        let k = 0;
+        for (let layer of this.layers)
+            layer.restyle(k++ == this.layer, -k);
     }
 
     /* Remove a layer from the stack. */
@@ -554,15 +548,7 @@ class Area
 
         this.tool.setOptions(options);
         this.restyleCrosshair();
-
-        if (options.kind)
-            // if the tool has changed, emit every event.
-            options = this.tool.options;
-
-        for (let k in options)
-            this.trigger('tool:' + k, options[k], this.tool.options);
-
-        this.trigger('tool:options', this.tool.options);
+        this.trigger('tool:options', this.tool.options, options);
         return true;
     }
 }

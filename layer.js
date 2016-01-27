@@ -38,10 +38,10 @@ class Layer
         else
             this.img.classList.remove('active');
         this.img.style.zIndex = zIndex;
-        this.img.style.left   = this.x * this.area.scale + 'px';
-        this.img.style.top    = this.y * this.area.scale + 'px';
-        this.img.style.width  = this.w * this.area.scale + 'px';
-        this.img.style.height = this.h * this.area.scale + 'px';
+        this.img.style.left   = this.x + 'em';
+        this.img.style.top    = this.y + 'em';
+        this.img.style.width  = this.w + 'em';
+        this.img.style.height = this.h + 'em';
     }
 
     move(x, y)
