@@ -41,7 +41,7 @@ class Area
                     return false;
 
                 const layer = this.layers[this.layer];
-                context = layer.img().getContext('2d');
+                context = layer.img.getContext('2d');
                 context.save();
                 context.translate(0.5 - layer.x, 0.5 - layer.y);
 
@@ -200,14 +200,9 @@ class Area
 
     onLayerRedraw(layer)
     {
-        this.trigger('layer:redraw', layer, this.layers.indexOf(layer));
-        this.restyleLayers();
-    }
-
-    onLayerResize(layer)
-    {
-        this.trigger('layer:resize', layer, this.layers.indexOf(layer));
-        this.restyleLayers();
+        const index = this.layers.indexOf(layer);
+        layer.restyle(-1 - index);
+        this.trigger('layer:redraw', layer, index);
     }
 
     restyleCrosshair()
@@ -228,13 +223,7 @@ class Area
         for (let n in this.layers) {
             const layer = this.layers[n];
             layer.active = n == this.layer;
-            layer.element.css({
-                'z-index': -1 - n,
-                'left':   layer.x * this.scale,
-                'top':    layer.y * this.scale,
-                'width':  layer.w * this.scale,
-                'height': layer.h * this.scale,
-            });
+            layer.restyle(-1 - n);
         }
     }
 
@@ -294,7 +283,7 @@ class Area
     snap(options)
     {
         if (options.state === undefined)
-            options.state = this.layers[options.index].state(true);
+            options.state = this.layers[options.index].state;
 
         this.redos = [];
         this.undos.splice(0, 0, options);
@@ -309,10 +298,11 @@ class Area
 
         const layer = new Layer(this);
         this.layers.splice(index, 0, layer);
+        this.element.appendChild(layer.img);
         this.trigger('layer:add', layer, index);
 
         if (state)
-            layer.load(state);
+            layer.state = state;
         else
             layer.crop(0, 0, this.w, this.h);
 
@@ -338,8 +328,7 @@ class Area
             return;
 
         this.snap({index: i, action: Area.UNDO_DEL_LAYER});
-        this.layers[i].clear();
-        this.layers.splice(i, 1);
+        this.layers.splice(i, 1)[0].img.remove();
         this.trigger('layer:del', i);
         this.setLayer(Math.min(this.layer, this.layers.length - 1));
     }
@@ -364,26 +353,25 @@ class Area
         if (i < 0 || this.layers.length - 1 <= i)
             return;
 
-        this.snap({index: i, action: Area.UNDO_MERGE_DOWN, below: this.layers[i + 1].state(true)});
+        this.snap({index: i, action: Area.UNDO_MERGE_DOWN, below: this.layers[i + 1].state});
 
-        const top = this.layers[i];
-        const bot = this.layers[i + 1];
+        const top = this.layers.splice(i, 1)[0];
+        const bot = this.layers[i];
+        this.trigger('layer:del', i);
 
         bot.crop(Math.min(top.x, bot.x), Math.min(top.y, bot.y),
                  Math.max(top.w + top.x, bot.w + bot.x) - Math.min(top.x, bot.x),
                  Math.max(top.h + top.y, bot.h + bot.y) - Math.min(top.y, bot.y));
 
-        const ctx = bot.img().getContext('2d');
+        const ctx = bot.img.getContext('2d');
         ctx.save();
         ctx.translate(-bot.x, -bot.y);
         top.drawOnto(ctx);
-        top.clear();
+        top.img.remove();
         ctx.restore();
 
-        this.onLayerRedraw(bot);
-        this.layers.splice(i, 1);
-        this.trigger('layer:del', i);
         this.setLayer(Math.min(this.layer, this.layers.length - 1));
+        this.onLayerRedraw(bot);
     }
 
     /* Revert the action at the top of the undo stack. Supported actions:
@@ -421,14 +409,14 @@ class Area
                 }
 
                 this.createLayer(data.index, data.state);
-                this.layers[data.index + 1].load(data.below);
+                this.layers[data.index + 1].state = data.below;
                 // createLayer has pushed an UNDO_ADD_LAYER onto the undo stack.
                 this.undos[0].action = Area.UNDO_MERGE_DOWN;
                 break;
 
             default:
                 this.snap({index: data.index, action: Area.UNDO_DRAW});
-                this.layers[data.index].load(data.state);
+                this.layers[data.index].state = data.state;
                 break;
         }
 

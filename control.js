@@ -494,17 +494,15 @@ class LayerControl
                 const entry = $('<div class="layer-menu-item"><canvas></canvas></div>');
                 entry.insertBefore(elem.children().eq(index));
             })
-            .on('layer:resize', (layer, index) => {
-                const scale = 150 / Math.max(layer.w, layer.h);
+
+            .on('layer:redraw', (layer, index) => {
+                const scale  = 150 / Math.max(layer.w, layer.h);
                 const canvas = elem.children().eq(index).find('canvas')[0];
                 canvas.width  = layer.w * scale;
                 canvas.height = layer.h * scale;
-            })
-            .on('layer:redraw', (layer, index) => {
-                const canvas = elem.children().eq(index).find('canvas')[0];
                 const ctx    = canvas.getContext('2d');
                 ctx.globalCompositeOperation = 'copy';
-                ctx.drawImage(layer.img(), 0, 0, canvas.width, canvas.height);
+                ctx.drawImage(layer.img, 0, 0, canvas.width, canvas.height);
             })
 
             .on('layer:set',  (index) => elem.children().removeClass('active').eq(index).addClass('active'))
@@ -530,7 +528,7 @@ class ConfigControl extends ModalControl
             if      (t == 'int')   v = parseInt(v);
             else if (t == 'float') v = parseFloat(v);
 
-            if (!isNaN(v) && this.select(k, v) !== false)
+            if (!(typeof v === 'number' && isNaN(v)) && this.select(k, v) !== false)
                 this.object[k] = v;
 
             this.redraw();

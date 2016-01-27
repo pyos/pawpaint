@@ -125,7 +125,7 @@
         area.setSize($('#area-container').innerWidth(), $('#area-container').innerHeight());
 
         const layer = area.createLayer(area.layer);
-        const ctx = layer.img().getContext('2d');
+        const ctx = layer.img.getContext('2d');
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, layer.w, layer.h);
         area.onLayerRedraw(layer);
