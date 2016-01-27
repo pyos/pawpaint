@@ -12,9 +12,10 @@
     <div class="side-area">
       <div class="toolbar-row">
         <canvas data-control="ColorButtonControl" data-control-click=".templates .control-color" width="45" height="45"></canvas>
-        <a class="action-save fa fa-save"   title="Save" data-control-click=".templates .control-save"></a>
         <a class="action-undo fa fa-undo"   title="Undo"></a>
         <a class="action-redo fa fa-repeat" title="Redo"></a>
+        <a class="fa fa-save"  title="Save"          data-control-click=".templates .control-save"></a>
+        <a class="fa fa-image" title="Image options" data-control-click=".templates .control-image-config"></a>
       </div>
     </div>
 
@@ -58,10 +59,19 @@
         </tr>
       </table>
 
+      <table class="control table control-image-config" data-control="ImageConfigControl">
+        <tr><th colspan="2">Image options</th></tr>
+        <tr><td>Size</td>
+            <td><input type="number" min="1" max="16384" data-prop="w" data-type="int" />
+              x <input type="number" min="1" max="16384" data-prop="h" data-type="int" /></td></tr>
+        <tr><td>Zoom</td>
+            <td><input type="number" min="0.1" max="16" step="0.1" data-prop="scale" data-type="float" /></td></tr>
+      </table>
+
       <table class="control table control-layer-config" data-control="LayerConfigControl">
-        <tr><th colspan="2">Layer options</th></tr>
-        <tr><td>Hidden</td>  <td><input type="checkbox" data-prop="hidden" /></td></tr>
-        <tr><td>Opacity</td> <td><input type="range" data-prop="opacity" min="0" max="1" step="0.05" value="1" /></td></tr>
+        <tr><th colspan="2"><input type="checkbox" data-prop="visible" title="Visibility" /> Layer options</th></tr>
+        <tr><td>Opacity</td>
+            <td><input type="range" data-prop="opacity" min="0" max="1" step="0.05" value="1" data-type="float" /></td></tr>
         <tr><td>Blend mode</td>
             <td>
               <select data-prop="blendMode" value="normal">
@@ -84,6 +94,12 @@
               </select>
             </td>
         </tr>
+        <tr><td>Position</td>
+            <td><input type="number" min="1" max="16384" data-prop="x" data-type="int" />
+              x <input type="number" min="1" max="16384" data-prop="y" data-type="int" /></td></tr>
+        <tr><td>Size</td>
+            <td><input type="number" min="1" max="16384" data-prop="w" data-type="int" />
+              x <input type="number" min="1" max="16384" data-prop="h" data-type="int" /></td></tr>
       </table>
     </div>
 

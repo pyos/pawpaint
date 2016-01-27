@@ -47,9 +47,11 @@
             window.SHIFT = e.shiftKey;
             window.ALT   = e.altKey;
             window.META  = e.metaKey;
-            if (e.type === 'keyup' && 16 /* Shift */ <= e.keyCode && e.keyCode <= 18 /* Alt */)
-                if (area.trigger('key:' + e.keyCode))
-                    e.preventDefault();
+
+            if (e.target.tagName !== 'INPUT')
+                if (e.type === 'keyup' && /* Shift/Ctrl/Alt */ 16 <= e.keyCode && e.keyCode <= 18)
+                    if (area.trigger('key:' + e.keyCode))
+                        e.preventDefault();
         })
 
         .on('keydown', (e) => {
@@ -57,7 +59,8 @@
                     + (e.shiftKey ? 'S-' : '')
                     + (e.altKey   ? 'A-' : '')
                     + (e.metaKey  ? 'M-' : '') + e.keyCode;
-            if (area.trigger('key:' + n))
+
+            if (e.target.tagName !== 'INPUT' && area.trigger('key:' + n))
                 e.preventDefault();
         })
 

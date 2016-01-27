@@ -7,20 +7,29 @@ class Layer
     {
         this.area    = area;
         this.element = $([]);
-        this.x = this.y = this.w = this.h = 0;
+        this._x = this._y = this._w = this._h = 0;
     }
 
     get active( ) { return this.element.hasClass('active'); }
     set active(v) { v ? this.element.addClass('active') : this.element.removeClass('active'); }
 
-    get hidden( ) { return this.element.css('display') == 'none'; }
-    set hidden(v) { return this.element.css('display', v ? 'none' : ''); }
+    get visible( ) { return this.element.css('display') != 'none'; }
+    set visible(v) { return this.element.css('display', v ? '' : 'none'); }
 
     get opacity( ) { return this.element.css('opacity'); }
     set opacity(v) { return this.element.css('opacity', v); }
 
     get blendMode( ) { return this.element.css('mix-blend-mode'); }
     set blendMode(v) { return this.element.css('mix-blend-mode', v); }
+
+    get x( ) { return this._x; }
+    get y( ) { return this._y; }
+    get w( ) { return this._w; }
+    get h( ) { return this._h; }
+    set x(x) { this.move(x, this._y); }
+    set y(y) { this.move(this._x, y); }
+    set w(w) { this.crop(this._x, this._y, w, this._h); }
+    set h(h) { this.crop(this._x, this._y, this._w, h); }
 
     // Remove the contents of this layer. (And the element that represents it.)
     clear()
@@ -33,8 +42,8 @@ class Layer
     // Change the position of this layer relative to the image.
     move(x, y)
     {
-        this.x = x;
-        this.y = y;
+        this._x = x;
+        this._y = y;
         this.area.onLayerResize(this);
     }
 
@@ -44,8 +53,8 @@ class Layer
     {
         const dx = this.x - x;
         const dy = this.y - y;
-        this.w = w;
-        this.h = h;
+        this._w = w;
+        this._h = h;
         this.move(x, y);
         this.replace(this.element, dx, dy, false);
     }
@@ -53,8 +62,8 @@ class Layer
     // Change the size of this layer and scale the contents at the same time.
     resize(w, h)
     {
-        this.w = w;
-        this.h = h;
+        this._w = w;
+        this._h = h;
         this.move(this.x, this.y);
         this.replace(this.element, 0, 0, true);
     }
@@ -112,7 +121,7 @@ class Layer
 
         if (state.blendMode !== undefined) this.blendMode = state.blendMode;
         if (state.opacity   !== undefined) this.opacity   = state.opacity;
-        if (state.hidden    !== undefined) this.hidden    = state.hidden;
+        if (state.visible   !== undefined) this.visible   = state.visible;
     }
 
     // Get the image/canvas that represents the contents of this layer.
@@ -125,9 +134,7 @@ class Layer
     // Draw the contents of this layer onto a 2D canvas context.
     drawOnto(ctx)
     {
-        if (this.hidden)
-            return;
-
+        if (!this.visible) return;
         ctx.save();
         ctx.globalAlpha = parseFloat(this.opacity);
         ctx.globalCompositeOperation = this.blendMode === 'normal' ? 'source-over' : this.blendMode;
@@ -148,7 +155,7 @@ class Layer
         tag.attr({'x': this.x, 'y': this.y, 'width': this.w, 'height': this.h});
         if (this.blendMode != 'normal') tag.css('mix-blend-mode', this.blendMode);
         if (this.opacity != '1') tag.attr('opacity', this.opacity);
-        if (this.hidden) tag.attr('visibility', 'hidden');
+        if (!this.visible) tag.attr('visibility', 'hidden');
         return tag;
     }
 
@@ -159,7 +166,7 @@ class Layer
             x: this.x, y: this.y, w: this.w, h: this.h, data: as_image_data
                 ? this.img().getContext('2d').getImageData(0, 0, this.w, this.h)
                 : this.url(),
-            blendMode: this.blendMode, opacity: this.opacity, hidden: this.hidden
+            blendMode: this.blendMode, opacity: this.opacity, visible: this.visible
         };
     }
 }

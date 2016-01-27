@@ -19,17 +19,17 @@ class Area
         this.crosshair.classList.add('crosshair');
 
         this.element    = element;
+        this._w         = 0;
+        this._h         = 0;
         this._scale     = 1;
         this.layer      = 0;
-        this.w          = 0;
-        this.h          = 0;
         this.drawing    = 0;   // number of active input devices
         this.layers     = [];  // :: [Layer]
         this.selection  = [];  // :: [Path2D]
         this.undos      = [];  // :: [{action, index, state, ...}]
         this.redos      = [];
         this.events     = {};
-        this.setToolOptions({ kind: Tool });
+        this.tool       = new Tool(this, {});
 
         let tools   = {};
         let context = null;
@@ -238,12 +238,17 @@ class Area
         }
     }
 
+    get w( ) { return this._w; }
+    get h( ) { return this._h; }
+    set w(w) { this.setSize(w, this._h); }
+    set h(h) { this.setSize(this._w, h); }
+
     /* Change the size of the area. The sizes of the layers do not change.
      * Uncovered part of the image is transparent, while the overflow is hidden. */
     setSize(w, h)
     {
-        this.element.style.width  = (this.w = w) * this.scale + "px";
-        this.element.style.height = (this.h = h) * this.scale + "px";
+        this.element.style.width  = (this._w = w) * this.scale + "px";
+        this.element.style.height = (this._h = h) * this.scale + "px";
         this.selection = this.selection;  // refresh the selection UI
     }
 
@@ -506,7 +511,7 @@ class Area
                     w: parseInt(x.getAttribute('width')),
                     h: parseInt(x.getAttribute('height')),
                     data: x.getAttribute('xlink:href'),
-                    hidden: x.getAttribute('visibility') == 'hidden',
+                    visible: x.getAttribute('visibility') !== 'hidden',
                     blendMode: x.style.mixBlendMode,
                 })
             );

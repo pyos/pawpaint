@@ -516,29 +516,53 @@ class LayerControl
 }
 
 
-class LayerConfigControl extends ModalControl
+class ConfigControl extends ModalControl
 {
-    constructor(e, area, index, x, y, parent)
+    constructor(e, object, x, y, parent)
     {
         super(e, x, y, parent);
-        this.layer = area.layers[index];
-        this.props = $(e).find('[data-prop]').on('change', (ev) => {
-            const k = ev.target.getAttribute('data-prop');
-            const v = ev.target.type == 'checkbox' ? ev.target.checked : ev.target.value;
-            area.snap({ index: area.layers.indexOf(this.layer) });
-            this.layer[k] = v;
+        this.object = object;
+        this.props  = $(e).find('[data-prop]').on('change', (ev) => {
+            let k = ev.target.getAttribute('data-prop');
+            let t = ev.target.getAttribute('data-type');
+            let v = ev.target.type == 'checkbox' ? ev.target.checked : ev.target.value;
+
+            if      (t == 'int')   v = parseInt(v);
+            else if (t == 'float') v = parseFloat(v);
+
+            if (!isNaN(v) && this.select(k, v) !== false)
+                this.object[k] = v;
+
+            this.redraw();
         });
     }
 
+    select(k, v) {}
     redraw()
     {
-        this.props.each((_, p) => { p.checked = p.value = this.layer[p.getAttribute('data-prop')] });
+        this.props.each((_, p) => { p.checked = p.value = this.object[p.getAttribute('data-prop')] });
+    }
+}
+
+
+class LayerConfigControl extends ConfigControl
+{
+    constructor(e, area, index, x, y, parent)
+    {
+        super(e, area.layers[index], x, y, parent);
+        this.area = area;
+    }
+
+    select(k, v)
+    {
+        this.area.snap({ index: this.area.layers.indexOf(this.object) });
     }
 }
 
 
 const exports = { ColorControl, SizeControl, PaletteControl, ToolControl, SaveControl
-                , JointControl, ColorButtonControl, LayerControl, LayerConfigControl };
+                , JointControl, ColorButtonControl, LayerControl, LayerConfigControl
+                , ImageConfigControl: ConfigControl };
 
 
 $.fn.control = function (...args)
