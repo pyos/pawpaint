@@ -71,12 +71,12 @@ class Tool
     symbol(ctx, x, y)
     {
         if (this.glyph) {
+            const opts = this.options;
             ctx.save();
-            ctx.rotate(this.options.rotation);
-            ctx.font = `${this.options.size}px FontAwesome`;
-            ctx.fillStyle = `hsla(${this.options.H},${this.options.S}%,${this.options.L}%,${this.options.opacity})`;
+            ctx.font = `${opts.size}px FontAwesome`;
+            ctx.fillStyle = `hsla(${opts.H},${opts.S}%,${opts.L}%,${opts.opacity})`;
             // these coordinates are the left end of the baseline segment.
-            ctx.fillText(this.glyph, x - this.options.size / 2, y + this.options.size / 2.5);
+            ctx.fillText(this.glyph, x - opts.size / 2, y + opts.size / 2.5);
             ctx.restore();
         } else {
             this.start(ctx, x, y, 1, 0);
@@ -95,15 +95,15 @@ class ColorpickerTool extends Tool
 
     start(ctx, x, y)
     {
-        const canvas = this.area.export('flatten');
-        this.stride = canvas.width;
-        this.imdata = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+        const img = this.area.save('flatten');
+        this.stride = img.width;
+        this.imdata = img.getContext('2d').getImageData(0, 0, img.width, img.height).data;
         this.move(ctx, x, y);
     }
 
     move(ctx, x, y)
     {
-        const i = Math.floor(x) * 4 + this.stride * Math.floor(y) * 4,
+        const i = 4 * (Math.floor(x) + this.stride * Math.floor(y)),
               r = this.imdata[i + 0] / 255,
               g = this.imdata[i + 1] / 255,
               b = this.imdata[i + 2] / 255;
@@ -117,7 +117,7 @@ class ColorpickerTool extends Tool
                   M == g ? 2 + (b - r) / (M - m) :
                   M == b ? 4 + (r - g) / (M - m) : 0;
 
-        this.area.setToolOptions({H: Math.round(H * 60), S: Math.round(S * 100), L: Math.round(L * 100)});
+        this.area.setToolOptions({H: H * 60, S: S * 100, L: L * 100});
     }
 
     stop(ctx)
@@ -177,7 +177,8 @@ class SelectionTool extends Tool
 
         const path = new Path2D();
         const paths = [];
-        this.select(path, this.startX + Math.min(0, dx), this.startY + Math.min(0, dy), this.dX, this.dY);
+        this.select(path, this.startX + Math.min(0, dx),
+                          this.startY + Math.min(0, dy), this.dX, this.dY);
 
         if (window.CTRL && window.ALT) {  // Ctrl+Alt+drag -- XOR
             for (let p of this.old)
@@ -218,13 +219,14 @@ class SelectionTool extends Tool
 
     symbol(ctx, x, y)
     {
+        const opts = this.options;
         ctx.save();
         ctx.lineWidth = 1;
-        ctx.globalAlpha = this.options.opacity;
+        ctx.globalAlpha = opts.opacity;
         ctx.setLineDash([5, 5]);
-        ctx.strokeStyle = `hsl(${this.options.H},${this.options.S}%,${this.options.L}%)`;
+        ctx.strokeStyle = `hsl(${opts.H},${opts.S}%,${opts.L}%)`;
         ctx.beginPath();
-        this.select(ctx, x - this.options.size / 2, y - this.options.size / 2, this.options.size, this.options.size);
+        this.select(ctx, x - opts.size / 2, y - opts.size / 2, opts.size, opts.size);
         ctx.stroke();
         ctx.restore();
     }
@@ -263,11 +265,12 @@ class PenTool extends Tool
 
     start(ctx, x, y, pressure, rotation)
     {
+        const opts = this.options;
         ctx.save();
-        ctx.lineWidth   = this.options.size;
-        ctx.globalAlpha = this.options.opacity;
-        ctx.strokeStyle = ctx.fillStyle = `hsl(${this.options.H},${this.options.S}%,${this.options.L}%)`;
-        for (let dyn of this.options.dynamic)
+        ctx.lineWidth   = opts.size;
+        ctx.globalAlpha = opts.opacity;
+        ctx.strokeStyle = ctx.fillStyle = `hsl(${opts.H},${opts.S}%,${opts.L}%)`;
+        for (let dyn of opts.dynamic)
             dyn.reset(ctx, this, x, y);
         this.windowX = [this.prevX = x, x, x];
         this.windowY = [this.prevY = y, y, y];

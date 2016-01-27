@@ -367,7 +367,7 @@ class SaveControl extends ModalControl
         $(e).find('[data-type]').on('click', (ev) => {
             const link = document.createElement('a');
             link.download = ev.target.getAttribute('data-name');
-            link.href     = area.export(ev.target.getAttribute('data-type'));
+            link.href     = area.save(ev.target.getAttribute('data-type'));
             link.click();
         });
     }

@@ -7,15 +7,11 @@ class Layer
     {
         this.area = area;
         this.img  = document.createElement('canvas');
-        this.img.width  = 0;
-        this.img.height = 0;
+        this.img.width  = 1;
+        this.img.height = 1;
         this.img.classList.add('layer');
         this._x = this._y = 0;
     }
-
-    get active( ) { return this.img.classList.contains('active'); }
-    set active(v) { v ? this.img.classList.add('active')
-                      : this.img.classList.remove('active'); }
 
     get visible( ) { return this.img.style.display != 'none'; }
     set visible(v) {        this.img.style.display = v ? '' : 'none'; }
@@ -35,8 +31,12 @@ class Layer
     set w(w) { this.crop(this._x, this._y, w, this.h); }
     set h(h) { this.crop(this._x, this._y, this.w, h); }
 
-    restyle(zIndex)
+    restyle(active, zIndex)
     {
+        if (active)
+            this.img.classList.add('active');
+        else
+            this.img.classList.remove('active');
         this.img.style.zIndex = zIndex;
         this.img.style.left   = this.x * this.area.scale + 'px';
         this.img.style.top    = this.y * this.area.scale + 'px';
@@ -119,15 +119,5 @@ class Layer
         ctx.globalCompositeOperation = !this.blendMode ? 'source-over' : this.blendMode;
         ctx.drawImage(this.img, this.x, this.y);
         ctx.restore();
-    }
-
-    svg()
-    {
-        const tag = $(`<svg:image xlink:href='${this.img.toDataURL('image/png')}'>`);
-        tag.attr({'x': this.x, 'y': this.y, 'width': this.w, 'height': this.h});
-        if (this.blendMode)      tag.css('mix-blend-mode', this.blendMode);
-        if (this.opacity != '1') tag.attr('opacity', this.opacity);
-        if (!this.visible) tag.attr('visibility', 'hidden');
-        return tag;
     }
 }

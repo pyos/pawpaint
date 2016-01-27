@@ -9,6 +9,7 @@ class Area
     static get UNDO_DEL_LAYER  () { return 2; }
     static get UNDO_MOVE_LAYER () { return 3; }
     static get UNDO_MERGE_DOWN () { return 4; }
+    static get UNDO_UNMERGE    () { return 5; }
 
     constructor(element)
     {
@@ -19,8 +20,6 @@ class Area
         this.crosshair.classList.add('crosshair');
 
         this.element    = element;
-        this._w         = 0;
-        this._h         = 0;
         this._scale     = 1;
         this.layer      = 0;
         this.drawing    = 0;   // number of active input devices
@@ -30,6 +29,7 @@ class Area
         this.redos      = [];
         this.events     = {};
         this.tool       = new Tool(this, {});
+        this.setSize(0, 0);
 
         let tools   = {};
         let context = null;
@@ -167,13 +167,13 @@ class Area
 
         element.addEventListener('mousedown',  onMouseDown);
         element.addEventListener('touchstart', onTouchDown);
-        element.addEventListener('mouseleave', (ev) => { this.crosshair.style.visibility = 'hidden' });
-        element.addEventListener('touchstart', (ev) => { this.crosshair.style.visibility = 'hidden' });
+        element.addEventListener('mouseleave', (ev) => this.crosshair.style.display = 'none');
+        element.addEventListener('touchstart', (ev) => this.crosshair.style.display = 'none');
         element.addEventListener('mousemove',  (ev) => {
             const r = element.getBoundingClientRect();
             this.crosshair.style.left = ev.clientX - r.left + 'px';
             this.crosshair.style.top  = ev.clientY - r.top  + 'px';
-            this.crosshair.style.visibility = 'visible';
+            this.crosshair.style.display = '';
         });
     }
 
@@ -192,7 +192,7 @@ class Area
         if (!this.events.hasOwnProperty(name))
             return false;
 
-        for (let fn of this.events[name] || [])
+        for (let fn of this.events[name])
             fn.apply(this, args);
 
         return true;
@@ -201,7 +201,7 @@ class Area
     onLayerRedraw(layer)
     {
         const index = this.layers.indexOf(layer);
-        layer.restyle(-1 - index);
+        layer.restyle(index == this.layer, -1 - index);
         this.trigger('layer:redraw', layer, index);
     }
 
@@ -210,21 +210,18 @@ class Area
         const sz = this.tool.options.size * this.scale;
         this.crosshair.width = this.crosshair.height = sz;
         this.crosshair.style.marginLeft = this.crosshair.style.marginTop = -sz / 2 + "px";
-        this.crosshair.style.display = sz > 5 ? '' : 'none';
 
         const ctx = this.crosshair.getContext('2d');
         ctx.translate(sz / 2, sz / 2);
         ctx.scale(this.scale, this.scale);
-        this.tool.crosshair(ctx);  // FIXME this goes out of bounds sometimes
+        this.tool.crosshair(ctx);
     }
 
     restyleLayers()
     {
-        for (let n in this.layers) {
-            const layer = this.layers[n];
-            layer.active = n == this.layer;
-            layer.restyle(-1 - n);
-        }
+        let i = 0;
+        for (let layer of this.layers)
+            layer.restyle(i++ == this.layer, -i);
     }
 
     get w( ) { return this._w; }
@@ -248,7 +245,7 @@ class Area
 
     set scale(x)
     {
-        this._scale = Math.max(0, Math.min(20, x));
+        this._scale = Math.max(0.05, Math.min(20, x));
         this.setSize(this.w, this.h);
         this.restyleCrosshair();
         this.restyleLayers();
@@ -340,7 +337,7 @@ class Area
         if (i + Math.min(delta, 0) < 0 || this.layers.length <= i + Math.max(delta, 0))
             return;
 
-        this.snap({index: i, action: Area.UNDO_MOVE_LAYER, delta: delta});
+        this.snap({index: i, action: Area.UNDO_MOVE_LAYER, delta: delta, state: null});
         this.layers.splice(i + delta, 0, this.layers.splice(i, 1)[0]);
         this.trigger('layer:move', i, delta);
         this.setLayer(i + delta);
@@ -403,15 +400,14 @@ class Area
                 break;
 
             case Area.UNDO_MERGE_DOWN:
-                if (reverse) {
-                    this.mergeDown(data.index);
-                    break;
-                }
-
                 this.createLayer(data.index, data.state);
                 this.layers[data.index + 1].state = data.below;
                 // createLayer has pushed an UNDO_ADD_LAYER onto the undo stack.
-                this.undos[0].action = Area.UNDO_MERGE_DOWN;
+                this.undos[0].action = Area.UNDO_UNMERGE;
+                break;
+
+            case Area.UNDO_UNMERGE:
+                this.mergeDown(data.index);
                 break;
 
             default:
@@ -420,11 +416,12 @@ class Area
                 break;
         }
 
-        // The above operations all call `snap`, which resets the redo stack and adds something
-        // to `undos`. We don't want the former, and possibly the latter, too.
+        // all these ops call `snap`, clearing the redo stack.
         this.redos = redos;
 
         if (!reverse)
+            // there's an undo of an undo on top of the undo stack.
+            // but an undo of an undo is a redo!
             this.redos.splice(0, 0, this.undos.splice(0, 1)[0]);
     }
 
@@ -440,28 +437,45 @@ class Area
      *   3. "svg" -- returns an image/svg+xml data URL where each layer is a separate
      *               object. preserves layer options, etc.
      */
-    export(type)
+    save(type)
     {
         switch (type) {
-            case "flatten":
-                const cnv = document.createElement('canvas');
-                cnv.width  = this.w;
-                cnv.height = this.h;
-                const ctx = cnv.getContext('2d');
-                for (let n = this.layers.length; n;) this.layers[--n].drawOnto(ctx);
-                return cnv;
+            case "flatten": {
+                const tag = document.createElement('canvas');
+                const ctx = tag.getContext('2d');
+                tag.width  = this.w;
+                tag.height = this.h;
+                for (let n = this.layers.length; n--;) this.layers[n].drawOnto(ctx);
+                return tag;
+            }
 
             case "png":
-                return this.export("flatten").toDataURL("image/png");
+                return this.save("flatten").toDataURL("image/png");
 
-            case "svg":
-                const tag = $("<svg:svg xmlns:svg='http://www.w3.org/2000/svg' width='" + this.w + "' "
-                                + "xmlns:xlink='http://www.w3.org/1999/xlink' height='" + this.h + "'>");
-                for (let layer of this.layers) tag.prepend(layer.svg());
-                // force the bottommost layer to have a "normal" blending mode
-                // should this image be inserted into an html document.
-                tag.css('isolation', 'isolate');
-                return "data:image/svg+xml;base64," + btoa(new XMLSerializer().serializeToString(tag[0]));
+            case "svg": {
+                const tag = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                tag.setAttributeNS(null, 'width',  this.w);
+                tag.setAttributeNS(null, 'height', this.h);
+                tag.style.isolation = 'isolate';
+
+                for (let n = this.layers.length; n--;) {
+                    const ob = this.layers[n];
+                    const it = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+                    it.setAttributeNS(null, 'x',      ob.x);
+                    it.setAttributeNS(null, 'y',      ob.y);
+                    it.setAttributeNS(null, 'width',  ob.w);
+                    it.setAttributeNS(null, 'height', ob.h);
+                    it.setAttributeNS('http://www.w3.org/1999/xlink', 'href',
+                                      ob.img.toDataURL('image/png'));
+                    if (ob.blendMode)      it.style.mixBlendMode = ob.blendMode;
+                    if (!ob.visible)       it.setAttributeNS(null, 'visibility', 'hidden');
+                    if (ob.opacity != '1') it.setAttributeNS(null, 'opacity', ob.opacity);
+                    tag.appendChild(it);
+                }
+
+                return "data:image/svg+xml;base64," +
+                        btoa(new XMLSerializer().serializeToString(tag));
+            }
 
             default: return null;
         }
@@ -471,28 +485,26 @@ class Area
      * formats: image/png and image/svg+xml; the latter allows importing many
      * layers at once. Set forceSize = true to resize the area to fit the new layer.
      * Returns true on a successful import. */
-    import(data, forceSize)
+    load(data, forceSize)
     {
         forceSize = forceSize || this.layers.length === 0;
 
         if (data.slice(0, 22) == 'data:image/png;base64,') {
-            const img = new Image();
-            img.onload = () => {
-                const state = {x: 0, y: 0, w: img.width, h: img.height, data: data};
-
-                this.createLayer(0, state);
-
-                if (forceSize)
-                    this.setSize(img.width, img.height);
-            };
-            img.src = data;
+            this.createLayer(0, {x: 0, y: 0, data});
+            if (forceSize) {
+                const img = new Image();
+                img.onload = () => this.setSize(img.width, img.height);
+                img.src = data;
+            }
             return true;
         }
 
         if (data.slice(0, 26) == 'data:image/svg+xml;base64,') {
-            const doc = $(atob(data.slice(26)));
+            const dom  = new DOMParser();
+            const doc  = dom.parseFromString(atob(data.slice(26)), 'application/xml');
+            const root = doc.documentElement;
 
-            doc.children().each((_, x) =>
+            for (let x = root.firstChild; x !== null; x = x.nextSibling) {
                 this.createLayer(0, {
                     x: parseInt(x.getAttribute('x')),
                     y: parseInt(x.getAttribute('y')),
@@ -500,13 +512,14 @@ class Area
                     h: parseInt(x.getAttribute('height')),
                     data: x.getAttribute('xlink:href'),
                     visible: x.getAttribute('visibility') !== 'hidden',
+                    opacity: x.getAttribute('opacity'),
                     blendMode: x.style.mixBlendMode,
-                })
-            );
+                });
+            }
 
             if (forceSize)
-                this.setSize(parseInt(doc.attr('width')), parseInt(doc.attr('height')));
-
+                this.setSize(parseInt(root.getAttribute('width')),
+                             parseInt(root.getAttribute('height')));
             return true;
         }
 
@@ -519,14 +532,14 @@ class Area
         for (let i = 0; i < data.files.length; i++) {
             if (data.files[i].type.match(/image\/.*/)) {
                 const file = new FileReader();
-                file.onload = (r) => this.import(r.target.result);
+                file.onload = (r) => this.load(r.target.result);
                 file.readAsDataURL(data.files[i]);
             }
         }
 
         for (let j = 0; j < data.types.length; j++)
             if (data.types[j] && data.types[j].match(/image\/.*/))
-                this.import(data.getData(data.types[j]));
+                this.load(data.getData(data.types[j]));
     }
 
     /* Apply new options to the currently selected tool. Options not specified

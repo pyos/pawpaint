@@ -25,7 +25,7 @@
         .on('key:C-83',   /* S */ () => {
             const link = document.createElement('a');
             link.download = 'image.png';
-            link.href     = area.export('png');
+            link.href     = area.save('png');
             link.click();
         })
         .on('key:C-17', () => {
@@ -116,7 +116,7 @@
     $('[data-control]:not(.templates [data-control])').control(area);
 
     if (localStorage.image) {
-        area.import(localStorage.image, true);
+        area.load(localStorage.image, true);
         area.palette = parseInt(localStorage.palette);
         if (isNaN(area.palette)) area.palette = 0;
     }
@@ -132,7 +132,7 @@
     }
 
     window.addEventListener('unload', () => {
-        localStorage.image   = area.export('svg');
+        localStorage.image   = area.save('svg');
         localStorage.palette = area.palette;
     });
 })();
