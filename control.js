@@ -268,7 +268,7 @@ class PaletteControl extends ItemControl
         } else if (i === this.number - 1) {
             if (this.area.palette !== this.area.palettes.length - 1)
                 this.area.palette++;
-        } else {
+        } else if (this.area.palettes[this.area.palette]) {
             const p = this.area.palettes[this.area.palette];
 
             if (i <= p.colors.length)
@@ -279,6 +279,8 @@ class PaletteControl extends ItemControl
     redrawItem(i, ctx, x, y)
     {
         const p = this.area.palettes[this.area.palette];
+        if (!p)
+             p = {colors: []};
 
         if (i === 0 || i > p.colors.length) {
             const q = i === 0 ? -1 : i === this.number - 1 ? +1 : 0;

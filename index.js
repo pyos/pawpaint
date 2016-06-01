@@ -96,6 +96,7 @@
         });
 
     area.setToolOptions({kind: PenTool, last: PenTool});
+    area.palette = 0;
     area.palettes = [];
     area.tools = [ RectSelectionTool
                  , MoveTool
