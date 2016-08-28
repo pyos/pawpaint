@@ -1,4 +1,4 @@
-"use strict";
+"use strict"; /* global $, Area */
 
 
 (() => {
@@ -116,10 +116,24 @@
 
     $('[data-control]:not(.templates [data-control])').control(area);
 
+    let _storedToolOptions = () => {
+        try {
+            return JSON.parse(localStorage.toolOpts);
+        } catch (err) {
+            return {};
+        }
+    };
+
     if (localStorage.image) {
         area.load(localStorage.image, true);
-        area.palette = parseInt(localStorage.palette);
+        area.palette = +localStorage.palette;
         if (isNaN(area.palette)) area.palette = 0;
+
+        if (!isNaN(+localStorage.tool) && +localStorage.tool < area.tools.length) {
+            let opts = _storedToolOptions();
+            opts.kind = area.tools[+localStorage.tool];
+            area.setToolOptions(opts);
+        }
     }
 
     if (!area.layers.length) {
@@ -133,7 +147,13 @@
     }
 
     window.addEventListener('unload', () => {
-        localStorage.image   = area.save('svg');
-        localStorage.palette = area.palette;
+        let opts = area.tool.options;
+        localStorage.image    = area.save('svg');
+        localStorage.palette  = area.palette;
+        localStorage.tool     = area.tools.indexOf(beforeCtrl || area.tool.options.kind);
+        localStorage.toolOpts = JSON.stringify({
+            'H': opts.H, 'S': opts.S, 'L': opts.L, 'size': opts.size,
+            'opacity': opts.opacity, 'rotation': opts.rotation, 'spacing': opts.spacing
+        });
     });
 })();
