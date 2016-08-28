@@ -67,7 +67,7 @@ class Area
                 const r = element.getBoundingClientRect();
                 const x = (ev.clientX - r.left) / this.scale;
                 const y = (ev.clientY - r.top)  / this.scale;
-                tools[dev].move(context, x, y, ev.force || 0, (ev.rotationAngle || 0) / 360);
+                tools[dev].move(context, x, y, ev.force || ev.pressure || 0, (ev.rotationAngle || 0) / 360);
             }
         };
 
@@ -85,6 +85,7 @@ class Area
                         this.trigger('layer:redraw', this.layers[this.layer], this.layer);
                 }
             }
+            return Object.keys(tools).length === 0;
         };
 
         // When using tablets, evdev may bug out and send the cursor jumping when doing
@@ -165,16 +166,67 @@ class Area
             }
         };
 
-        element.addEventListener('mousedown',  onMouseDown);
-        element.addEventListener('touchstart', onTouchDown);
-        element.addEventListener('mouseleave', (ev) => this.crosshair.style.display = 'none');
-        element.addEventListener('touchstart', (ev) => this.crosshair.style.display = 'none');
-        element.addEventListener('mousemove',  (ev) => {
+        const onPointerDown = (ev) =>
+        {
+            if (ev.which === 0 /* no buttons, e.g. touch screen */ || ev.which === 1) {
+                ev.preventDefault();
+                lastX = ev.pageX;
+                lastY = ev.pageY;
+
+                if (onDown(ev.pointerId, ev)) {
+                    element.addEventListener('pointerup',    onPointerUp);
+                    element.addEventListener('pointerleave', onPointerUp);
+                    element.addEventListener('pointermove',  onPointerMove);
+                    element.addEventListener('pointerenter', onPointerDown);
+                }
+            }
+        };
+
+        const onPointerMove = (ev) =>
+        {
+            if (Math.abs(ev.pageX - lastX) + Math.abs(ev.pageY - lastY) < 200) {
+                lastX = ev.pageX;
+                lastY = ev.pageY;
+                onMove(ev.pointerId, ev);
+            }
+
+            if (ev.pointerType === "pen" || ev.pointerType === "mouse") {
+                // Need this because `mousemove` is not emitted for some reason.
+                updateCrosshair(ev);
+            }
+        };
+
+        const onPointerUp = (ev) =>
+        {
+            if (onUp(ev.pointerId)) {
+                element.removeEventListener('pointerup',    onPointerUp);
+                element.removeEventListener('pointerleave', onPointerUp);
+                element.removeEventListener('pointermove',  onPointerMove);
+                if (ev.type !== 'pointerleave')
+                    element.removeEventListener('pointerenter', onPointerDown);
+            }
+        };
+
+        const updateCrosshair = (ev) =>
+        {
             const r = element.getBoundingClientRect();
             this.crosshair.style.left = ev.clientX - r.left + 'px';
             this.crosshair.style.top  = ev.clientY - r.top  + 'px';
             this.crosshair.style.display = '';
-        });
+        };
+
+        if ('onpointerdown' in document.body) {
+            element.addEventListener('pointerdown', onPointerDown);
+            // Still have to ignore these separately.
+            element.addEventListener('touchstart', (ev) => ev.preventDefault());
+        } else {
+            element.addEventListener('mousedown',   onMouseDown);
+            element.addEventListener('touchstart',  onTouchDown);
+        }
+
+        element.addEventListener('mouseleave',  (ev) => this.crosshair.style.display = 'none');
+        element.addEventListener('touchstart',  (ev) => this.crosshair.style.display = 'none');
+        element.addEventListener('mousemove',   updateCrosshair);
     }
 
     on(name, fn)

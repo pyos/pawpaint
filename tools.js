@@ -1,4 +1,4 @@
-"use strict";
+"use strict"; /* global Dynamic, Path2D */
 
 
 // Something to draw with.
@@ -33,7 +33,7 @@ class Tool
         this.area = area;
         this.options = {};
         this.setOptions({
-            dynamic: [],
+            dynamic: Dynamic.DEFAULT_SET,
             rotation: 0,
             spacing:  1,
             opacity:  1,
