@@ -1,4 +1,4 @@
-"use strict";
+"use strict"; /* global $ */
 
 
 class CanvasControl
@@ -278,7 +278,7 @@ class PaletteControl extends ItemControl
 
     redrawItem(i, ctx, x, y)
     {
-        const p = this.area.palettes[this.area.palette];
+        let p = this.area.palettes[this.area.palette];
         if (!p)
              p = {colors: []};
 
