@@ -7,7 +7,7 @@
 //   max   -- each result (in 0..1) is scaled to fit into this range
 //   min   --
 //   type  -- which parameter to use (velocity, direction, pressure, rotation, random)
-//   avgOf -- size of the window to use for smoothing the values
+//   alpha -- exponential moving average coefficient. 0 = always use first value, 1 = no averaging.
 //
 class Dynamic
 {
@@ -16,8 +16,7 @@ class Dynamic
         this.type  = 0;
         this.min   = 0;
         this.max   = 1;
-        this.avgOf = 10;
-
+        this.alpha = 0.66;
         for (let k in options)
             this[k] = options[k];
     }
@@ -35,22 +34,9 @@ class Dynamic
     reset(ctx, tool)
     {
         let value = 0;
-        let count = 0;
-        let array = [];
-
         this._f = (current) => {
-            if (count === 0) {
-                for (let i = 0; i < this.avgOf; i++)
-                    array.push(current);
-
-                value = current;
-            } else {
-                value += (current - array[count % this.avgOf]) / this.avgOf;
-                array[count % this.avgOf] = current;
-            }
-
-            count++;
-            return value;
+            value = value || current;
+            return (value = value * (1 - this.alpha) + current * this.alpha);
         };
     }
 
