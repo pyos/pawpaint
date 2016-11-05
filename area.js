@@ -55,19 +55,25 @@ class Area
             const x = (ev.clientX - r.left) / this.scale;
             const y = (ev.clientY - r.top)  / this.scale;
 
+            let pressure = 1;
+            if (ev.pointerType === "pen")
+                pressure = ev.pressure;
             tools[dev] = new this.tool.options.kind(this, {});
             tools[dev].options = this.tool.options;  // FIXME should not share dynamics
-            tools[dev].start(context, x, y, ev.force || 0, (ev.rotationAngle || 0) / 360);
+            tools[dev].start(context, x, y, pressure, (ev.rotationAngle || 0) / 360);
             return true;
         };
 
         const onMove = (dev, ev) =>
         {
             if (tools.hasOwnProperty(dev)) {
+                let pressure = 1;
+                if (ev.pointerType === "pen")
+                    pressure = ev.pressure;
                 const r = element.getBoundingClientRect();
                 const x = (ev.clientX - r.left) / this.scale;
                 const y = (ev.clientY - r.top)  / this.scale;
-                tools[dev].move(context, x, y, ev.force || ev.pressure || 0, (ev.rotationAngle || 0) / 360);
+                tools[dev].move(context, x, y, pressure, (ev.rotationAngle || 0) / 360);
             }
         };
 
