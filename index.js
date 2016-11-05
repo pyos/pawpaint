@@ -27,18 +27,6 @@
             link.download = 'image.png';
             link.href     = area.save('png');
             link.click();
-        })
-        .on('key:C-17', () => {
-            if (beforeCtrl === null) {
-                beforeCtrl = area.tool.options.kind;
-                area.setToolOptions({ kind: ColorpickerTool });
-            }
-        })
-        .on('key:17', () => {
-            if (beforeCtrl !== null) {
-                area.setToolOptions({ kind: beforeCtrl });
-                beforeCtrl = null;
-            }
         });
 
     $(document.body)
