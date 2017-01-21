@@ -562,7 +562,7 @@ class Area
                     y: parseInt(x.getAttribute('y')),
                     w: parseInt(x.getAttribute('width')),
                     h: parseInt(x.getAttribute('height')),
-                    data: x.getAttribute('xlink:href'),
+                    data: x.getAttributeNS('http://www.w3.org/1999/xlink', 'href'),
                     visible: x.getAttribute('visibility') !== 'hidden',
                     opacity: x.getAttribute('opacity'),
                     blendMode: x.style.mixBlendMode,
