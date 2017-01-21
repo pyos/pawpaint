@@ -38,7 +38,7 @@ class Area
         {
             if (this.drawing++ === 0) {
                 if (!this.layers.length || !this.tool)
-                    return false;
+                    return this.drawing--, false;
 
                 const layer = this.layers[this.layer];
                 context = layer.img.getContext('2d');
