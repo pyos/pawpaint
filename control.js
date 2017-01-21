@@ -11,6 +11,21 @@ class CanvasControl
         this.element = e;
         this.area    = area;
 
+        const ctx = e.getContext('2d');
+        const dpr = window.devicePixelRatio || 1,
+              bsr = ctx.webkitBackingStorePixelRatio || ctx.mozBackingStorePixelRatio ||
+                    ctx.msBackingStorePixelRatio     || ctx.oBackingStorePixelRatio   ||
+                    ctx.backingStorePixelRatio       || 1;
+        this.width = +e.width;
+        this.height = +e.height;
+        if (dpr != bsr) {
+            e.style.width = e.width + 'px';
+            e.style.height = e.height + 'px';
+            e.width = e.width * dpr / bsr;
+            e.height = e.height * dpr / bsr;
+            ctx.scale(dpr / bsr, dpr / bsr);
+        }
+
         const click = (ev) =>
         {
             const r = e.getBoundingClientRect();
@@ -40,7 +55,7 @@ class ColorControl extends CanvasControl
     constructor(e, area, linked)
     {
         super(e, area, linked, true);
-        this.hueOuterR = Math.min(e.width, e.height) / 2;
+        this.hueOuterR = Math.min(this.width, this.height) / 2;
         this.hueInnerR = 3 / 4 * this.hueOuterR;
         this.satRadius = 5 / 6 * this.hueInnerR;
 
@@ -154,8 +169,8 @@ class BarControl extends CanvasControl
         super(e, area, linked, true);
     }
 
-    get vertical () { return this.element.height >= this.element.width; }
-    get length   () { return this.vertical ? this.element.height : this.element.width;  }
+    get vertical () { return this.height >= this.width; }
+    get length   () { return this.vertical ? this.height : this.width;  }
 
     select(x, y)
     {
@@ -169,18 +184,18 @@ class BarControl extends CanvasControl
         ctx.lineWidth   = 3;
         ctx.fillStyle   = '#aaa';
         ctx.strokeStyle = '#aaa';
-        ctx.clearRect(0, 0, this.element.width, this.element.height);
+        ctx.clearRect(0, 0, this.width, this.height);
         ctx.beginPath();
         if (this.vertical) {
-            const y = 0.5 + (19 / 18 - this.value) * this.element.height * 9 / 10;
+            const y = 0.5 + (19 / 18 - this.value) * this.height * 9 / 10;
             ctx.fillText(this.title, 5.5, y - 5);
             ctx.moveTo(0.5, y);
-            ctx.lineTo(0.5 + this.element.width, y);
+            ctx.lineTo(0.5 + this.width, y);
         } else {
-            const x = 0.5 + (1  / 18 + this.value) * this.element.width * 9 / 10;
-            ctx.fillText(this.title, x + 5, this.element.height - 4.5);
+            const x = 0.5 + (1  / 18 + this.value) * this.width * 9 / 10;
+            ctx.fillText(this.title, x + 5, this.height - 4.5);
             ctx.moveTo(x, 0.5);
-            ctx.lineTo(x, 0.5 + this.element.height);
+            ctx.lineTo(x, 0.5 + this.height);
         }
         ctx.stroke();
     }
@@ -198,7 +213,7 @@ class SizeControl extends BarControl
         super.redraw();
         const ctx = this.element.getContext('2d');
         ctx.save();
-        ctx.translate(this.element.width / 2, this.element.height / 2);
+        ctx.translate(this.width / 2, this.height / 2);
         this.area.tool.crosshair(ctx);
         ctx.restore();
     }
@@ -214,32 +229,31 @@ class ItemControl extends CanvasControl
     {
         super(e, area, linked);
         this.number = 0;
-        this.height = Math.min(e.height, e.width);
-
-        if (e.getAttribute('data-item-height'))
-            this.height = parseInt(e.getAttribute('data-item-height'));
+        this.itemSize = Math.min(this.height, this.width);
+        if (e.hasAttribute('data-item-height'))
+            this.itemSize = parseInt(e.getAttribute('data-item-height'));
     }
 
     select(x, y)
     {
-        const i = Math.floor(x / this.height) * Math.floor(this.element.height / this.height)
-                + Math.floor(y / this.height);
+        const i = Math.floor(x / this.itemSize) * Math.floor(this.height / this.itemSize)
+                + Math.floor(y / this.itemSize);
         this.selectItem(i);
     }
 
     redraw()
     {
         const ctx = this.element.getContext('2d');
-        const qty = Math.floor(this.element.height / this.height);
+        const qty = Math.floor(this.height / this.itemSize);
         ctx.save();
-        ctx.clearRect(0, 0, this.element.width, this.element.height);
+        ctx.clearRect(0, 0, this.width, this.height);
         ctx.translate(0.5, 0.5);
 
         for (let i = 0; i < this.number; i++) {
-            const x = Math.floor(i / qty) * this.height;
-            const y = Math.floor(i % qty) * this.height;
+            const x = Math.floor(i / qty) * this.itemSize;
+            const y = Math.floor(i % qty) * this.itemSize;
             ctx.beginPath();
-            ctx.rect(x, y, this.height, this.height);
+            ctx.rect(x, y, this.itemSize, this.itemSize);
             this.redrawItem(i, ctx, x, y);
         }
 
@@ -255,9 +269,9 @@ class PaletteControl extends ItemControl
         super(e, area, linked);
 
         for (let p of area.palettes)
-            this.height = Math.min(this.height, e.height / (p.colors.length + 2));
+            this.itemSize = Math.min(this.itemSize, this.height / (p.colors.length + 2));
 
-        this.number = Math.floor(e.height / this.height);
+        this.number = Math.floor(this.height / this.itemSize);
     }
 
     selectItem(i)
@@ -285,9 +299,9 @@ class PaletteControl extends ItemControl
         if (i === 0 || i > p.colors.length) {
             const q = i === 0 ? -1 : i === this.number - 1 ? +1 : 0;
             ctx.beginPath();
-            ctx.moveTo(x + this.height * 0.3, y + this.height * (0.5 - 0.1 * q));
-            ctx.lineTo(x + this.height * 0.5, y + this.height * (0.5 + 0.1 * q));
-            ctx.lineTo(x + this.height * 0.7, y + this.height * (0.5 - 0.1 * q));
+            ctx.moveTo(x + this.itemSize * 0.3, y + this.itemSize * (0.5 - 0.1 * q));
+            ctx.lineTo(x + this.itemSize * 0.5, y + this.itemSize * (0.5 + 0.1 * q));
+            ctx.lineTo(x + this.itemSize * 0.7, y + this.itemSize * (0.5 - 0.1 * q));
             ctx.lineWidth = 3;
             ctx.strokeStyle = "#888";
             ctx.stroke();
@@ -304,7 +318,7 @@ class ToolControl extends ItemControl
     constructor(e, area, linked)
     {
         super(e, area, linked);
-        const n = Math.floor(e.height / this.height) * Math.floor(e.width / this.height);
+        const n = Math.floor(this.height / this.itemSize) * Math.floor(this.width / this.itemSize);
         this.tools  = n < this.area.tools.length ? this.smallSubset : this.area.tools;
         this.number = this.tools.length;
     }
@@ -330,7 +344,7 @@ class ToolControl extends ItemControl
     redrawItem(i, ctx, x, y)
     {
         const selected = this.tools[i] === this.area.tool.options.kind;
-        const size = this.height;
+        const size = this.itemSize;
         const tool = new this.tools[i](null, { size: size * 9 / 20, L: 80, opacity: selected ? 1 : 0.5 });
         tool.symbol(ctx, x + size / 2, y + size / 2);
     }
@@ -404,13 +418,13 @@ class ColorButtonControl extends CanvasControl
         const opt = this.area.tool.options;
 
         if (this.tool.constructor !== opt.kind)
-            this.tool = new opt.kind(null, { size: this.element.width / 1.5, L: 50 });
+            this.tool = new opt.kind(null, { size: this.width / 1.5, L: 50 });
 
         if (Math.abs(this.tool.options.L - opt.L) <= 50) {
             const ctx = this.element.getContext('2d');
-            ctx.clearRect(0, 0, this.element.width, this.element.height);
+            ctx.clearRect(0, 0, this.width, this.height);
             this.tool.options.L = opt.L > 50 ? 0 : 100;
-            this.tool.symbol(ctx, this.element.width / 2, this.element.height / 2);
+            this.tool.symbol(ctx, this.width / 2, this.height / 2);
         }
 
         this.element.style.background = `hsl(${opt.H}, ${opt.S}%, ${opt.L}%)`;

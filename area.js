@@ -265,13 +265,18 @@ class Area
 
     restyleCrosshair()
     {
-        const sz = Math.ceil(this.tool.options.size * this.scale);
-        this.crosshair.width = this.crosshair.height = sz;
-        this.crosshair.style.marginLeft = this.crosshair.style.marginTop = -sz / 2 + "px";
-
         const ctx = this.crosshair.getContext('2d');
-        ctx.translate(sz / 2, sz / 2);
-        ctx.scale(this.scale, this.scale);
+        const bsr = ctx.webkitBackingStorePixelRatio || ctx.mozBackingStorePixelRatio ||
+                    ctx.msBackingStorePixelRatio     || ctx.oBackingStorePixelRatio   ||
+                    ctx.backingStorePixelRatio       || 1;
+
+        const s = this.tool.options.size;
+        const m = this.scale * (window.devicePixelRatio || 1) / bsr;
+        this.crosshair.width = this.crosshair.height = s * m;
+        this.crosshair.style.width = this.crosshair.style.height = Math.ceil(s * this.scale) + "px";
+        this.crosshair.style.marginLeft = this.crosshair.style.marginTop = -s / 2 * this.scale + "px";
+        ctx.translate(s * m / 2, s * m / 2);
+        ctx.scale(m, m);
         this.tool.crosshair(ctx);
     }
 
