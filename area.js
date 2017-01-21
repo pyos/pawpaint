@@ -265,7 +265,7 @@ class Area
 
     restyleCrosshair()
     {
-        const sz = this.tool.options.size * this.scale;
+        const sz = Math.ceil(this.tool.options.size * this.scale);
         this.crosshair.width = this.crosshair.height = sz;
         this.crosshair.style.marginLeft = this.crosshair.style.marginTop = -sz / 2 + "px";
 
