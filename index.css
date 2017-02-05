@@ -124,11 +124,11 @@ td, th {
     height: calc(100% - 135px);  /* - 3 x 45px buttons */
 }
 
-.layer-menu-item:not(.active) {
+.layer-menu > *:not(.active) {
     opacity: 0.5;
 }
 
-.layer-menu-item > canvas {
+.layer-menu > * > canvas {
     background: url(img/checkers.png);
     max-height: 45px;
     max-width:  100%;

@@ -74,13 +74,15 @@
         })
 
         .on('click', '[data-control-click]', function (e) {
-            $(this.getAttribute('data-control-click')).clone().control(area, 0, 0, this);
             e.preventDefault();
+            let c = document.querySelector(this.getAttribute('data-control-click')).cloneNode(true);
+            new Control(c, area, 0, 0, this);
         })
 
         .on('contextmenu', '[data-control-menu]', function (e) {
-            $(this.getAttribute('data-control-menu')).clone().control(area, e.clientX, e.clientY);
             e.preventDefault();
+            let c = document.querySelector(this.getAttribute('data-control-menu')).cloneNode(true);
+            new Control(c, area, e.clientX, e.clientY);
         });
 
     area.setToolOptions({kind: PenTool, last: PenTool});
@@ -102,7 +104,9 @@
     xhr.open('GET', 'img/palettes.json', true);
     xhr.send();
 
-    $('[data-control]:not(.templates [data-control])').control(area);
+    for (let c of document.querySelectorAll('[data-control]'))
+        if (!c.$nearestParent('.templates'))
+            new Control(c, area);
 
     let _storedToolOptions = () => {
         try {

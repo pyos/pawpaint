@@ -1,92 +1,85 @@
-"use strict"; /* global $ */
+"use strict";
 
 
-class CanvasControl
-{
-    select(x, y) {}
-    redraw() {}
-
-    constructor(e, area, linked, draggable)
-    {
+class ControlBase {
+    constructor(e, area, linked = []) {
         this.element = e;
         this.area    = area;
+        this.linked  = linked;
+    }
 
-        const ctx = e.getContext('2d');
-        const dpr = window.devicePixelRatio || 1,
-              bsr = ctx.webkitBackingStorePixelRatio || ctx.mozBackingStorePixelRatio ||
-                    ctx.msBackingStorePixelRatio     || ctx.oBackingStorePixelRatio   ||
-                    ctx.backingStorePixelRatio       || 1;
-        this.width = +e.width;
-        this.height = +e.height;
-        if (dpr != bsr) {
-            e.style.width = e.width + 'px';
-            e.style.height = e.height + 'px';
-            e.width = e.width * dpr / bsr;
-            e.height = e.height * dpr / bsr;
-            ctx.scale(dpr / bsr, dpr / bsr);
-        }
-
-        const click = (ev) =>
-        {
-            const r = e.getBoundingClientRect();
-            this.select(ev.clientX - r.left, ev.clientY - r.top);
-            this.redraw();
-            if (linked !== undefined) for (let control of linked) control.redraw();
-        };
-
-        const touch = (ev) => { if (ev.touches.length === 1) click(ev.touches[0]); };
-        const mouse = (ev) => { if (ev.which === 1) click(ev); };
-
-        if (draggable) {
-            e.addEventListener('mousedown',  (ev) => { ev.preventDefault(); e.addEventListener('mousemove', mouse); mouse(ev); });
-            e.addEventListener('touchstart', (ev) => { ev.preventDefault(); e.addEventListener('touchmove', touch); touch(ev); });
-            e.addEventListener('mousemove',  (ev) =>   ev.preventDefault());
-            e.addEventListener('touchmove',  (ev) =>   ev.preventDefault());
-            e.addEventListener('mouseup',    (ev) => { ev.preventDefault(); e.removeEventListener('mousemove', mouse); });
-            e.addEventListener('touchend',   (ev) => { ev.preventDefault(); e.removeEventListener('touchmove', mouse); });
-        } else
-            e.addEventListener('click', click);
+    redraw(all = false) {
+        for (let c of this.linked)
+            c.redraw();
     }
 }
 
 
-class ColorControl extends CanvasControl
-{
-    constructor(e, area, linked)
-    {
-        super(e, area, linked, true);
-        this.hueOuterR = Math.min(this.width, this.height) / 2;
-        this.hueInnerR = 3 / 4 * this.hueOuterR;
-        this.satRadius = 5 / 6 * this.hueInnerR;
+class CanvasControl extends ControlBase {
+    constructor(e, area, linked = [], draggable = false) {
+        super(e, area, linked);
+        this.width   = +e.width;
+        this.height  = +e.height;
+        e.$forceNativeResolution();
 
-        const ctx = this.element.getContext('2d');
-        ctx.save();
-        ctx.scale(this.hueOuterR, this.hueOuterR);
-        ctx.translate(1, 1);
+        const click = ev => {
+            const r = e.getBoundingClientRect();
+            this.select(ev.clientX - r.left, ev.clientY - r.top);
+            this.redraw();
+        };
 
-        const dr = Math.PI / 4;
-        const di = 45;  // rad_to_deg(dr)
+        if (draggable) {
+            const touch = ev => {
+                if (ev.touches.length === 1)
+                    click(ev.touches[0]);
+            };
 
-        for (let i = 0, r = 0; i < 360; i += di) {
-            var grad = ctx.createLinearGradient(Math.cos(r), Math.sin(r), Math.cos(r + dr), Math.sin(r + dr));
-            grad.addColorStop(0, `hsl(${i},      100%, 50%)`);
-            grad.addColorStop(1, `hsl(${i + di}, 100%, 50%)`);
-            ctx.beginPath();
-            ctx.arc(0, 0, 1, r, r += dr);
-            ctx.lineTo(0, 0);
-            ctx.fillStyle = grad;
-            ctx.fill();
+            const mouse = ev => {
+                if (ev.which === 1)
+                    click(ev);
+            };
+
+            e.$defaultEventListener('mousedown',  ev => { e.addEventListener('mousemove', mouse); mouse(ev); });
+            e.$defaultEventListener('touchstart', ev => { e.addEventListener('touchmove', touch); touch(ev); });
+            e.$defaultEventListener('mousemove',  ev => {});
+            e.$defaultEventListener('touchmove',  ev => {});
+            e.$defaultEventListener('mouseup',    ev => { e.removeEventListener('mousemove', mouse); });
+            e.$defaultEventListener('touchend',   ev => { e.removeEventListener('touchmove', mouse); });
+        } else {
+            e.$defaultEventListener('click', click);
         }
-
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.beginPath();
-        ctx.arc(0, 0, this.hueInnerR / this.hueOuterR, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
     }
 
-    select(x, y)
-    {
+    select(x, y) {
+    }
+
+    redraw(all = false) {
+        super.redraw(all);
+        if (all) {
+            this.element.getContext('2d').clearRect(0, 0, this.width, this.height);
+        }
+    }
+}
+
+
+class ColorControl extends CanvasControl {
+    constructor(e, area, linked) {
+        super(e, area, linked, true);
+    }
+
+    get hueOuterR() {
+        return Math.min(this.width, this.height) / 2;
+    }
+
+    get hueInnerR() {
+        return 3 / 4 * this.hueOuterR;
+    }
+
+    get satRadius() {
+        return 5 / 6 * this.hueInnerR;
+    }
+
+    select(x, y) {
         const satHeight = this.satRadius * 1.5;
         const satSide   = this.satRadius * Math.sqrt(3);
 
@@ -104,11 +97,37 @@ class ColorControl extends CanvasControl
             this.area.setToolOptions({ H: Math.atan2(y, x) * 180 / Math.PI });
     }
 
-    redraw()
-    {
+    redraw(all = false) {
+        super.redraw(all);
         const satHeight = this.satRadius * 1.5;
         const satSide   = this.satRadius * Math.sqrt(3);
         const ctx       = this.element.getContext('2d');
+
+        if (all) {
+            ctx.save();
+            ctx.scale(this.hueOuterR, this.hueOuterR);
+            ctx.translate(1, 1);
+
+            const steps = 8;
+            const rad = 2 * Math.PI / steps;
+            const deg = 360 / steps;
+            for (let i = 0; i < steps; i++) {
+                const grad = ctx.createLinearGradient(Math.cos(i*rad), Math.sin(i*rad), Math.cos((i+1)*rad), Math.sin((i+1)*rad));
+                grad.addColorStop(0, `hsl(${i*deg},100%,50%)`);
+                grad.addColorStop(1, `hsl(${(i+1)*deg},100%,50%)`);
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(0, 0, 1, i*rad, (i+1)*rad);
+                ctx.lineTo(0, 0);
+                ctx.fill();
+            }
+
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.beginPath();
+            ctx.arc(0, 0, this.hueInnerR / this.hueOuterR, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
 
         ctx.save();
         ctx.translate(this.hueOuterR, this.hueOuterR);
@@ -158,150 +177,158 @@ class ColorControl extends CanvasControl
 }
 
 
-class BarControl extends CanvasControl
-{
-    // get title -> String
-    // get value -> [0..1]
-    // set value <- [0..1]
-
-    constructor(e, area, linked)
-    {
+class BarControl extends CanvasControl {
+    constructor(e, area, linked) {
         super(e, area, linked, true);
     }
 
-    get vertical () { return this.height >= this.width; }
-    get length   () { return this.vertical ? this.height : this.width;  }
-
-    select(x, y)
-    {
-        this.value = Math.max(0, Math.min(1, (this.vertical ? this.length - y : x) / this.length * 10 / 9 - 1 / 18));
+    get isVertical() {
+        return this.height >= this.width;
     }
 
-    redraw()
-    {
+    get length() {
+        return Math.max(this.height, this.width);
+    }
+
+    select(x, y) {
+        this.value = Math.max(0, Math.min(1, (this.isVertical ? this.length - y : x) / this.length * 10 / 9 - 1 / 18));
+    }
+
+    redraw(all = false) {
+        super.redraw(true);
         const ctx = this.element.getContext('2d');
         ctx.font        = '14px Helvetica';
         ctx.lineWidth   = 3;
         ctx.fillStyle   = '#aaa';
         ctx.strokeStyle = '#aaa';
-        ctx.clearRect(0, 0, this.width, this.height);
         ctx.beginPath();
-        if (this.vertical) {
+        if (this.isVertical) {
             const y = 0.5 + (19 / 18 - this.value) * this.height * 9 / 10;
-            ctx.fillText(this.title, 5.5, y - 5);
+            ctx.fillText(this.text, 5.5, y - 5);
             ctx.moveTo(0.5, y);
             ctx.lineTo(0.5 + this.width, y);
         } else {
             const x = 0.5 + (1  / 18 + this.value) * this.width * 9 / 10;
-            ctx.fillText(this.title, x + 5, this.height - 4.5);
+            ctx.fillText(this.text, x + 5, this.height - 4.5);
             ctx.moveTo(x, 0.5);
             ctx.lineTo(x, 0.5 + this.height);
         }
         ctx.stroke();
     }
+
+    get text() {
+        return Math.round(this.value);
+    }
+
+    get value() {
+        return 0;
+    }
+
+    set value(v) {
+    }
 }
 
 
-class SizeControl extends BarControl
-{
-    get title( ) { return Math.round(this.area.tool.options.size); }
-    get value( ) { return Math.sqrt((this.area.tool.options.size - 1) / this.length); }
-    set value(v) { this.area.setToolOptions({ size: v * v * this.length + 1 }); }
-
-    redraw()
-    {
-        super.redraw();
+class SizeControl extends BarControl {
+    redraw(all = true) {
+        super.redraw(all);
         const ctx = this.element.getContext('2d');
         ctx.save();
         ctx.translate(this.width / 2, this.height / 2);
         this.area.tool.crosshair(ctx);
         ctx.restore();
     }
+
+    get text() {
+        return Math.round(this.area.tool.options.size);
+    }
+
+    get value() {
+        return Math.sqrt((this.area.tool.options.size - 1) / this.length);
+    }
+
+    set value(v) {
+        this.area.setToolOptions({ size: v * v * this.length + 1 });
+    }
 }
 
 
-class ItemControl extends CanvasControl
-{
-    selectItem(i) {}
-    redrawItem(i, context2d, x, y) {}
-
-    constructor(e, area, linked)
-    {
-        super(e, area, linked);
-        this.number = 0;
-        this.itemSize = Math.min(this.height, this.width);
-        if (e.hasAttribute('data-item-height'))
-            this.itemSize = parseInt(e.getAttribute('data-item-height'));
+class ItemControl extends CanvasControl {
+    select(x, y) {
+        let isz = this.itemSize;
+        this.selectItem(Math.floor(x / isz) * Math.floor(this.height / isz) + Math.floor(y / isz));
     }
 
-    select(x, y)
-    {
-        const i = Math.floor(x / this.itemSize) * Math.floor(this.height / this.itemSize)
-                + Math.floor(y / this.itemSize);
-        this.selectItem(i);
-    }
-
-    redraw()
-    {
+    redraw(all = false) {
+        super.redraw(all);
         const ctx = this.element.getContext('2d');
         const qty = Math.floor(this.height / this.itemSize);
         ctx.save();
         ctx.clearRect(0, 0, this.width, this.height);
         ctx.translate(0.5, 0.5);
 
-        for (let i = 0; i < this.number; i++) {
-            const x = Math.floor(i / qty) * this.itemSize;
-            const y = Math.floor(i % qty) * this.itemSize;
+        let isz = this.itemSize;
+        for (let i = 0; i < this.itemCount; i++) {
+            const x = Math.floor(i / qty) * isz;
+            const y = Math.floor(i % qty) * isz;
             ctx.beginPath();
-            ctx.rect(x, y, this.itemSize, this.itemSize);
-            this.redrawItem(i, ctx, x, y);
+            ctx.rect(x, y, isz, isz);
+            this.redrawItem(i, ctx, x, y, isz);
         }
 
         ctx.restore();
     }
+
+    get itemCount() {
+        return 0;
+    }
+
+    get itemSize() {
+        const ds = this.element.dataset.itemSize;
+        return !isNaN(+ds) ? +ds : Math.min(this.width, this.height);
+    }
+
+    selectItem(i) {
+    }
+
+    redrawItem(i, context2d, x, y, size) {
+    }
 }
 
 
-class PaletteControl extends ItemControl
-{
-    constructor(e, area, linked)
-    {
-        super(e, area, linked);
-
-        for (let p of area.palettes)
-            this.itemSize = Math.min(this.itemSize, this.height / (p.colors.length + 2));
-
-        this.number = Math.floor(this.height / this.itemSize);
+class PaletteControl extends ItemControl {
+    get itemCount() {
+        return Math.floor(this.height / this.itemSize);
     }
 
-    selectItem(i)
-    {
-        if (i === 0) {
-            if (this.area.palette !== 0)
-                this.area.palette--;
-        } else if (i === this.number - 1) {
-            if (this.area.palette !== this.area.palettes.length - 1)
-                this.area.palette++;
-        } else if (this.area.palettes[this.area.palette]) {
-            const p = this.area.palettes[this.area.palette];
-
-            if (i <= p.colors.length)
-                this.area.setToolOptions(p.colors[i - 1]);
-        }
+    get itemSize() {
+        let r = Math.min(this.width, this.height);
+        for (let p of this.area.palettes)
+            r = Math.min(r, this.height / (p.colors.length + 2));
+        return r;
     }
 
-    redrawItem(i, ctx, x, y)
-    {
+    selectItem(i) {
+        if (i === 0)
+            return this.area.palette = Math.max(this.area.palette - 1, 0);
+        if (i === this.itemCount - 1)
+            return this.area.palette = Math.min(this.area.palette + 1, this.area.palettes.length - 1);
+        const p = this.area.palettes[this.area.palette];
+        if (p && i <= p.colors.length)
+            this.area.setToolOptions(p.colors[i - 1]);
+    }
+
+    redrawItem(i, ctx, x, y, size) {
         let p = this.area.palettes[this.area.palette];
         if (!p)
              p = {colors: []};
 
         if (i === 0 || i > p.colors.length) {
-            const q = i === 0 ? -1 : i === this.number - 1 ? +1 : 0;
+            const q = i === 0 ? -1 : i === this.itemCount - 1 ? +1 : 0;
             ctx.beginPath();
-            ctx.moveTo(x + this.itemSize * 0.3, y + this.itemSize * (0.5 - 0.1 * q));
-            ctx.lineTo(x + this.itemSize * 0.5, y + this.itemSize * (0.5 + 0.1 * q));
-            ctx.lineTo(x + this.itemSize * 0.7, y + this.itemSize * (0.5 - 0.1 * q));
+            ctx.moveTo(x + size * 0.3, y + size * (0.5 - 0.1 * q));
+            ctx.lineTo(x + size * 0.5, y + size * (0.5 + 0.1 * q));
+            ctx.lineTo(x + size * 0.7, y + size * (0.5 - 0.1 * q));
             ctx.lineWidth = 3;
             ctx.strokeStyle = "#888";
             ctx.stroke();
@@ -313,50 +340,45 @@ class PaletteControl extends ItemControl
 }
 
 
-class ToolControl extends ItemControl
-{
-    constructor(e, area, linked)
-    {
-        super(e, area, linked);
-        const n = Math.floor(this.height / this.itemSize) * Math.floor(this.width / this.itemSize);
-        this.tools  = n < this.area.tools.length ? this.smallSubset : this.area.tools;
-        this.number = this.tools.length;
-    }
-
-    get smallSubset()
-    {
+class ToolControl extends ItemControl {
+    get smallSubset() {
         return [RectSelectionTool, this.area.tool.options.last, EraserTool, ColorpickerTool];
     }
 
-    selectItem(i)
-    {
-        const tool = this.tools[i];
+    get tools() {
+        const isz = this.itemSize;
+        const max = Math.floor(this.height / isz) * Math.floor(this.width / isz);
+        return max < this.area.tools.length ? this.smallSubset : this.area.tools;
+    }
 
+    get itemCount() {
+        return this.tools.length;
+    }
+
+    selectItem(i) {
+        const tool = this.tools[i];
         if (tool === undefined || tool === this.area.tool.options.kind)
             return;
-
         if (this.smallSubset.indexOf(tool) === -1)
             this.area.setToolOptions({ kind: tool, last: tool });
         else
             this.area.setToolOptions({ kind: tool });
     }
 
-    redrawItem(i, ctx, x, y)
-    {
-        const selected = this.tools[i] === this.area.tool.options.kind;
-        const size = this.itemSize;
-        const tool = new this.tools[i](null, { size: size * 9 / 20, L: 80, opacity: selected ? 1 : 0.5 });
+    redrawItem(i, ctx, x, y, size) {
+        const ctor = this.tools[i];
+        const tool = new ctor(null, { size: size * 9 / 20, L: 80, opacity: ctor === this.area.tool.options.kind ? 1 : 0.5 });
         tool.symbol(ctx, x + size / 2, y + size / 2);
     }
 }
 
 
-class ModalControl
-{
-    constructor(e, x, y, parent)
-    {
+class ModalControl extends ControlBase {
+    constructor(e, area, x, y, parent) {
+        super(e, area, []);
         if (parent) {
-            const right = $(parent).parents('.side-area').hasClass('side-area-right');
+            const area = parent.$nearestParent('.side-area');
+            const right = area && area.classList.contains('side-area-right');
             e.style.top = parent.offsetTop + 'px';
             e.classList.add('fixed');
             e.classList.add(right ? 'fixed-right' : 'fixed-left');
@@ -370,220 +392,223 @@ class ModalControl
         this.cover.appendChild(this.element = e);
     }
 
-    redraw() {}
+    redraw(all = false) {
+    }
 }
 
 
-class SaveControl extends ModalControl
-{
-    constructor(e, area, x, y, parent)
-    {
-        super(e, x, y, parent);
-
-        $(e).find('[data-type]').on('click', (ev) => {
+class SaveControl extends ModalControl {
+    constructor(e, area, x, y, parent) {
+        super(e, area, x, y, parent);
+        let download = ev => {
             const link = document.createElement('a');
-            link.download = ev.target.getAttribute('data-name');
-            link.href     = area.save(ev.target.getAttribute('data-type'));
+            link.download = ev.target.dataset.name;
+            link.href     = area.save(ev.target.dataset.type);
             link.click();
-        });
+        };
+        for (let c of e.querySelectorAll('[data-type]'))
+            c.addEventListener('click', download);
     }
 }
 
 
-class JointControl extends ModalControl
-{
-    constructor(e, area, x, y, parent)
-    {
-        super(e, x, y, parent);
-        const elem = $(e);
-        const color   = elem.find('[data-control="ColorControl"]')   .control(area);
-        const palette = elem.find('[data-control="PaletteControl"]') .control(area, color);
-        const size    = elem.find('[data-control="SizeControl"]')    .control(area);
-        const tool    = elem.find('[data-control="ToolControl"]')    .control(area, size);
+class JointControl extends ModalControl {
+    constructor(e, area, x, y, parent) {
+        super(e, area, x, y, parent);
+        const color   = Array.from(e.querySelectorAll('[data-control="ColorControl"]')  ).map(c => new Control(c, area));
+        const palette = Array.from(e.querySelectorAll('[data-control="PaletteControl"]')).map(c => new Control(c, area, color));
+        const size    = Array.from(e.querySelectorAll('[data-control="SizeControl"]')   ).map(c => new Control(c, area));
+        const tool    = Array.from(e.querySelectorAll('[data-control="ToolControl"]')   ).map(c => new Control(c, area, size));
     }
 }
 
 
-class ColorButtonControl extends CanvasControl
-{
-    constructor(e, area)
-    {
+class ColorButtonControl extends CanvasControl {
+    constructor(e, area) {
         super(e, area);
-        area.on('tool:options', this.redraw.bind(this));
-        this.tool = {};
+        // FIXME event handler leak
+        area.on('tool:options', _ => this.redraw());
     }
 
-    redraw()
-    {
+    redraw(all = false) {
         const opt = this.area.tool.options;
-
-        if (this.tool.constructor !== opt.kind)
+        if (all || this.tool.constructor !== opt.kind)
             this.tool = new opt.kind(null, { size: this.width / 1.5, L: 50 });
-
-        if (Math.abs(this.tool.options.L - opt.L) <= 50) {
-            const ctx = this.element.getContext('2d');
-            ctx.clearRect(0, 0, this.width, this.height);
+        if (all || Math.abs(this.tool.options.L - opt.L) <= 50) {
+            super.redraw(true);
             this.tool.options.L = opt.L > 50 ? 0 : 100;
-            this.tool.symbol(ctx, this.width / 2, this.height / 2);
+            this.tool.symbol(this.element.getContext('2d'), this.width / 2, this.height / 2);
         }
-
         this.element.style.background = `hsl(${opt.H}, ${opt.S}%, ${opt.L}%)`;
     }
 }
 
 
-class LayerControl
-{
-    constructor(e, area)
-    {
-        const template = $(e.getAttribute('data-control-layer-config'));
-        const button   = (ev) => ev.originalEvent.touches ? ev.originalEvent.touches.length : ev.button;
-        const position = (ev) => ev.originalEvent.touches ? ev.originalEvent.touches[0].pageY : ev.pageY;
-
-        const elem = $(e);
-        elem.append("<div>");
-
-        elem.on('contextmenu', '.layer-menu-item', function (ev) {
-            template.clone().control(area, $(this).index(), 0, 0, this);
-            return false;
-        });
-
-        elem.on('mousedown touchstart', '.layer-menu-item', function (ev) {
-            if (ev.which > 1)
-                return true;
-
-            const elem  = $(this);
-            const index = elem.index();
-            const pageY = elem.position().top;
-            const body  = $(document.body);
-
-            let offset = 0;
-            let start  = position(ev);
-
-            const drag = (ev) => {
-                offset = position(ev) - start;
-                elem.css('position', 'relative').css('top', offset).css('z-index', 1);
-                return false;
-            };
-
-            const abort = (ev) => {
-                if (button(ev) > 1) {
-                    body.off('mousedown touchstart', abort);
-                    body.off('mousemove touchmove',  drag);
-                    body.off('mouseup   touchend',   drop);
-                    elem.css('position', 'static').css('top', '');
-                    return false;
-                }
-            };
-
-            const drop = (ev) => {
-                body.off('mousedown touchstart', abort);
-                body.off('mousemove touchmove',  drag);
-                body.off('mouseup   touchend',   drop);
-
-                let shift = -index;
-
-                elem.parent().children('.layer-menu-item').each((i, it) => {
-                    if (i != index && $(it).position().top < pageY + offset)
-                        shift = i - index + (i < index);
-                });
-
-                elem.css('position', 'static').css('z-index', '');
-
-                if (shift !== 0)
-                    area.moveLayer(index, shift);
-                else if (index !== area.layer)
-                    area.setLayer(index);
-                else
-                    elem.trigger('contextmenu');
-
-                return false;
-            };
-
-            body.on('mousedown touchstart', abort);
-            body.on('mousemove touchmove',  drag);
-            body.on('mouseup   touchend',   drop);
-            return false;
-        });
-
-        area.on('layer:add', (layer, index) => {
-                const entry = $('<div class="layer-menu-item"><canvas></canvas></div>');
-                entry.insertBefore(elem.children().eq(index));
-            })
-
-            .on('layer:redraw', (layer, index) => {
-                const scale  = 150 / Math.max(layer.w, layer.h);
-                const canvas = elem.children().eq(index).find('canvas')[0];
-                canvas.width  = layer.w * scale;
-                canvas.height = layer.h * scale;
-                const ctx    = canvas.getContext('2d');
-                ctx.globalCompositeOperation = 'copy';
-                ctx.drawImage(layer.img, 0, 0, canvas.width, canvas.height);
-            })
-
-            .on('layer:set',  (index) => elem.children().removeClass('active').eq(index).addClass('active'))
-            .on('layer:del',  (index) => elem.children().eq(index).remove())
-            .on('layer:move', (i, di) => elem.children().eq(i).detach().insertBefore(elem.children().eq(i + di)));
+class LayerControl extends ControlBase {
+    constructor(e, area) {
+        super(e, area);
+        // FIXME event handler leak
+        area.on('layer:add',    this.onLayerAdd.bind(this))
+            .on('layer:redraw', this.onLayerDraw.bind(this))
+            .on('layer:set',    this.onLayerSet.bind(this))
+            .on('layer:del',    this.onLayerDel.bind(this))
+            .on('layer:move',   this.onLayerMove.bind(this));
     }
 
-    redraw() { /* add existing layers to the list? */ }
+    onLayerAdd(layer, index) {
+        const cnv = document.createElement('canvas');
+        const div = document.createElement('div');
+        cnv.getContext('2d').globalCompositeOperation = 'copy';
+        div.appendChild(cnv);
+        div.addEventListener('contextmenu', this.onLayerMenu.bind(this));
+        div.addEventListener('touchstart',  this.onLayerDrag.bind(this));
+        div.addEventListener('mousedown',   this.onLayerDrag.bind(this));
+        this.element.$insertAt(div, index);
+    }
+
+    onLayerDrag(ev) {
+        const button   = ev => ev.touches ? ev.touches.length : ev.button;
+        const position = ev => ev.touches ? ev.touches[0].pageY : ev.pageY;
+        if (button(ev) > 1)
+            return;
+
+        ev.preventDefault();
+        let target = ev.currentTarget;
+        let origin = target.offsetTop;
+        let start = position(ev), end = start;
+        target.style.position = 'relative';
+        target.style.zIndex = 1;
+
+        const drag = (ev) => {
+            ev.preventDefault();
+            end = position(ev);
+            target.style.top = `${end - start}px`;
+        };
+
+        const stop = (ev) => {
+            ev.preventDefault();
+            target.style.position = 'static';
+            target.style.top = '';
+            const body = document.body;
+            body.removeEventListener('touchstart', abort);
+            body.removeEventListener('mousedown',  abort);
+            body.removeEventListener('mousemove',  drag);
+            body.removeEventListener('touchmove',  drag);
+            body.removeEventListener('mouseup',    drop);
+            body.removeEventListener('touchend',   drop);
+        };
+
+        const abort = (ev) => {
+            if (button(ev) > 1)
+                stop(ev);
+        };
+
+        const drop = (ev) => {
+            stop(ev);
+            let index = 0, newIndex = 0;
+            for (let c of target.parentElement.children) {
+                if (c !== target && c.offsetTop < origin)
+                    index++;
+                if (c !== target && c.offsetTop < origin + (end - start))
+                    newIndex++;
+            }
+            if (index !== newIndex)
+                area.moveLayer(index, newIndex - index);
+            area.setLayer(newIndex);
+        };
+
+        const body = document.body;
+        body.addEventListener('mousedown',  abort);
+        body.addEventListener('touchstart', abort);
+        body.addEventListener('mousemove',  drag);
+        body.addEventListener('touchmove',  drag);
+        body.addEventListener('mouseup',    drop);
+        body.addEventListener('touchend',   drop);
+    }
+
+    onLayerMenu(ev) {
+        ev.preventDefault();
+        const c = document.querySelector(this.element.dataset.controlLayerConfig).cloneNode(true);
+        new Control(c, this.area, 0, 0, ev.currentTarget, this.area.layers[$(ev.currentTarget).index()]);
+    }
+
+    onLayerDraw(layer, index) {
+        const scale = 150 / Math.max(layer.w, layer.h);
+        const canvas = this.element.children[index].querySelector('canvas');
+        canvas.width = layer.w * scale;
+        canvas.height = layer.h * scale;
+        canvas.getContext('2d').drawImage(layer.img, 0, 0, canvas.width, canvas.height);
+    }
+
+    onLayerSet(index) {
+        for (let c of this.element.children)
+            c.classList.remove('active');
+        this.element.children[index].classList.add('active');
+    }
+
+    onLayerDel(index) {
+        this.element.children[index].remove();
+    }
+
+    onLayerMove(index, delta) {
+        this.element.$insertAt(this.element.children[index], index + delta + (delta >= 0));
+    }
 }
 
 
-class ConfigControl extends ModalControl
-{
-    constructor(e, object, x, y, parent)
-    {
-        super(e, x, y, parent);
+class ConfigControl extends ModalControl {
+    constructor(e, area, x, y, parent, object) {
+        super(e, area, x, y, parent);
         this.object = object;
-        this.props  = $(e).find('[data-prop]').on('change', (ev) => {
-            let k = ev.target.getAttribute('data-prop');
-            let t = ev.target.getAttribute('data-type');
-            let v = ev.target.type == 'checkbox' ? ev.target.checked : ev.target.value;
-
-            if      (t == 'int')   v = parseInt(v);
-            else if (t == 'float') v = parseFloat(v);
-
-            if (!(typeof v === 'number' && isNaN(v)) && this.select(k, v) !== false)
-                this.object[k] = v;
-
-            this.redraw();
-        });
+        for (let c of e.querySelectorAll('[data-prop]'))
+            c.addEventListener('change', this.onChange.bind(this));
     }
 
-    select(k, v) {}
-    redraw()
-    {
-        this.props.each((_, p) => { p.checked = p.value = this.object[p.getAttribute('data-prop')] });
+    onChange(ev) {
+        let t = ev.target.dataset.type;
+        let k = ev.target.dataset.prop;
+        let v = ev.target.type == 'checkbox' ? ev.target.checked : ev.target.value;
+        if (t === 'int')
+            v = parseInt(v);
+        if (t === 'float')
+            v = parseFloat(v);
+        if (!(typeof v === 'number' && isNaN(v)))
+            this.select(k, v);
+    }
+
+    select(k, v) {
+        this.object[k] = v;
+        this.redraw();
+    }
+
+    redraw(all = false) {
+        super.redraw(all);
+        for (let p of this.element.querySelectorAll('[data-prop]'))
+            p.checked = p.value = this.object[p.dataset.prop];
     }
 }
 
 
-class LayerConfigControl extends ConfigControl
-{
-    constructor(e, area, index, x, y, parent)
-    {
-        super(e, area.layers[index], x, y, parent);
-        this.area = area;
-    }
-
-    select(k, v)
-    {
+class LayerConfigControl extends ConfigControl {
+    select(k, v) {
         this.area.snap({ index: this.area.layers.indexOf(this.object) });
+        super.select(k, v);
     }
 }
 
 
-const exports = { ColorControl, SizeControl, PaletteControl, ToolControl, SaveControl
+class ImageConfigControl extends ConfigControl {
+    constructor(e, area, x, y, parent) {
+        super(e, area, x, y, parent, area);
+    }
+}
+
+
+function Control(e, ...args) {
+    let c = new Control.types[e.dataset.control](e, ...args);
+    return c.redraw(true), c;
+}
+
+Control.types = { ColorControl, SizeControl, PaletteControl, ToolControl, SaveControl
                 , JointControl, ColorButtonControl, LayerControl, LayerConfigControl
-                , ImageConfigControl: ConfigControl };
-
-
-$.fn.control = function (...args)
-{
-    return this.toArray().map((v) => {
-        const it = new exports[v.getAttribute('data-control')](v, ...args);
-        it.redraw();
-        return it;
-    });
-};
+                , ImageConfigControl };

@@ -1,16 +1,18 @@
 "use strict";
 
+const UNDO_OPS_LIMIT = 25;
+
+// enum UNDO_OPERATION_KIND:
+const UNDO_DRAW       = 0
+    , UNDO_ADD_LAYER  = 1
+    , UNDO_DEL_LAYER  = 2
+    , UNDO_MOVE_LAYER = 3
+    , UNDO_MERGE_DOWN = 4
+    , UNDO_UNMERGE    = 5;
+
 
 class Area
 {
-    static get UNDO_OPS_LIMIT  () { return 25; }
-    static get UNDO_DRAW       () { return 0; }
-    static get UNDO_ADD_LAYER  () { return 1; }
-    static get UNDO_DEL_LAYER  () { return 2; }
-    static get UNDO_MOVE_LAYER () { return 3; }
-    static get UNDO_MERGE_DOWN () { return 4; }
-    static get UNDO_UNMERGE    () { return 5; }
-
     constructor(element)
     {
         element.appendChild(this.select_ui = document.createElement('canvas'));
@@ -48,7 +50,7 @@ class Area
                 for (let path of this.selection)
                     context.clip(path);
 
-                this.snap({index: this.layer, action: Area.UNDO_DRAW});
+                this.snap({index: this.layer, action: UNDO_DRAW});
             }
 
             const r = element.getBoundingClientRect();
@@ -338,7 +340,7 @@ class Area
 
         this.redos = [];
         this.undos.splice(0, 0, options);
-        this.undos.splice(Area.UNDO_OPS_LIMIT);
+        this.undos.splice(UNDO_OPS_LIMIT);
     }
 
     /* Create an empty layer at a given position in the stack,
@@ -358,7 +360,7 @@ class Area
             layer.crop(0, 0, this.w, this.h);
 
         this.setLayer(index);
-        this.snap({index: index, action: Area.UNDO_ADD_LAYER, state: null});
+        this.snap({index: index, action: UNDO_ADD_LAYER, state: null});
         return layer;
     }
 
@@ -381,7 +383,7 @@ class Area
         if (i < 0 || this.layers.length <= i)
             return;
 
-        this.snap({index: i, action: Area.UNDO_DEL_LAYER});
+        this.snap({index: i, action: UNDO_DEL_LAYER});
         this.layers.splice(i, 1)[0].img.remove();
         this.trigger('layer:del', i);
         this.setLayer(Math.min(this.layer, this.layers.length - 1));
@@ -394,7 +396,7 @@ class Area
         if (i + Math.min(delta, 0) < 0 || this.layers.length <= i + Math.max(delta, 0))
             return;
 
-        this.snap({index: i, action: Area.UNDO_MOVE_LAYER, delta: delta, state: null});
+        this.snap({index: i, action: UNDO_MOVE_LAYER, delta: delta, state: null});
         this.layers.splice(i + delta, 0, this.layers.splice(i, 1)[0]);
         this.trigger('layer:move', i, delta);
         this.setLayer(i + delta);
@@ -407,7 +409,7 @@ class Area
         if (i < 0 || this.layers.length - 1 <= i)
             return;
 
-        this.snap({index: i, action: Area.UNDO_MERGE_DOWN, below: this.layers[i + 1].state});
+        this.snap({index: i, action: UNDO_MERGE_DOWN, below: this.layers[i + 1].state});
 
         const top = this.layers.splice(i, 1)[0];
         const bot = this.layers[i];
@@ -444,31 +446,31 @@ class Area
         const data = undos.splice(0, 1)[0];
 
         switch (data.action) {
-            case Area.UNDO_ADD_LAYER:
+            case UNDO_ADD_LAYER:
                 this.deleteLayer(data.index);
                 break;
 
-            case Area.UNDO_DEL_LAYER:
+            case UNDO_DEL_LAYER:
                 this.createLayer(data.index, data.state);
                 break;
 
-            case Area.UNDO_MOVE_LAYER:
+            case UNDO_MOVE_LAYER:
                 this.moveLayer(data.index + data.delta, -data.delta);
                 break;
 
-            case Area.UNDO_MERGE_DOWN:
+            case UNDO_MERGE_DOWN:
                 this.createLayer(data.index, data.state);
                 this.layers[data.index + 1].state = data.below;
                 // createLayer has pushed an UNDO_ADD_LAYER onto the undo stack.
-                this.undos[0].action = Area.UNDO_UNMERGE;
+                this.undos[0].action = UNDO_UNMERGE;
                 break;
 
-            case Area.UNDO_UNMERGE:
+            case UNDO_UNMERGE:
                 this.mergeDown(data.index);
                 break;
 
             default:
-                this.snap({index: data.index, action: Area.UNDO_DRAW});
+                this.snap({index: data.index, action: UNDO_DRAW});
                 this.layers[data.index].state = data.state;
                 break;
         }
