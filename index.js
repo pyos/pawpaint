@@ -18,6 +18,7 @@
         .on('key:78',     /* N */ () => area.createLayer(area.layer))
         .on('key:88',     /* X */ () => area.deleteLayer(area.layer))
         .on('key:77',     /* M */ () => area.mergeDown(area.layer))
+        .on('key:81',     /* Q */ () => area.setToolOptions({ kind: ColorpickerTool }))
         .on('key:87',     /* W */ () => area.setToolOptions({ kind: area.tool.options.last }))
         .on('key:69',     /* E */ () => area.setToolOptions({ eraser: !area.tool.options.eraser }))
         .on('key:C-83',   /* S */ () => {
