@@ -8,8 +8,6 @@
     window.META  = false;
     const area = window.area = new Area(document.getElementById('area'));
 
-    let beforeCtrl = null;
-
     area.on('key:27',   /* Esc */ () => $('.cover').click())
         .on('key:C-90',   /* Z */ () => area.undo())
         .on('key:C-89',   /* Y */ () => area.redo())
@@ -142,7 +140,7 @@
         let opts = area.tool.options;
         localStorage.image    = area.save('svg');
         localStorage.palette  = area.palette;
-        localStorage.tool     = area.tools.indexOf(beforeCtrl || area.tool.options.kind);
+        localStorage.tool     = area.tools.indexOf(area.tool.options.kind);
         localStorage.toolOpts = JSON.stringify({
             'H': opts.H, 'S': opts.S, 'L': opts.L, 'size': opts.size,
             'opacity': opts.opacity, 'rotation': opts.rotation, 'spacing': opts.spacing
