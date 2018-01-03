@@ -244,11 +244,11 @@ class SizeControl extends BarControl {
     }
 
     get value() {
-        return Math.sqrt((this.area.tool.options.size - 1) / this.length);
+        return Math.pow((this.area.tool.options.size - 1) / this.length / 2.5, 0.4);
     }
 
     set value(v) {
-        this.area.setToolOptions({ size: v * v * this.length + 1 });
+        this.area.setToolOptions({ size: Math.pow(v, 2.5) * this.length * 2.5 + 1 });
     }
 }
 
