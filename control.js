@@ -230,15 +230,6 @@ class BarControl extends CanvasControl {
 
 
 class SizeControl extends BarControl {
-    redraw(all = true) {
-        super.redraw(all);
-        const ctx = this.element.getContext('2d');
-        ctx.save();
-        ctx.translate(this.width / 2, this.height / 2);
-        this.area.tool.crosshair(ctx);
-        ctx.restore();
-    }
-
     get text() {
         return Math.round(this.area.tool.options.size);
     }
@@ -254,15 +245,6 @@ class SizeControl extends BarControl {
 
 
 class OpacityControl extends BarControl {
-    redraw(all = true) {
-        super.redraw(all);
-        const ctx = this.element.getContext('2d');
-        ctx.save();
-        ctx.globalAlpha = this.value;
-        ctx.arc(this.width / 2, this.height / 2, Math.min(this.width, this.height) / 2.5, 0, 2 * Math.PI);
-        ctx.restore();
-    }
-
     get text() {
         return Math.round(this.area.tool.options.opacity * 100) / 100;
     }
@@ -273,6 +255,21 @@ class OpacityControl extends BarControl {
 
     set value(v) {
         this.area.setToolOptions({ opacity: v });
+    }
+}
+
+
+class RotationControl extends BarControl {
+    get text() {
+        return Math.round(this.value * 360);
+    }
+
+    get value() {
+        return this.area.tool.options.rotation / 2 / Math.PI;
+    }
+
+    set value(v) {
+        this.area.setToolOptions({ rotation: v * 2 * Math.PI });
     }
 }
 
@@ -426,11 +423,36 @@ class SaveControl extends ModalControl {
 class JointControl extends ModalControl {
     constructor(e, area, x, y, parent) {
         super(e, area, x, y, parent);
-        const color   = Array.from(e.querySelectorAll('[data-control="ColorControl"]')  ).map(c => new Control(c, area));
-        const palette = Array.from(e.querySelectorAll('[data-control="PaletteControl"]')).map(c => new Control(c, area, color));
-        const size    = Array.from(e.querySelectorAll('[data-control="SizeControl"]')   ).map(c => new Control(c, area));
-        const opacity = Array.from(e.querySelectorAll('[data-control="OpacityControl"]')).map(c => new Control(c, area));
-        const tool    = Array.from(e.querySelectorAll('[data-control="ToolControl"]')   ).map(c => new Control(c, area, size));
+        let cs = Array.from(e.children).filter(c => c.dataset.control).map(c => new Control(c, area, [this]));
+        let cc = cs.filter(c => c instanceof ColorControl);
+        let pc = cs.filter(c => c instanceof PaletteControl);
+        let bc = cs.filter(c => c instanceof BarControl);
+        pc.forEach(c => c.linked = cc);
+        this.bars = bc;
+        this.tool = document.createElement('canvas');
+        this.tool.style.top = '0';
+        this.tool.style.zIndex = '0';
+        this.tool.style.position = 'absolute';
+        this.tool.style.pointerEvents = 'none';
+        this.element.insertBefore(this.tool, this.element.children[0]);
+    }
+
+    redraw(all = true) {
+        super.redraw(all);
+        if (this.tool) {
+            let a = Infinity, b = -Infinity;
+            for (let c of this.bars)
+                a = Math.min(a, c.element.offsetLeft), b = Math.max(b, c.element.offsetLeft + c.element.offsetWidth);
+
+            this.tool.width = b - a;
+            this.tool.height = this.element.offsetHeight;
+            this.tool.style.left = `${a}px`;
+            this.tool.$forceNativeResolution();
+            const ctx = this.tool.getContext('2d');
+            ctx.clearRect(0, 0, b - a, this.element.offsetHeight);
+            ctx.translate((b - a) / 2, this.element.offsetHeight / 2);
+            this.area.tool.crosshair(ctx);
+        }
     }
 }
 
@@ -621,6 +643,6 @@ function Control(e, ...args) {
     return c.redraw(true), c;
 }
 
-Control.types = { ColorControl, SizeControl, OpacityControl, PaletteControl, ToolControl, SaveControl
-                , JointControl, ColorButtonControl, LayerControl, LayerConfigControl
-                , ImageConfigControl };
+Control.types = { ColorControl, SizeControl, OpacityControl, RotationControl, PaletteControl, ToolControl
+                , JointControl, ColorButtonControl, LayerControl, LayerConfigControl , ImageConfigControl
+                , SaveControl };
