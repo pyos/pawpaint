@@ -341,32 +341,19 @@ class PaletteControl extends ItemControl {
 
 
 class ToolControl extends ItemControl {
-    get smallSubset() {
-        return [RectSelectionTool, MoveTool, this.area.tool.options.last, ColorpickerTool];
-    }
-
-    get tools() {
-        const isz = this.itemSize;
-        const max = Math.floor(this.height / isz) * Math.floor(this.width / isz);
-        return max < this.area.tools.length ? this.smallSubset : this.area.tools;
-    }
-
     get itemCount() {
-        return this.tools.length;
+        return this.area.tools.length;
     }
 
     selectItem(i) {
-        const tool = this.tools[i];
+        const tool = this.area.tools[i];
         if (tool === undefined || tool === this.area.tool.options.kind)
             return;
-        if (this.smallSubset.indexOf(tool) === -1)
-            this.area.setToolOptions({ kind: tool, last: tool });
-        else
-            this.area.setToolOptions({ kind: tool });
+        this.area.setToolOptions({ kind: tool, last: tool });
     }
 
     redrawItem(i, ctx, x, y, size) {
-        const ctor = this.tools[i];
+        const ctor = this.area.tools[i];
         const tool = new ctor(null, { size: size * 9 / 20, L: 80, opacity: ctor === this.area.tool.options.kind ? 1 : 0.5 });
         tool.symbol(ctx, x + size / 2, y + size / 2);
     }
