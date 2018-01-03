@@ -118,5 +118,5 @@ class OptionDynamic extends Dynamic
 
 Dynamic.DEFAULT_SET = [
     new OptionDynamic({'source': 'opacity', 'target': 'globalAlpha', 'type': 2}),
-    new OptionDynamic({'source': 'size', 'target': 'lineWidth', 'type': 2}),
+    // new OptionDynamic({'source': 'size', 'target': 'lineWidth', 'type': 2}),
 ];
