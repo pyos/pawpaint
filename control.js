@@ -44,7 +44,7 @@ class CanvasControl extends ControlBase {
             e.$defaultEventListener('mousemove',  ev => {});
             e.$defaultEventListener('touchmove',  ev => {});
             e.$defaultEventListener('mouseup',    ev => { e.removeEventListener('mousemove', mouse); });
-            e.$defaultEventListener('touchend',   ev => { e.removeEventListener('touchmove', mouse); });
+            e.$defaultEventListener('touchend',   ev => { e.removeEventListener('touchmove', touch); });
         } else {
             e.$defaultEventListener('click', click);
         }
