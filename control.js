@@ -72,11 +72,11 @@ class ColorControl extends CanvasControl {
     }
 
     get hueInnerR() {
-        return 3 / 4 * this.hueOuterR;
+        return 0.78 * this.hueOuterR;
     }
 
     get satRadius() {
-        return 5 / 6 * this.hueInnerR;
+        return 0.87 * this.hueInnerR;
     }
 
     select(x, y) {
