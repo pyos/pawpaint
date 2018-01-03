@@ -342,7 +342,7 @@ class PaletteControl extends ItemControl {
 
 class ToolControl extends ItemControl {
     get smallSubset() {
-        return [RectSelectionTool, this.area.tool.options.last, EraserTool, ColorpickerTool];
+        return [RectSelectionTool, MoveTool, this.area.tool.options.last, ColorpickerTool];
     }
 
     get tools() {

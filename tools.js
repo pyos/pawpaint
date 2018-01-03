@@ -265,6 +265,8 @@ class PenTool extends Tool
         ctx.lineWidth   = opts.size;
         ctx.globalAlpha = opts.opacity;
         ctx.strokeStyle = ctx.fillStyle = `hsl(${opts.H},${opts.S}%,${opts.L}%)`;
+        if (opts.eraser)
+            ctx.globalCompositeOperation = "destination-out";
         for (let dyn of opts.dynamic)
             dyn.reset(ctx, this, x, y);
         this.windowX = [this.prevX = x, x, x];
@@ -323,40 +325,6 @@ class PenTool extends Tool
         for (let dyn of this.options.dynamic)
             dyn.restore(ctx, this);
 
-        ctx.restore();
-    }
-}
-
-
-class EraserTool extends PenTool
-{
-    get glyph()
-    {
-        return '\uf12d';  // an eraser, duh
-    }
-
-    crosshair(ctx)
-    {
-        ctx.save();
-        ctx.lineWidth   = 2;
-        ctx.globalAlpha = 0.5;
-        ctx.beginPath();
-        ctx.arc(0, 0, Math.max(0, this.options.size / 2 - 1), 0, 2 * Math.PI, false);
-        ctx.strokeStyle = `hsl(0,0%,50%)`;
-        ctx.stroke();
-        ctx.restore();
-    }
-
-    start(ctx, x, y, pressure, rotation)
-    {
-        ctx.save();
-        ctx.globalCompositeOperation = "destination-out";
-        super.start(ctx, x, y, pressure, rotation);
-    }
-
-    stop(ctx)
-    {
-        super.stop(ctx);
         ctx.restore();
     }
 }
