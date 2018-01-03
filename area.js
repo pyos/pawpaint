@@ -30,7 +30,7 @@ class Area {
         this.undos      = [];  // :: [{action, index, state, ...}]
         this.redos      = [];
         this.events     = {};
-        this.scale      = 1;
+        this.scale      = this.defaultScale();
         this.w          = 0;
         this.h          = 0;
 
@@ -187,6 +187,10 @@ class Area {
         element.addEventListener('touchstart',  (ev) => this.crosshair.style.display = 'none');
         element.addEventListener('mousemove',   updateCrosshair);
         element.addEventListener('pointermove', updateCrosshair);
+    }
+
+    defaultScale() {
+        return 1 / this.crosshair.$getResolution();
     }
 
     on(name, fn) {

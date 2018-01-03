@@ -14,7 +14,7 @@
         .on('key:C-90',   /* Z */ () => area.undo())
         .on('key:C-89',   /* Y */ () => area.redo())
         .on('key:C-S-90', /* Z */ () => area.redo())
-        .on('key:C-48',   /* 0 */ () => area.scale = 1)
+        .on('key:C-48',   /* 0 */ () => area.scale = area.defaultScale())
         .on('key:C-187',  /* = */ () => area.scale *= 10/9)
         .on('key:C-189',  /* - */ () => area.scale *= 9/10)
         .on('key:78',     /* N */ () => area.createLayer(area.layer))
@@ -130,8 +130,8 @@
     }
 
     if (!area.layers.length) {
-        area.w = $('#area-container').innerWidth();
-        area.h = $('#area-container').innerHeight();
+        area.w = $('#area-container').innerWidth() / area.defaultScale();
+        area.h = $('#area-container').innerHeight() / area.defaultScale();
         const layer = area.createLayer(area.layer);
         const ctx = layer.img.getContext('2d');
         ctx.fillStyle = 'white';
