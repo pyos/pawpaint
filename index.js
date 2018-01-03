@@ -48,6 +48,7 @@
                     + (e.altKey   ? 'A-' : '')
                     + (e.metaKey  ? 'M-' : '') + e.keyCode;
 
+            console.log('key event: ' + n);
             if (e.target.tagName !== 'INPUT' && area.trigger('key:' + n))
                 e.preventDefault();
         })
@@ -129,8 +130,8 @@
     }
 
     if (!area.layers.length) {
-        area.setSize($('#area-container').innerWidth(), $('#area-container').innerHeight());
-
+        area.w = $('#area-container').innerWidth();
+        area.h = $('#area-container').innerHeight();
         const layer = area.createLayer(area.layer);
         const ctx = layer.img.getContext('2d');
         ctx.fillStyle = 'white';

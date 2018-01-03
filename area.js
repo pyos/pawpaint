@@ -2,7 +2,7 @@
 
 const UNDO_OPS_LIMIT = 25;
 
-// enum UNDO_OPERATION_KIND:
+// enum UNDO_OPERATION_KIND
 const UNDO_DRAW       = 0
     , UNDO_ADD_LAYER  = 1
     , UNDO_DEL_LAYER  = 2
@@ -11,13 +11,13 @@ const UNDO_DRAW       = 0
     , UNDO_UNMERGE    = 5;
 
 
-class Area
-{
-    constructor(element)
-    {
+class Area {
+    constructor(element) {
         element.appendChild(this.select_ui = document.createElement('canvas'));
         element.appendChild(this.crosshair = document.createElement('canvas'));
-        this.select_ui.style.top = this.select_ui.style.left = 0;
+        this.select_ui.style.top = this.select_ui.style.left = "0";
+        this.select_ui.style.width = "100%";
+        this.select_ui.style.height = "100%";
         this.select_ui.classList.add('selection');
         this.crosshair.classList.add('crosshair');
 
@@ -31,296 +31,227 @@ class Area
         this.redos      = [];
         this.events     = {};
         this.scale      = 1;
-        this.setSize(0, 0);
+        this.w          = 0;
+        this.h          = 0;
 
-        let tools   = {};
-        let context = null;
+        let device = {
+            active: {},
+            context: null,
 
-        const onDown = (dev, ev) =>
-        {
-            if (this.drawing++ === 0) {
-                if (!this.layers.length || !this.tool)
-                    return this.drawing--, false;
-
-                const layer = this.layers[this.layer];
-                context = layer.img.getContext('2d');
-                context.save();
-                context.translate(0.5 - layer.x, 0.5 - layer.y);
-
-                for (let path of this.selection)
-                    context.clip(path);
-
-                this.snap({index: this.layer, action: UNDO_DRAW});
-            }
-
-            const r = element.getBoundingClientRect();
-            const x = (ev.clientX - r.left) / this.scale;
-            const y = (ev.clientY - r.top)  / this.scale;
-
-            let pressure = 1;
-            if (ev.pointerType === "pen")
-                pressure = ev.pressure;
-            tools[dev] = new this.tool.options.kind(this, {});
-            tools[dev].options = this.tool.options;  // FIXME should not share dynamics
-            tools[dev].start(context, x, y, pressure, (ev.rotationAngle || 0) / 360);
-            return true;
-        };
-
-        const onMove = (dev, ev) =>
-        {
-            if (tools.hasOwnProperty(dev)) {
-                let pressure = 1;
-                if (ev.pointerType === "pen")
-                    pressure = ev.pressure;
+            position: (ev) => {
                 const r = element.getBoundingClientRect();
                 const x = (ev.clientX - r.left) / this.scale;
                 const y = (ev.clientY - r.top)  / this.scale;
-                tools[dev].move(context, x, y, pressure, (ev.rotationAngle || 0) / 360);
-            }
-        };
+                const z = ev.pointerType === "pen" ? ev.pressure : 1;
+                const w = (ev.rotationAngle || 0) / 360;
+                return {x, y, z, w};
+            },
 
-        const onUp = (dev) =>
-        {
-            if (tools.hasOwnProperty(dev)) {
-                tools[dev].stop(context);
-                delete tools[dev];
-
-                if (--this.drawing === 0) {
-                    context.restore();
-                    context = null;
-
-                    if (this.layers.length)  // might have changed since `onDown`
-                        this.trigger('layer:redraw', this.layers[this.layer], this.layer);
+            start: (dev, ev) => {
+                if (!this.layers.length || !this.tool)
+                    return false;
+                if (this.drawing++ === 0) {
+                    const layer = this.layers[this.layer];
+                    const ctx = layer.img.getContext('2d');
+                    ctx.save();
+                    ctx.translate(0.5 - layer.x, 0.5 - layer.y);
+                    for (let path of this.selection)
+                        ctx.clip(path);
+                    this.snap({index: this.layer, action: UNDO_DRAW});
+                    device.context = ctx;
                 }
-            }
-            return Object.keys(tools).length === 0;
+                const p = device.position(ev);
+                const t = device.active[dev] = new this.tool.options.kind(this, {});
+                t.options = this.tool.options;  // FIXME should not share dynamics
+                t.start(device.context, p.x, p.y, p.z, p.w);
+                return true;
+            },
+
+            move: (dev, ev) => {
+                if (device.active[dev]) {
+                    const p = device.position(ev);
+                    device.active[dev].move(device.context, p.x, p.y, p.z, p.w);
+                }
+            },
+
+            end: (dev) => {
+                if (device.active[dev]) {
+                    device.active[dev].stop(device.context);
+                    delete device.active[dev];
+                    if (--this.drawing === 0) {
+                        device.context.restore();
+                        device.context = null;
+                        if (this.layers.length)  // might have changed since `onDown`
+                            this.trigger('layer:redraw', this.layers[this.layer], this.layer);
+                        return true;
+                    }
+                }
+                return false;
+            },
         };
 
-        // When using tablets, evdev may bug out and send the cursor jumping when doing
-        // fine movements. To prevent this, we're going to ignore extremely fast
-        // mouse movement events.
-        let lastX = 0;
-        let lastY = 0;
+        const mouse = {
+            start(ev) {
+                element.removeEventListener('mouseenter', mouse.start);
+                if (ev.which !== 1 || (ev.buttons !== undefined && ev.buttons !== 1))
+                    return;
+                ev.preventDefault();  // FIXME this prevents unwanted selection, but breaks focusing.
+                if (device.start(-1, ev))
+                    element.addEventListener('mousemove', mouse.move);
+            },
 
-        const onMouseDown = (ev) =>
-        {
-            if (ev.which === 1 && (ev.buttons === undefined || ev.buttons === 1)) {
-                // FIXME this prevents unwanted selection, but breaks focusing.
+            move(ev) {
+                device.move(-1, ev);
+            },
+
+            end(ev) {
+                device.end(-1);
+                element.removeEventListener('mousemove', mouse.move);
+                if (ev.type === 'mouseleave')
+                    element.addEventListener('mouseenter', mouse.start);
+            },
+        };
+
+        const touch = {
+            start(ev) {
+                // FIXME this one is even worse depending on the device.
+                //   On Chromium OS, this will prevent "back/forward" gestures from
+                //   interfering with drawing, but will not focus the broswer window
+                //   if the user taps the canvas.
                 ev.preventDefault();
-                lastX = ev.pageX;
-                lastY = ev.pageY;
+                for (let t of ev.changedTouches)
+                    if (device.start(t.identifier, t))
+                        element.addEventListener('touchmove', touch.move);
+            },
 
-                if (onDown(0, ev)) {
-                    element.addEventListener('mouseup',    onMouseUp);
-                    element.addEventListener('mouseleave', onMouseUp);
-                    element.addEventListener('mousemove',  onMouseMove);
-                    element.addEventListener('mouseenter', onMouseDown);
-                }
-            }
+            move(ev) {
+                for (let t of ev.changedTouches)
+                    device.move(t.identifier, t);
+            },
+
+            end(ev) {
+                for (let t of ev.changedTouches)
+                    device.end(t.identifier);
+                if (ev.touches.length === 0)
+                    element.removeEventListener('touchmove', touch.move);
+            },
         };
 
-        const onMouseMove = (ev) =>
-        {
-            if (Math.abs(ev.pageX - lastX) + Math.abs(ev.pageY - lastY) < 200) {
-                lastX = ev.pageX;
-                lastY = ev.pageY;
-                onMove(0, ev);
-            }
-        };
-
-        const onMouseUp = (ev) =>
-        {
-            onUp(0);
-            element.removeEventListener('mouseup',    onMouseUp);
-            element.removeEventListener('mouseleave', onMouseUp);
-            element.removeEventListener('mousemove',  onMouseMove);
-            if (ev.type !== 'mouseleave')
-                element.removeEventListener('mouseenter', onMouseDown);
-        };
-
-        const onTouchDown = (ev) =>
-        {
-            // FIXME this one is even worse depending on the device.
-            //   On Chromium OS, this will prevent "back/forward" gestures from
-            //   interfering with drawing, but will not focus the broswer window
-            //   if the user taps the canvas.
-            ev.preventDefault();
-
-            for (let i = 0; i < ev.changedTouches.length; i++) {
-                const touch = ev.changedTouches[i];
-                if (onDown(touch.identifier + 1, touch)) {
-                    element.addEventListener('touchmove', onTouchMove);
-                    element.addEventListener('touchend',  onTouchUp);
-                }
-            }
-        };
-
-        const onTouchMove = (ev) =>
-        {
-            for (let i = 0; i < ev.changedTouches.length; i++) {
-                const touch = ev.changedTouches[i];
-                onMove(touch.identifier + 1, touch);
-            }
-        };
-
-        const onTouchUp = (ev) =>
-        {
-            for (let i = 0; i < ev.changedTouches.length; i++)
-                onUp(ev.changedTouches[i].identifier + 1);
-
-            if (ev.touches.length === 0) {
-                element.removeEventListener('touchmove', onTouchMove);
-                element.removeEventListener('touchend',  onTouchUp);
-            }
-        };
-
-        const onPointerDown = (ev) =>
-        {
-            if (ev.which === 0 /* no buttons, e.g. touch screen */ || ev.which === 1) {
+        const pointer = {
+            start(ev) {
+                element.removeEventListener('pointerenter', pointer.start);
+                if (ev.which !== 0 /* no buttons, e.g. touch screen */ && ev.which !== 1)
+                    return;
                 ev.preventDefault();
-                lastX = ev.pageX;
-                lastY = ev.pageY;
+                if (device.start(ev.pointerId, ev))
+                    element.addEventListener('pointermove',  pointer.move);
+            },
 
-                if (onDown(ev.pointerId, ev)) {
-                    element.addEventListener('pointerup',    onPointerUp);
-                    element.addEventListener('pointerleave', onPointerUp);
-                    element.addEventListener('pointermove',  onPointerMove);
-                    element.addEventListener('pointerenter', onPointerDown);
+            move(ev) {
+                device.move(ev.pointerId, ev);
+            },
+
+            end(ev) {
+                if (device.end(ev.pointerId)) {
+                    element.removeEventListener('pointermove',  pointer.move);
+                    if (ev.type === 'pointerleave')
+                        element.addEventListener('pointerenter', pointer.start);
                 }
-            }
+            },
         };
 
-        const onPointerMove = (ev) =>
-        {
-            if (Math.abs(ev.pageX - lastX) + Math.abs(ev.pageY - lastY) < 200) {
-                lastX = ev.pageX;
-                lastY = ev.pageY;
-                onMove(ev.pointerId, ev);
-            }
+        if ('onpointerdown' in document.body) {
+            element.addEventListener('pointerdown',  pointer.start);
+            element.addEventListener('pointerleave', pointer.end);
+            element.addEventListener('pointerup',    pointer.end);
+            // Still have to ignore these separately.
+            element.addEventListener('touchstart', ev => ev.preventDefault());
+        } else {
+            element.addEventListener('mousedown',  mouse.start);
+            element.addEventListener('mouseleave', mouse.end);
+            element.addEventListener('mouseup',    mouse.end);
+            element.addEventListener('touchstart', touch.start);
+            element.addEventListener('touchend',   touch.end);
+        }
 
-            if (ev.pointerType === "pen" || ev.pointerType === "mouse") {
-                // Need this because `mousemove` is not emitted for some reason.
-                updateCrosshair(ev);
-            }
-        };
-
-        const onPointerUp = (ev) =>
-        {
-            if (onUp(ev.pointerId)) {
-                element.removeEventListener('pointerup',    onPointerUp);
-                element.removeEventListener('pointerleave', onPointerUp);
-                element.removeEventListener('pointermove',  onPointerMove);
-                if (ev.type !== 'pointerleave')
-                    element.removeEventListener('pointerenter', onPointerDown);
-            }
-        };
-
-        const updateCrosshair = (ev) =>
-        {
+        const updateCrosshair = (ev) => {
+            if (ev.pointerType && ev.pointerType !== "pen" && ev.pointerType !== "mouse")
+                return;
             const r = element.getBoundingClientRect();
             this.crosshair.style.left = ev.clientX - r.left + 'px';
             this.crosshair.style.top  = ev.clientY - r.top  + 'px';
             this.crosshair.style.display = '';
         };
 
-        if ('onpointerdown' in document.body) {
-            element.addEventListener('pointerdown', onPointerDown);
-            // Still have to ignore these separately.
-            element.addEventListener('touchstart', (ev) => ev.preventDefault());
-        } else {
-            element.addEventListener('mousedown',   onMouseDown);
-            element.addEventListener('touchstart',  onTouchDown);
-        }
-
         element.addEventListener('mouseleave',  (ev) => this.crosshair.style.display = 'none');
         element.addEventListener('touchstart',  (ev) => this.crosshair.style.display = 'none');
         element.addEventListener('mousemove',   updateCrosshair);
+        element.addEventListener('pointermove', updateCrosshair);
     }
 
-    on(name, fn)
-    {
+    on(name, fn) {
         for (let n of name.split(' ')) {
             this.events[n] = this.events[n] || [];
             this.events[n].push(fn);
         }
-
         return this;
     }
 
-    trigger(name, ...args)
-    {
-        if (!this.events.hasOwnProperty(name))
+    trigger(name, ...args) {
+        if (!this.events[name])
             return false;
-
         for (let fn of this.events[name])
             fn.apply(this, args);
-
         return true;
     }
 
-    onLayerRedraw(layer)
-    {
+    onLayerRedraw(layer) {
         const index = this.layers.indexOf(layer);
         layer.restyle(index == this.layer, -1 - index);
         this.trigger('layer:redraw', layer, index);
     }
 
-    restyleCrosshair()
-    {
-        const ctx = this.crosshair.getContext('2d');
-        const bsr = ctx.webkitBackingStorePixelRatio || ctx.mozBackingStorePixelRatio ||
-                    ctx.msBackingStorePixelRatio     || ctx.oBackingStorePixelRatio   ||
-                    ctx.backingStorePixelRatio       || 1;
-
+    restyleCrosshair() {
         const s = this.tool.options.size;
-        const m = this.scale * (window.devicePixelRatio || 1) / bsr;
-        this.crosshair.width = this.crosshair.height = s * m;
-        this.crosshair.style.width = this.crosshair.style.height = Math.ceil(s * this.scale) + "px";
-        this.crosshair.style.marginLeft = this.crosshair.style.marginTop = -s / 2 * this.scale + "px";
-        ctx.translate(s * m / 2, s * m / 2);
-        ctx.scale(m, m);
+        this.crosshair.width = this.crosshair.height = s * this.scale;
+        this.crosshair.$forceNativeResolution();
+        this.crosshair.style.marginLeft = `${-s / 2 * this.scale}px`;
+        this.crosshair.style.marginTop  = `${-s / 2 * this.scale}px`;
+        const ctx = this.crosshair.getContext('2d');
+        ctx.scale(this.scale, this.scale);
+        ctx.translate(s / 2, s / 2);
         this.tool.crosshair(ctx);
     }
 
-    get w( ) { return this._w; }
-    get h( ) { return this._h; }
-    set w(w) { this.setSize(w, this._h); }
-    set h(h) { this.setSize(this._w, h); }
+    get w() { return this._w; }
+    get h() { return this._h; }
+    get scale() { return this._scale; }
 
-    /* Change the size of the area. The sizes of the layers do not change.
-     * Uncovered part of the image is transparent, while the overflow is hidden. */
-    setSize(w, h)
-    {
-        this.element.style.width  = (this._w = w) + "em";
-        this.element.style.height = (this._h = h) + "em";
-        this.selection = this.selection;  // refresh the selection UI
+    set w(w) {
+        this.element.style.width  = `${this._w = w}em`;
+        this.selection = this.selection;
     }
 
-    get scale()
-    {
-        return this._scale;
+    set h(h) {
+        this.element.style.height = `${this._h = h}em`;
+        this.selection = this.selection;
     }
 
-    set scale(x)
-    {
+    set scale(x) {
         this._scale = Math.max(0.05, Math.min(20, x));
         this.element.style.fontSize = `${this._scale}px`;
         this.restyleCrosshair();
         // TODO make the viewport centered at the same position as it was
     }
 
-    get selection()
-    {
+    get selection() {
         return this._selection;
     }
 
-    set selection(paths)
-    {
+    set selection(paths) {
         this._selection = paths;  // TODO grayscale masks
         this.select_ui.width  = this.w;
         this.select_ui.height = this.h;
-        this.select_ui.style.width  = this.w + "em";
-        this.select_ui.style.height = this.h + "em";
         const ctx = this.select_ui.getContext('2d');
         ctx.save();
         ctx.globalAlpha = 0.33;
@@ -552,7 +483,10 @@ class Area
             this.createLayer(0, {x: 0, y: 0, data});
             if (forceSize) {
                 const img = new Image();
-                img.onload = () => this.setSize(img.width, img.height);
+                img.onload = () => {
+                    this.w = img.width;
+                    this.h = img.height;
+                };
                 img.src = data;
             }
             return true;
@@ -576,9 +510,10 @@ class Area
                 });
             }
 
-            if (forceSize)
-                this.setSize(parseInt(root.getAttribute('width')),
-                             parseInt(root.getAttribute('height')));
+            if (forceSize) {
+                this.w = root.getAttribute('width')|0;
+                this.h = root.getAttribute('height')|0;
+            }
             return true;
         }
 

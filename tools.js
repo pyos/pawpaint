@@ -12,24 +12,20 @@
 //   rotation :: float -- 0 to 2pi
 //   spacing  :: float -- greater or equal to 1, only affects pattern brushes
 //
-class Tool
-{
-    get spacingAdjust()
-    {
+class Tool {
+    get spacingAdjust() {
         // multiply by the size to get additional spacing between draw events.
         // a transparent edge will become opaque when drawn too many times
         // near the same spot.
         return 0.1;
     }
 
-    get glyph()
-    {
+    get glyph() {
         // Can be a string specifying a FontAwesome character to use an an icon.
         return null;
     }
 
-    constructor(area, options)
-    {
+    constructor(area, options) {
         this.area = area;
         this.options = {};
         this.setOptions({
@@ -45,8 +41,7 @@ class Tool
     }
 
     /* Change some of the values. The rest remain intact. */
-    setOptions(options)
-    {
+    setOptions(options) {
         for (let k in options)
             if (options.hasOwnProperty(k))
                 this.options[k] = options[k];
@@ -166,7 +161,7 @@ class SelectionTool extends Tool
         let dx = x - this.startX;
         let dy = y - this.startY;
 
-        if (window.SHIFT) {  // Shift+drag: lock aspect ratio at 1
+        if (window.SHIFT && dx !== 0 && dy !== 0) {  // Shift+drag: lock aspect ratio at 1
             const m = Math.min(Math.abs(dx), Math.abs(dy));
             dy *= m / Math.abs(dy);
             dx *= m / Math.abs(dx);

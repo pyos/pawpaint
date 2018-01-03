@@ -1,7 +1,8 @@
 'use strict';
 
-for (let T of [NodeList, HTMLCollection])
-    T.prototype[Symbol.iterator] = Array.prototype[Symbol.iterator];
+for (let T of [window.NodeList, window.HTMLCollection, window.TouchList])
+    if (T !== undefined)
+        T.prototype[Symbol.iterator] = Array.prototype[Symbol.iterator];
 
 
 function $preventDefault(ev) {
@@ -42,7 +43,6 @@ HTMLCanvasElement.prototype.$getResolution = function () {
 
 
 HTMLCanvasElement.prototype.$forceNativeResolution = function () {
-    const ctx = this.getContext('2d');
     const scale = this.$getResolution();
     if (scale != 1) {
         this.style.width  = this.width + 'px';
