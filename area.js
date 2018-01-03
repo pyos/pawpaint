@@ -1,6 +1,6 @@
 "use strict";
 
-const UNDO_OPS_LIMIT = 25;
+const UNDO_OPS_LIMIT = 50;
 
 // enum UNDO_OPERATION_KIND
 const UNDO_DRAW       = 0
