@@ -260,6 +260,8 @@ class PenTool extends Tool
 
     start(ctx, x, y, pressure, rotation)
     {
+        this.prevX = x;
+        this.prevY = y;
         const opts = this.options;
         ctx.save();
         ctx.lineWidth   = opts.size;
@@ -267,56 +269,47 @@ class PenTool extends Tool
         ctx.strokeStyle = ctx.fillStyle = `hsl(${opts.H},${opts.S}%,${opts.L}%)`;
         if (opts.eraser)
             ctx.globalCompositeOperation = "destination-out";
-        for (let dyn of opts.dynamic)
+        for (let dyn of opts.dynamic) {
             dyn.reset(ctx, this, x, y);
-        this.windowX = [this.prevX = x, x, x];
-        this.windowY = [this.prevY = y, y, y];
-        this.empty = 1;
-        this.count = 0;
-        this.move(ctx, x, y, pressure, rotation);
+            dyn.start(ctx, this, 0, 0, pressure, rotation);
+            dyn.step(ctx, this, 1);
+        }
+        this.step(ctx, x, y);
+        for (let dyn of this.options.dynamic)
+            dyn.stop(ctx, this);
+
     }
 
     move(ctx, x, y, pressure, rotation)
     {
-        // target = moving average of 5 last points including (x, y)
-        const i = this.count % this.windowX.length;
-        const dx = (x - this.windowX[i]) / this.windowX.length;
-        const dy = (y - this.windowY[i]) / this.windowY.length;
+        const dx = x - this.prevX;
+        const dy = y - this.prevY;
         const sp = this.options.spacing + ctx.lineWidth * this.spacingAdjust;
-        const steps = Math.floor(Math.sqrt(dx * dx + dy * dy) / sp) || this.empty;
-
-        if (steps) {
-            this.count++;
-            this.windowX[i] = x;
-            this.windowY[i] = y;
+        const steps = Math.floor(Math.sqrt(dx * dx + dy * dy) / sp);
+        if (!steps)
+            return;
+        for (let dyn of this.options.dynamic)
+            dyn.start(ctx, this, dx, dy, pressure, rotation);
+        const dx_step = dx / steps;
+        const dy_step = dy / steps;
+        x = this.prevX;
+        y = this.prevY;
+        for (let k = 0; k < steps; k++) {
             for (let dyn of this.options.dynamic)
-                dyn.start(ctx, this, dx, dy, pressure, rotation);
-
-            const dx_step = dx / steps;
-            const dy_step = dy / steps;
-            let sx = this.prevX;
-            let sy = this.prevY;
-
-            for (let k = 0; k < steps; k++) {
-                for (let dyn of this.options.dynamic)
-                    dyn.step(ctx, this, steps);
-
-                this.step(ctx, sx, sy, sx += dx_step, sy += dy_step);
-            }
-
-            for (let dyn of this.options.dynamic)
-                dyn.stop(ctx, this);
-
-            this.empty = 0;
-            this.prevX = sx;
-            this.prevY = sy;
+                dyn.step(ctx, this, steps);
+            // TODO: interpolate; browsers tend to skip lots of events during fast movements
+            this.step(ctx, x += dx_step, y += dy_step);
         }
+        for (let dyn of this.options.dynamic)
+            dyn.stop(ctx, this);
+        this.prevX = x;
+        this.prevY = y;
     }
 
-    step(ctx, x, y, nx, ny)
+    step(ctx, x, y)
     {
         ctx.beginPath();
-        ctx.arc(nx, ny, ctx.lineWidth / 2, 0, 2 * Math.PI);
+        ctx.arc(x, y, ctx.lineWidth / 2, 0, 2 * Math.PI);
         ctx.fill();
     }
 
@@ -351,11 +344,11 @@ class ImagePenTool extends PenTool
         super.start(ctx, x, y, pressure, rotation);
     }
 
-    step(ctx, x, y, nx, ny)
+    step(ctx, x, y)
     {
         const ds = ctx.lineWidth;
         ctx.save();
-        ctx.translate(nx, ny);
+        ctx.translate(x, y);
         ctx.rotate(this.options.rotation);
         ctx.drawImage(this.pattern, -ds / 2, -ds / 2, ds, ds);
         ctx.restore();
