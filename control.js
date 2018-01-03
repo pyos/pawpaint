@@ -253,6 +253,30 @@ class SizeControl extends BarControl {
 }
 
 
+class OpacityControl extends BarControl {
+    redraw(all = true) {
+        super.redraw(all);
+        const ctx = this.element.getContext('2d');
+        ctx.save();
+        ctx.globalAlpha = this.value;
+        ctx.arc(this.width / 2, this.height / 2, Math.min(this.width, this.height) / 2.5, 0, 2 * Math.PI);
+        ctx.restore();
+    }
+
+    get text() {
+        return Math.round(this.area.tool.options.opacity * 100) / 100;
+    }
+
+    get value() {
+        return this.area.tool.options.opacity;
+    }
+
+    set value(v) {
+        this.area.setToolOptions({ opacity: v });
+    }
+}
+
+
 class ItemControl extends CanvasControl {
     select(x, y) {
         let isz = this.itemSize;
@@ -405,6 +429,7 @@ class JointControl extends ModalControl {
         const color   = Array.from(e.querySelectorAll('[data-control="ColorControl"]')  ).map(c => new Control(c, area));
         const palette = Array.from(e.querySelectorAll('[data-control="PaletteControl"]')).map(c => new Control(c, area, color));
         const size    = Array.from(e.querySelectorAll('[data-control="SizeControl"]')   ).map(c => new Control(c, area));
+        const opacity = Array.from(e.querySelectorAll('[data-control="OpacityControl"]')).map(c => new Control(c, area));
         const tool    = Array.from(e.querySelectorAll('[data-control="ToolControl"]')   ).map(c => new Control(c, area, size));
     }
 }
@@ -596,6 +621,6 @@ function Control(e, ...args) {
     return c.redraw(true), c;
 }
 
-Control.types = { ColorControl, SizeControl, PaletteControl, ToolControl, SaveControl
+Control.types = { ColorControl, SizeControl, OpacityControl, PaletteControl, ToolControl, SaveControl
                 , JointControl, ColorButtonControl, LayerControl, LayerConfigControl
                 , ImageConfigControl };
