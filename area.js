@@ -140,7 +140,8 @@ class Area {
         const pointer = {
             start(ev) {
                 element.removeEventListener('pointerenter', pointer.start);
-                if (ev.which !== 0 /* no buttons, e.g. touch screen */ && ev.which !== 1)
+                // touch screens have no buttons.
+                if ((ev.buttons !== 0 || ev.type !== 'pointerdown') && ev.buttons !== 1)
                     return;
                 ev.preventDefault();
                 if (device.start(ev.pointerId, ev))
