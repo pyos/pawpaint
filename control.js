@@ -387,7 +387,10 @@ class ModalControl extends ControlBase {
         if (parent) {
             const area = parent.$nearestParent('.side-area');
             const right = area && area.classList.contains('side-area-right');
-            e.style.top = parent.offsetTop + 'px';
+            if (parent.offsetTop <= document.body.offsetHeight / 2)
+                e.style.top = `${parent.offsetTop}px`;
+            else
+                e.style.bottom = `${document.body.offsetHeight - parent.offsetTop - parent.offsetHeight}px`;
             e.classList.add('fixed');
             e.classList.add(right ? 'fixed-right' : 'fixed-left');
         } else {
