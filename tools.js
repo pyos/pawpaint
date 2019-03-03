@@ -20,11 +20,6 @@ class Tool {
         return 0.1;
     }
 
-    get glyph() {
-        // Can be a string specifying a FontAwesome character to use an an icon.
-        return null;
-    }
-
     constructor(area, options) {
         this.area = area;
         this.options = {};
@@ -65,29 +60,14 @@ class Tool {
 
     symbol(ctx, x, y)
     {
-        if (this.glyph) {
-            const opts = this.options;
-            ctx.save();
-            ctx.font = `${opts.size}px FontAwesome`;
-            ctx.fillStyle = `hsla(${opts.H},${opts.S}%,${opts.L}%,${opts.opacity})`;
-            // these coordinates are the left end of the baseline segment.
-            ctx.fillText(this.glyph, x - opts.size / 2, y + opts.size / 2.5);
-            ctx.restore();
-        } else {
-            this.start(ctx, x, y, 1, 0);
-            this.stop (ctx);
-        }
+        this.start(ctx, x, y, 1, 0);
+        this.stop (ctx);
     }
 }
 
 
 class ColorpickerTool extends Tool
 {
-    get glyph()
-    {
-        return '\uf1fb';  // a dropper
-    }
-
     start(ctx, x, y)
     {
         const img = this.area.save('flatten');
@@ -119,16 +99,34 @@ class ColorpickerTool extends Tool
     {
         this.imdata = null;
     }
+
+    symbol(ctx, x, y)
+    {
+        const opts = this.options;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(opts.size / 2, opts.size / 2);
+        ctx.beginPath();
+        ctx.moveTo(-0.9, 0.9);
+        let pts1 = [[0.05, -0.35], [-0.8, 0.55], [-0.8, 0.7], [-0.9, 0.8]];
+        for (let [x, y] of pts1.reverse()) ctx.lineTo(x, y);
+        for (let [x, y] of pts1.reverse()) ctx.lineTo(-y, -x);
+        ctx.closePath();
+        ctx.moveTo(0.3, -0.3);
+        ctx.arc(0.15, -0.65, 0.1 * Math.sqrt(2), -Math.PI * 5 / 4, -Math.PI / 4)
+        ctx.lineTo(0.35, -0.65);
+        ctx.arc(0.7, -0.7, 0.15 * Math.sqrt(2), -Math.PI * 3 / 4, +Math.PI / 4);
+        ctx.lineTo(0.65, -0.35);
+        ctx.arc(0.65, -0.15, 0.1 * Math.sqrt(2), -Math.PI / 4, +Math.PI * 3 / 4);
+        ctx.fillStyle = `hsla(${opts.H},${opts.S}%,${opts.L}%,${opts.opacity})`;
+        ctx.fill();
+        ctx.restore();
+    }
 }
 
 
 class MoveTool extends Tool
 {
-    get glyph()
-    {
-        return '\uf047';  // arrows in 4 directions
-    }
-
     start(ctx, x, y)
     {
         this.layer = this.area.layers[this.area.layer];
@@ -141,6 +139,27 @@ class MoveTool extends Tool
         this.layer.move(this.layer.x + (x - this.lastX), this.layer.y + (y - this.lastY));
         this.lastX = x;
         this.lastY = y;
+    }
+
+    symbol(ctx, x, y)
+    {
+        const opts = this.options;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(opts.size / 2, opts.size / 2);
+        ctx.beginPath();
+        for (const m of [1, -1]) {
+            let pts = [[0.1, 0.2], [0.1, 0.65], [0.35, 0.65]];
+            ctx.moveTo(0.0, 1.0 * m);
+            for (const [x, y] of pts.reverse()) ctx.lineTo(x, y * m);
+            for (const [x, y] of pts.reverse()) ctx.lineTo(-x, y * m);
+            ctx.moveTo(1.0 * m, 0.0);
+            for (const [x, y] of pts.reverse()) ctx.lineTo(y * m, x);
+            for (const [x, y] of pts.reverse()) ctx.lineTo(y * m, -x);
+        }
+        ctx.fillStyle = `hsla(${opts.H},${opts.S}%,${opts.L}%,${opts.opacity})`;
+        ctx.fill();
+        ctx.restore();
     }
 }
 
