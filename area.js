@@ -233,12 +233,12 @@ class Area {
     get scale() { return this._scale; }
 
     set w(w) {
-        this.element.style.width  = `${this._w = w}em`;
+        this.element.style.width  = `${this._w = w|0}em`;
         this.selection = this.selection;
     }
 
     set h(h) {
-        this.element.style.height = `${this._h = h}em`;
+        this.element.style.height = `${this._h = h|0}em`;
         this.selection = this.selection;
     }
 
