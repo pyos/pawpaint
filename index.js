@@ -58,6 +58,8 @@
         .on('drop',     (e) => { e.preventDefault(); area.paste(e.originalEvent.dataTransfer);  })
         .on('dragover', (e) => { e.preventDefault() })
 
+        .on('click', '.action-zoom-in',      () => area.scale *= 10/9)
+        .on('click', '.action-zoom-out',     () => area.scale *= 9/10)
         .on('click', '.action-eraser',       () => area.setToolOptions({ eraser: !area.tool.options.eraser }))
         .on('click', '.action-create-layer', () => area.createLayer(area.layer))
         .on('click', '.action-remove-layer', () => area.deleteLayer(area.layer))
