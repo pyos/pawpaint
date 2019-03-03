@@ -61,13 +61,13 @@
             <td><input type="number" min="1" max="16384" data-prop="w" data-type="int" />
               x <input type="number" min="1" max="16384" data-prop="h" data-type="int" /></td></tr>
         <tr><td>Zoom</td>
-            <td><input type="number" min="0.1" max="16" step="0.1" data-prop="scale" data-type="float" /></td></tr>
+            <td><input type="number" min="0.1" max="16" step="0.05" data-prop="scale" data-type="float" /></td></tr>
       </table>
 
       <table class="control control-layer-config" data-control="LayerConfigControl">
         <tr><th colspan="2">Layer options</th></tr>
         <tr><td>Opacity <input type="checkbox" data-prop="visible" title="Visibility" /></td>
-            <td><input type="range" data-prop="opacity" min="0" max="1" step="0.05" value="1" data-type="float" /></td></tr>
+            <td><input type="range" data-prop="opacity" min="0" max="1" step="0.01" value="1" data-type="float" /></td></tr>
         <tr><td>Blend mode</td>
             <td>
               <select data-prop="blendMode" value="">
@@ -91,8 +91,8 @@
             </td>
         </tr>
         <tr><td>Position</td>
-            <td><input type="number" min="1" max="16384" data-prop="x" data-type="int" />
-              x <input type="number" min="1" max="16384" data-prop="y" data-type="int" /></td></tr>
+            <td><input type="number" min="-16384" max="16384" data-prop="x" data-type="int" />
+              x <input type="number" min="-16384" max="16384" data-prop="y" data-type="int" /></td></tr>
         <tr><td>Size</td>
             <td><input type="number" min="1" max="16384" data-prop="w" data-type="int" />
               x <input type="number" min="1" max="16384" data-prop="h" data-type="int" /></td></tr>
