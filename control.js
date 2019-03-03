@@ -548,9 +548,9 @@ class LayerControl extends ControlBase {
             }
             if (index !== newIndex)
                 area.moveLayer(index, newIndex - index);
-            area.setLayer(newIndex);
-            if (totalMoved < 5)
+            if (area.layer === newIndex && totalMoved < 5)
                 this.showLayerMenu(target);
+            area.setLayer(newIndex);
         };
 
         const body = document.body;
