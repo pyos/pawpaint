@@ -509,12 +509,13 @@ class LayerControl extends ControlBase {
         ev.preventDefault();
         let target = ev.currentTarget;
         let origin = target.offsetTop;
-        let start = position(ev), end = start;
+        let start = position(ev), end = start, totalMoved = 0;
         target.style.position = 'relative';
         target.style.zIndex = 1;
 
         const drag = (ev) => {
             end = position(ev);
+            totalMoved += Math.abs(end - start);
             target.style.top = `${end - start}px`;
         };
 
@@ -548,6 +549,8 @@ class LayerControl extends ControlBase {
             if (index !== newIndex)
                 area.moveLayer(index, newIndex - index);
             area.setLayer(newIndex);
+            if (totalMoved < 5)
+                this.showLayerMenu(target);
         };
 
         const body = document.body;
@@ -559,10 +562,14 @@ class LayerControl extends ControlBase {
         body.addEventListener('touchend',   drop);
     }
 
+    showLayerMenu(target) {
+        const c = document.querySelector(this.element.dataset.controlLayerConfig).cloneNode(true);
+        new Control(c, this.area, 0, 0, target, this.area.layers[$(target).index()]);
+    }
+
     onLayerMenu(ev) {
         ev.preventDefault();
-        const c = document.querySelector(this.element.dataset.controlLayerConfig).cloneNode(true);
-        new Control(c, this.area, 0, 0, ev.currentTarget, this.area.layers[$(ev.currentTarget).index()]);
+        this.showLayerMenu(ev.currentTarget);
     }
 
     onLayerDraw(layer, index) {
