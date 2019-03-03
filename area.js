@@ -218,7 +218,7 @@ class Area {
 
     restyleCrosshair() {
         const s = this.tool.options.size;
-        this.crosshair.width = this.crosshair.height = s * this.scale;
+        this.crosshair.width = this.crosshair.height = Math.ceil(s * this.scale);
         this.crosshair.$forceNativeResolution();
         this.crosshair.style.marginLeft = `${-s / 2 * this.scale}px`;
         this.crosshair.style.marginTop  = `${-s / 2 * this.scale}px`;
