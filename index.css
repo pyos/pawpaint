@@ -22,10 +22,6 @@ body {
     -ms-touch-action: none;
 }
 
-select {
-    color: black;
-}
-
 table {
     border-collapse: collapse;
 }
@@ -87,48 +83,49 @@ td, th {
 }
 
 .side-area {
-    background: #111;
-    font-size: 0;
+    display: flex;
+    flex-direction: column;
+    background: #222;
     position: relative;
     overflow: hidden;
     height: 100%;
-    width: 45px;
+    width: 71px;
     color: white;
     float: left;
+    box-shadow: inset -10px 0 20px -10px #000;
 }
 
 .side-area-right {
     float: right;
 }
 
-.toolbar-row > * {
-    width: 45px;
-    height: 45px;
-    padding: 6px;
-    display: inline-block;
+.side-area-buttons {
+    display: flex;
+    flex-wrap: wrap;
+}
 
-    font-size: 20px;
-    text-align: center;
+.side-area-buttons > * {
+    width: 35px;
+    height: 35px;
+    font-size: 15px;
+    padding: 10px;
     color: inherit;
     cursor: pointer;
+    display: inline-block;
+    text-align: center;
 }
 
-.toolbar-row *,
-.toolbar-row *::before {
-    vertical-align: middle;
-}
-
-.layer-menu {
+.side-area > .layer-menu {
     overflow-x: hidden;
     overflow-y: auto;
-    height: calc(100% - 135px);  /* - 3 x 45px buttons */
+    flex: 1;
 }
 
-.layer-menu > *:not(.active) {
+.side-area > .layer-menu > *:not(.active) {
     opacity: 0.5;
 }
 
-.layer-menu > * > canvas {
+.side-area > .layer-menu > * > canvas {
     background: url(img/checkers.png);
     max-height: 45px;
     max-width:  100%;
@@ -154,13 +151,13 @@ td, th {
 }
 
 .control.fixed-left {
-    left: 45px;
+    left: 71px;
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
 }
 
 .control.fixed-right {
-    right: 45px;
+    right: 0px;
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
 }
@@ -205,4 +202,3 @@ td, th {
 [data-control="SizeControl"]    { cursor: ns-resize; }
 [data-control="ColorControl"]   { cursor: crosshair; }
 [data-control="PaletteControl"] { cursor: crosshair; }
-[data-control="ColorButtonControl"] { box-shadow: 0 0 15px -5px #000 inset; }

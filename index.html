@@ -9,20 +9,15 @@
   </head>
   <body>
     <div class="side-area">
-      <div class="toolbar-row">
-        <canvas data-control="ColorButtonControl" data-control-click=".templates .control-color" width="45" height="45"></canvas>
-        <a class="action-undo fa fa-undo"   title="Undo"></a>
+      <canvas data-control="ColorButtonControl" data-control-click=".templates .control-color" width="71" height="40"></canvas>
+      <div class="side-area-buttons">
+        <a class="action-undo fa fa-undo" title="Undo"></a>
         <a class="action-redo fa fa-repeat" title="Redo"></a>
-        <a class="fa fa-save"  title="Save"          data-control-click=".templates .control-save"></a>
-        <a class="fa fa-image" title="Image options" data-control-click=".templates .control-image-config"></a>
-      </div>
-    </div>
-
-    <div class="side-area side-area-right">
-      <div class="toolbar-row">
-        <a class="action-create-layer fa fa-plus"       title="New layer"></a>
-        <a class="action-remove-layer fa fa-trash"      title="Remove layer"></a>
-        <a class="action-merge-down   fa fa-level-down" title="Merge down"></a>
+        <a class="fa fa-save" title="Save" data-control-click=".templates .control-save"></a>
+        <a class="fa fa-cog" title="Image options" data-control-click=".templates .control-image-config"></a>
+        <a class="action-create-layer fa fa-plus" title="New layer"></a>
+        <a class="action-remove-layer fa fa-minus" title="Remove layer"></a>
+        <a class="action-merge-down fa fa-level-down" title="Merge down"></a>
       </div>
       <div class="layer-menu" data-control="LayerControl" data-control-layer-config=".templates .control-layer-config"></div>
     </div>
@@ -67,8 +62,8 @@
       </table>
 
       <table class="control control-layer-config" data-control="LayerConfigControl">
-        <tr><th colspan="2"><input type="checkbox" data-prop="visible" title="Visibility" /> Layer options</th></tr>
-        <tr><td>Opacity</td>
+        <tr><th colspan="2">Layer options</th></tr>
+        <tr><td>Opacity <input type="checkbox" data-prop="visible" title="Visibility" /></td>
             <td><input type="range" data-prop="opacity" min="0" max="1" step="0.05" value="1" data-type="float" /></td></tr>
         <tr><td>Blend mode</td>
             <td>

@@ -467,7 +467,7 @@ class ColorButtonControl extends CanvasControl {
     redraw(all = false) {
         const opt = this.area.tool.options;
         if (all || this.tool.constructor !== opt.kind)
-            this.tool = new opt.kind(null, { size: this.width / 1.5, L: 50 });
+            this.tool = new opt.kind(null, { size: Math.min(this.width, this.height) / 1.5, L: 50 });
         if (all || Math.abs(this.tool.options.L - opt.L) <= 50) {
             super.redraw(true);
             this.tool.options.L = opt.L > 50 ? 0 : 100;
