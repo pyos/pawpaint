@@ -476,32 +476,19 @@ class Area {
         }
     }
 
-    /* Deserialize an image and add it on top of the existing one. Supported
-     * formats: image/png and image/svg+xml; the latter allows importing many
-     * layers at once. Set forceSize = true to resize the area to fit the new layer.
-     * Returns true on a successful import. */
+    /* Deserialize an image and add it on top of the existing one. SVG images
+     * can insert multiple layers at once. Set forceSize = true to resize
+     * the area to fit the new layer. Returns true on a successful import. */
     load(data, forceSize)
     {
         forceSize = forceSize || this.layers.length === 0;
-
-        if (data.slice(0, 22) == 'data:image/png;base64,') {
-            this.createLayer(0, {x: 0, y: 0, data});
-            if (forceSize) {
-                const img = new Image();
-                img.onload = () => {
-                    this.w = img.width;
-                    this.h = img.height;
-                };
-                img.src = data;
-            }
-            return true;
-        }
 
         if (data.slice(0, 26) == 'data:image/svg+xml;base64,') {
             const dom  = new DOMParser();
             const doc  = dom.parseFromString(atob(data.slice(26)), 'application/xml');
             const root = doc.documentElement;
-
+            // TODO check if the document consists only of <image>s; otherwise fall back
+            //      to importing as a single layer.
             for (let x = root.firstChild; x !== null; x = x.nextSibling) {
                 this.createLayer(0, {
                     x: parseInt(x.getAttribute('x')),
@@ -514,10 +501,22 @@ class Area {
                     blendMode: x.style.mixBlendMode,
                 });
             }
-
             if (forceSize) {
                 this.w = root.getAttribute('width')|0;
                 this.h = root.getAttribute('height')|0;
+            }
+            return true;
+        }
+
+        if (data.slice(0, 11) == 'data:image/') {
+            this.createLayer(0, {x: 0, y: 0, data});
+            if (forceSize) {
+                const img = new Image();
+                img.onload = () => {
+                    this.w = img.width;
+                    this.h = img.height;
+                };
+                img.src = data;
             }
             return true;
         }
