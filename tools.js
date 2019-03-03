@@ -250,11 +250,19 @@ class PenTool extends Tool
 {
     crosshair(ctx)
     {
+        const eraser = this.options.eraser;
         const opts = {H: 0, S: 0, L: 50, opacity: this.options.opacity / 2, dynamic: [], eraser: false};
         Object.setPrototypeOf(opts, this.options);
         this.options = opts;
         this.start(ctx, 0, 0, 1, 0);
         this.stop (ctx);
+        if (eraser) {
+            this.options.eraser = true;
+            this.options.size -= Math.min(this.options.size, 2);
+            this.options.opacity *= 1.5;
+            this.start(ctx, 0, 0, 1, 0);
+            this.stop (ctx);
+        }
         this.options = Object.getPrototypeOf(opts);
     }
 
