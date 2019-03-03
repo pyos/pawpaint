@@ -514,7 +514,6 @@ class LayerControl extends ControlBase {
         target.style.zIndex = 1;
 
         const drag = (ev) => {
-            ev.preventDefault();
             end = position(ev);
             target.style.top = `${end - start}px`;
         };
