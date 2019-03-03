@@ -58,6 +58,7 @@
         .on('drop',     (e) => { e.preventDefault(); area.paste(e.originalEvent.dataTransfer);  })
         .on('dragover', (e) => { e.preventDefault() })
 
+        .on('click', '.action-eraser',       () => area.setToolOptions({ eraser: !area.tool.options.eraser }))
         .on('click', '.action-create-layer', () => area.createLayer(area.layer))
         .on('click', '.action-remove-layer', () => area.deleteLayer(area.layer))
         .on('click', '.action-merge-down',   () => area.mergeDown(area.layer))
